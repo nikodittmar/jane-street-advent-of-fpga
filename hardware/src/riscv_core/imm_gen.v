@@ -1,4 +1,4 @@
-`include "imm.vh"
+`include "control_sel.vh"
 
 module imm_gen (
     input [31:0] inst,

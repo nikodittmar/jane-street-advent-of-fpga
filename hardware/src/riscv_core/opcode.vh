@@ -27,6 +27,16 @@
 `define OPC_ARI_RTYPE   7'b0110011
 `define OPC_ARI_ITYPE   7'b0010011
 
+// Floating point instructions
+`define OPC_FP          7'b1010011
+
+// Floating point load and store instructions
+`define OPC_FP_STORE    7'b0100111
+`define OPC_FP_LOAD     7'b0000111
+
+// Floating point multiply add instruction
+`define OPC_FP_MADD     7'b1000011
+
 // ***** 5-bit Opcodes *****
 `define OPC_LUI_5       5'b01101
 `define OPC_AUIPC_5     5'b00101
@@ -37,6 +47,12 @@
 `define OPC_LOAD_5      5'b00000
 `define OPC_ARI_RTYPE_5 5'b01100
 `define OPC_ARI_ITYPE_5 5'b00100
+
+// 5-bit floating point opcodes
+`define OPC_FP_STORE_5  5'b01001
+`define OPC_FP_LOAD_5   5'b00001
+`define OPC_FP_5        5'b10100
+`define OPC_FP_MADD_5   5'b10000
 
 // ***** Function codes *****
 
@@ -78,4 +94,18 @@
 
 `define FNC7_0  7'b0000000 // ADD, SRL
 `define FNC7_1  7'b0100000 // SUB, SRA
+
+// Floating point function codes
+`define FNC4_FP_ADD     4'b0000
+`define FNC4_FP_FSGNJ_S 4'b0010
+`define FNC4_FP_MV_X_W  4'b1110
+`define FNC4_FP_MV_W_X  4'b1111
+`define FNC4_FP_CVT_S_W 4'b1101
+
+`define FNC7_FP_ADD     7'b0000000
+`define FNC7_FP_FSGNJ_S 7'b0010000
+`define FNC7_FP_MV_X_W  7'b1110000
+`define FNC7_FP_MV_W_X  7'b1111000
+`define FNC7_FP_CVT_S_W 7'b1101000
+
 `endif //OPCODE

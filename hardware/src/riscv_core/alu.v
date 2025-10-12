@@ -1,4 +1,4 @@
-`include "alu_sel.vh"
+`include "control_sel.vh"
 
 module alu (
     input [31:0] a,
