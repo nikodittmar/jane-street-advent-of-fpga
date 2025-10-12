@@ -14,3 +14,5 @@
 `define ALU_SUB     4'b1100
 `define ALU_SRA     4'b1101
 `define ALU_BSEL    4'b1111
+
+`endif //ALU_SEL

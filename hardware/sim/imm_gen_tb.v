@@ -14,19 +14,6 @@ module imm_gen_tb();
         .imm(imm)
     );
 
-    // Helpers
-    task expect_eq;
-        input [31:0] got;
-        input [31:0] exp;
-        input [8*128-1:0] msg;
-        begin
-            if (got != exp) begin 
-                $display("FAIL: %s\ngot %h, expected %h @%0t", msg, got, exp, $time);
-                $fatal(1);
-            end
-        end
-    endtask
-
     // Sign-extend utilities
     function [31:0] sext12;
         input [31:0] x;
@@ -126,59 +113,60 @@ module imm_gen_tb();
         // -------- I-type (sign-extended 12-bit) --------
         // 0
         inst = pack_I(12'h000); sel = `IMM_I; #1;
-        expect_eq(imm, 32'h0000_0000, "I imm 0");
+        assert(imm == 32'h0000_0000) else $display("ERROR: I imm 0 expected %h, got %h", 32'h0000_0000, imm);
         // +2047
         inst = pack_I(12'h7FF); sel = `IMM_I; #1;
-        expect_eq(imm, 32'h0000_07FF, "I imm +2047");
+        assert(imm == 32'h0000_07FF) else $display("ERROR: I imm +2047 expected %h, got %h", 32'h0000_07FF, imm);
         // -2048
         inst = pack_I(12'h800); sel = `IMM_I; #1;
-        expect_eq(imm, 32'hFFFF_F800, "I imm -2048");
+        assert(imm == 32'hFFFF_F800) else $display("ERROR: I imm -2048 expected %h, got %h", 32'hFFFF_F800, imm);
         // -1
         inst = pack_I(12'hFFF); sel = `IMM_I; #1;
-        expect_eq(imm, 32'hFFFF_FFFF, "I imm -1");
+        assert(imm == 32'hFFFF_FFFF) else $display("ERROR: I imm -1 expected %h, got %h", 32'hFFFF_FFFF, imm);
 
         // -------- S-type (sign-extended 12-bit) --------
         inst = pack_S(12'h000); sel = `IMM_S; #1;
-        expect_eq(imm, 32'h0000_0000, "S imm 0");
+        assert(imm == 32'h0000_0000) else $display("ERROR: S imm 0 expected %h, got %h", 32'h0000_0000, imm);
         inst = pack_S(12'h123); sel = `IMM_S; #1;
-        expect_eq(imm, 32'h0000_0123, "S imm +0x123");
+        assert(imm == 32'h0000_0123) else $display("ERROR: S imm +0x123 expected %h, got %h", 32'h0000_0123, imm);
         inst = pack_S(12'h800); sel = `IMM_S; #1;
-        expect_eq(imm, 32'hFFFF_F800, "S imm -2048");
+        assert(imm == 32'hFFFF_F800) else $display("ERROR: S imm -2048 expected %h, got %h", 32'hFFFF_F800, imm);
         inst = pack_S(12'hFFF); sel = `IMM_S; #1;
-        expect_eq(imm, 32'hFFFF_FFFF, "S imm -1");
+        assert(imm == 32'hFFFF_FFFF) else $display("ERROR: S imm -1 expected %h, got %h", 32'hFFFF_FFFF, imm);
 
         // -------- B-type (sign-extended 13-bit, LSB=0) --------
         // +8
         inst = pack_B(13'h008); sel = `IMM_B; #1;
-        expect_eq(imm, 32'h0000_0008, "B imm +8");
+        assert(imm == 32'h0000_0008) else $display("ERROR: B imm +8 expected %h, got %h", 32'h0000_0008, imm);
         // -4
         inst = pack_B(13'h1FFC); sel = `IMM_B; #1; // -4 in 13-bit two's complement
-        expect_eq(imm, 32'hFFFF_FFFC, "B imm -4");
+        assert(imm == 32'hFFFF_FFFC) else $display("ERROR: B imm -4 expected %h, got %h", 32'hFFFF_FFFC, imm);
         // +4094 (max positive)
         inst = pack_B(13'h0FFE); sel = `IMM_B; #1;
-        expect_eq(imm, 32'h0000_0FFE, "B imm +4094");
+        assert(imm == 32'h0000_0FFE) else $display("ERROR: B imm +4094 expected %h, got %h", 32'h0000_0FFE, imm);
         // -4096 (min)
         inst = pack_B(13'h1000); sel = `IMM_B; #1;
-        expect_eq(imm, 32'hFFFF_F000, "B imm -4096");
+        assert(imm == 32'hFFFF_F000) else $display("ERROR: B imm -4096 expected %h, got %h", 32'hFFFF_F000, imm);
 
         // -------- U-type (upper 20 << 12, no sign-extend) --------
         inst = pack_U(32'h000A_B000); sel = `IMM_U; #1; // expect the same
-        expect_eq(imm, 32'h000A_B000, "U imm 0x000AB000");
+        assert(imm == 32'h000A_B000) else $display("ERROR: U imm 0x000AB000 expected %h, got %h", 32'h000A_B000, imm);
         inst = pack_U(32'h8000_0000); sel = `IMM_U; #1;
-        expect_eq(imm, 32'h8000_0000, "U imm 0x80000000");
+        assert(imm == 32'h8000_0000) else $display("ERROR: U imm 0x80000000 expected %h, got %h", 32'h8000_0000, imm);
 
         // -------- J-type (sign-extended 21-bit, LSB=0) --------
         // +4
         inst = pack_J(21'h004); sel = `IMM_J; #1;
-        expect_eq(imm, 32'h0000_0004, "J imm +4");
+        assert(imm == 32'h0000_0004) else $display("ERROR: J imm +4 expected %h, got %h", 32'h0000_0004, imm);
         // -8
         inst = pack_J(21'h1FFFF8); sel = `IMM_J; #1; // -8 in 21-bit two's complement
-        expect_eq(imm, 32'hFFFF_FFF8, "J imm -8");
-        // A mid-range positive (e.g., +0x123456 & even)
+        assert(imm == 32'hFFFF_FFF8) else $display("ERROR: J imm -8 expected %h, got %h", 32'hFFFF_FFF8, imm);
+        // A mid-range positive (e.g., +0x68AC & even)
         inst = pack_J(21'h68AC); sel = `IMM_J; #1; // 0x68AC = 0b0110_1000_1010_1100 (even)
-        expect_eq(imm, sext21(32'h0000_68AC), "J imm +0x68AC");
+        assert(imm == sext21(32'h0000_68AC)) else
+            $display("ERROR: J imm +0x68AC expected %h, got %h", sext21(32'h0000_68AC), imm);
 
-        $display("PASS: All imm_gen tests passed");
+        $display("FINISHED: imm_gen testbench complete");
         $finish;
     end
 endmodule

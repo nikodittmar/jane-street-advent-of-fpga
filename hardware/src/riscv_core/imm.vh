@@ -18,3 +18,5 @@
 
 // J-type immediates
 `define IMM_J 3'b100
+
+`endif //IMM

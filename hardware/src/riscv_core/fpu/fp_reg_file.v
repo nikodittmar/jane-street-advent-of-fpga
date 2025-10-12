@@ -5,9 +5,17 @@ module fp_reg_file (
     input [31:0] wd,
     output [31:0] rd1, rd2, rd3
 );
-    parameter DEPTH = 32;
     reg [31:0] mem [0:31];
-    assign rd1 = 32'd0;
-    assign rd2 = 32'd0;
-    assign rd3 = 32'd0;
+
+    // Asynchronous read
+    assign rd1 = mem[ra1];
+    assign rd2 = mem[ra2];
+    assign rd3 = mem[ra3];
+
+    // Synchronous write
+    always @(posedge clk) begin
+        if (we) begin 
+            mem[wa] <= wd;
+        end
+    end
 endmodule
