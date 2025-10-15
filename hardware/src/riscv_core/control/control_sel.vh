@@ -17,6 +17,11 @@
 
 // ***** ID STAGE *****
 
+// Instruction sel
+`define INST_SEL_NUM_INPUTS     2
+`define INST_BIOS               1'b0
+`define INST_IMEM               1'b1
+
 // Immediate generator sel
 `define IMM_I                   3'b000 // I-type immediates
 `define IMM_S                   3'b001 // S-type immediates

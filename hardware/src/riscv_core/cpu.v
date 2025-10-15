@@ -13,104 +13,13 @@ module cpu #(
 );
     // MARK: Instruction Fetch (IF)
 
-    reg [31:0] if_pc;
-
-    // MARK: Instruction Decode (ID)
-
-    wire [31:0] id_pc;
-    wire [31:0] id_inst;
-
-    wire id_reg_rst;
-    wire id_reg_we;
+    wire [31:0] 
 
     // ********** Modules **********
 
-    wire wb_rf_we;
-    wire [4:0] id_rf_ra1, id_rf_ra2, wb_rf_wa;
-    wire [31:0] wb_rf_wd;
-    wire [31:0] id_rf_rd1, id_rf_rd2;
-    reg_file id_rf (
-        .clk(clk),
-        .we(wb_rf_we),
-        .ra1(id_rf_ra1), .ra2(id_rf_ra2), .wa(wb_rf_wa),
-        .wd(wb_rf_wd),
-
-        .rd1(id_rf_rd1), .rd2(id_rf_rd2)
-    );
-
-    /*
-    // For checkpoint 3
-
-    wire wb_fprf_we;
-    wire [4:0] id_fprf_ra1, id_fprf_ra2, id_fprf_ra3, wb_fprf_wa;
-    wire [31:0] wb_fprf_wd;
-    wire [31:0] id_fprf_rd1, id_fprf_rd2, id_fprf_rd3;
-    fp_reg_file id_fprf (
-        .clk(clk),
-        .we(wb_fprf_we),
-        .ra1(id_fprf_ra1), .ra2(id_fprf_ra2), .ra3(id_fprf_ra3), .wa(wb_fprf_wa),
-        .wd(wb_fprf_wd),
-
-        .rd1(id_fprf_rd1), .rd2(id_fprf_rd2), .rd3(id_fprf_rd3)
-    );
-    */
-
-    wire [2:0] id_imm_gen_sel;
-    wire [31:0] id_imm_gen_imm;
-    imm_gen id_imm_gen (
-        .inst(id_inst),
-        .sel(id_imm_gen_sel),
-
-        .imm(id_imm_gen_imm)
-    );
-
-    // ********** Control Logic **********
-
-    id_control id_control (
-        .inst(id_inst),
-        
-        .immsel(id_imm_gen_sel)
-    );
-
-    // ********** Pipeline Registers **********
-
-    pipeline_reg id_pc_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(id_pc),
-
-        .out(ex_pc)
-    );
-
-    pipeline_reg id_rd1_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(id_rf_rd1),
-
-        .out(ex_rd1)
-    );
-
-    pipeline_reg id_rd2_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(id_rf_rd2),
-
-        .out(ex_rd2)
-    );
-
-    pipeline_reg id_imm_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(id_imm_gen_imm),
-
-        .out(ex_imm)
-    );
-
-    pipeline_reg id_inst_reg (
+    pipeline_reg #(
+        .RESET_VAL(RESET_PC)
+    ) if_pc (
         .clk(clk),
         .rst(id_reg_rst),
         .we(id_reg_we),
@@ -118,6 +27,8 @@ module cpu #(
 
         .out(ex_inst)
     );
+
+    // MARK: Instruction Decode (ID)
 
     // MARK: Execute (EX)
 
@@ -185,7 +96,7 @@ module cpu #(
     assign ex_fwdb_in[`EX_FWD_WB * 32 +: 32] = 32'b0; // TODO
 
     mux #(
-        .NUM_INPUTS(`EX_FWD_NUM_INPUTS),
+        .NUM_INPUTS(`EX_FWD_NUM_INPUTS)
     ) ex_fwdb_mux (
         .in(ex_fwdb_in),
         .sel(ex_fwdb_sel),
@@ -200,7 +111,7 @@ module cpu #(
     assign ex_a_in[`A_PC * 32 +: 32] = ex_pc;
     
     mux #(
-        .NUM_INPUTS(`A_NUM_INPUTS),
+        .NUM_INPUTS(`A_NUM_INPUTS)
     ) ex_a_mux (
         .in(ex_a_in),
         .sel(ex_a_sel),
@@ -215,7 +126,7 @@ module cpu #(
     assign ex_b_in[`B_IMM * 32 +: 32] = ex_imm;
 
     mux #(
-        .NUM_INPUTS(`B_NUM_INPUTS),
+        .NUM_INPUTS(`B_NUM_INPUTS)
     ) ex_b_mux (
         .in(ex_b_in),
         .sel(ex_b_sel),
@@ -387,7 +298,7 @@ module cpu #(
     assign wb_dout_in[`DOUT_UART * 32 +: 32] = 31'b0; // TODO
 
     mux #(
-        .NUM_INPUTS(`DOUT_NUM_INPUTS),
+        .NUM_INPUTS(`DOUT_NUM_INPUTS)
     ) wb_dout_mux (
         .in(wb_dout_in),
         .sel(wb_dout_sel),
@@ -403,7 +314,7 @@ module cpu #(
     assign wb_wb_in[`WB_MEM * 32 +: 32] = wb_mem;
 
     mux #(
-        .NUM_INPUTS(`WB_NUM_INPUTS),
+        .NUM_INPUTS(`WB_NUM_INPUTS)
     ) wb_wb_mux (
         .in(wb_wb_in),
         .sel(wb_wb_sel),
