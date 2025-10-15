@@ -22,47 +22,47 @@ always @ (*) begin
             case (inst[30])
             `FNC2_ADD: begin
                 // ADD
-
+                immsel = `IMM_DONT_CARE;
             end
             `FNC2_SUB: begin
                 // SUB
-
+                immsel = `IMM_DONT_CARE;
             end
             endcase
         `FNC_AND: begin
             // AND
-
+            immsel = `IMM_DONT_CARE;
         end
         `FNC_OR: begin
             // OR
-
+            immsel = `IMM_DONT_CARE;
         end
         `FNC_XOR: begin
             // XOR
-
+            immsel = `IMM_DONT_CARE;
         end
         `FNC_SLL: begin
             // SLL
-
+            immsel = `IMM_DONT_CARE;
         end
         `FNC_SRL_SRA:
             case (inst[30])
             `FNC2_SRL: begin
                 // SRL
-
+                immsel = `IMM_DONT_CARE;
             end
             `FNC2_SRA: begin
                 // SRA
-
+                immsel = `IMM_DONT_CARE;
             end
             endcase
         `FNC_SLT: begin
             // SLT
-
+            immsel = `IMM_DONT_CARE;
         end
         `FNC_SLTU: begin
             // SLTU
-
+            immsel = `IMM_DONT_CARE;
         end
         endcase
 

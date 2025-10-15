@@ -23,6 +23,7 @@
 `define IMM_B                   3'b010 // B-type immediates
 `define IMM_U                   3'b011 // U-type immediates
 `define IMM_J                   3'b100 // J-type immediates
+`define IMM_DONT_CARE           3'bxxx
 
 // ***** EX STAGE *****
 
@@ -31,6 +32,9 @@
 `define EX_FWD_NONE             2'b00
 `define EX_FWD_MEM              2'b01
 `define EX_FWD_WB               2'b10
+
+// BrUn
+`define BRUN_DONT_CARE          1'bx
 
 // ALU A input sel
 `define A_NUM_INPUTS            2
@@ -60,6 +64,7 @@
 `define WDATA_MEM               2'b00
 `define WDATA_ALU               2'b01
 `define WDATA_FPU               2'b10
+`define WDATA_DONT_CARE         2'bxx
 
 // UARTRW sel
 `define UART_READ     1'b0

@@ -191,16 +191,19 @@ always @ (*) begin
             // SB
             dsel = `DOUT_DMEM;
             regwen = 1'b0;
+            wbsel = `WDATA_DONT_CARE;
         end
         `FNC_SH: begin
             // SH
             dsel = `DOUT_DMEM;
             regwen = 1'b0;
+            wbsel = `WDATA_DONT_CARE;
         end
         `FNC_SW: begin
             // SW
             dsel = `DOUT_DMEM;
             regwen = 1'b0;
+            wbsel = `WDATA_DONT_CARE;
         end
         endcase
     
@@ -210,31 +213,37 @@ always @ (*) begin
             // BEQ
             dsel = `DOUT_DMEM;
             regwen = 1'b0;
+            wbsel = `WDATA_DONT_CARE;
         end
         `FNC_BNE: begin
             // BNE
             dsel = `DOUT_DMEM;
             regwen = 1'b0;
+            wbsel = `WDATA_DONT_CARE;
         end
         `FNC_BLT: begin
             // BLT
             dsel = `DOUT_DMEM;
             regwen = 1'b0;
+            wbsel = `WDATA_DONT_CARE;
         end
         `FNC_BGE: begin
             // BGE
             dsel = `DOUT_DMEM;
             regwen = 1'b0;
+            wbsel = `WDATA_DONT_CARE;
         end
         `FNC_BLTU: begin
             // BLTU
             dsel = `DOUT_DMEM;
             regwen = 1'b0;
+            wbsel = `WDATA_DONT_CARE;
         end
         `FNC_BGEU: begin
             // BGEU
             dsel = `DOUT_DMEM;
             regwen = 1'b0;
+            wbsel = `WDATA_DONT_CARE;
         end
         endcase
     

@@ -29,12 +29,14 @@ always @ (*) begin
                 asel = `A_REG;
                 bsel = `B_REG;
                 alusel = `ALU_ADD;
+                brun = `BRUN_DONT_CARE;
             end
             `FNC2_SUB: begin
                 // SUB
                 asel = `A_REG;
                 bsel = `B_REG;
                 alusel = `ALU_SUB;
+                brun = `BRUN_DONT_CARE;
             end
             endcase
         `FNC_AND: begin
@@ -42,24 +44,28 @@ always @ (*) begin
             asel = `A_REG;
             bsel = `B_REG;
             alusel = `ALU_AND;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_OR: begin
             // OR
             asel = `A_REG;
             bsel = `B_REG;
             alusel = `ALU_OR;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_XOR: begin
             // XOR
             asel = `A_REG;
             bsel = `B_REG;
             alusel = `ALU_XOR;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_SLL: begin
             // SLL
             asel = `A_REG;
             bsel = `B_REG;
             alusel = `ALU_SLL;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_SRL_SRA:
             case (inst[30])
@@ -68,12 +74,14 @@ always @ (*) begin
                 asel = `A_REG;
                 bsel = `B_REG;
                 alusel = `ALU_SRL;
+                brun = `BRUN_DONT_CARE;
             end
             `FNC2_SRA: begin
                 // SRA
                 asel = `A_REG;
                 bsel = `B_REG;
                 alusel = `ALU_SRA;
+                brun = `BRUN_DONT_CARE;
             end
             endcase
         `FNC_SLT: begin
@@ -81,12 +89,14 @@ always @ (*) begin
             asel = `A_REG;
             bsel = `B_REG;
             alusel = `ALU_SLT;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_SLTU: begin
             // SLTU
             asel = `A_REG;
             bsel = `B_REG;
             alusel = `ALU_SLT;
+            brun = `BRUN_DONT_CARE;
         end
         endcase
 
@@ -97,12 +107,14 @@ always @ (*) begin
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_SLL: begin
             // SLLI
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_SLL;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_SLT: begin
             // SLTI
@@ -123,18 +135,21 @@ always @ (*) begin
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_XOR;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_OR: begin
             // ORI
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_OR;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_AND: begin
             // ANDI
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_AND;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_SRL_SRA:
             case (inst[30])
@@ -143,12 +158,14 @@ always @ (*) begin
                 asel = `A_REG;
                 bsel = `B_IMM;
                 alusel = `ALU_SRL;
+                brun = `BRUN_DONT_CARE;
             end
             `FNC2_SRA: begin
                 // SRAI
                 asel = `A_REG;
                 bsel = `B_IMM;
                 alusel = `ALU_SRA;
+                brun = `BRUN_DONT_CARE;
             end
             endcase
         endcase
@@ -160,30 +177,35 @@ always @ (*) begin
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_LH: begin
             // LH
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_LW: begin
             // LW
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_LBU: begin
             // LBU
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_LHU: begin
             // LHU
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         endcase
 
@@ -194,18 +216,21 @@ always @ (*) begin
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_SH: begin
             // SH
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_SW: begin
             // SW
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         endcase
     
@@ -216,12 +241,14 @@ always @ (*) begin
             asel = `A_PC;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_BNE: begin
             // BNE
             asel = `A_PC;
             bsel = `B_IMM;
             alusel = `ALU_ADD;
+            brun = `BRUN_DONT_CARE;
         end
         `FNC_BLT: begin
             // BLT
@@ -258,12 +285,14 @@ always @ (*) begin
         asel = `A_PC;
         bsel = `B_IMM;
         alusel = `ALU_ADD;
+        brun = `BRUN_DONT_CARE;
     end
     `OPC_JALR_5: begin
         // JALR
         asel = `A_PC;
         bsel = `B_IMM;
         alusel = `ALU_ADD;
+        brun = `BRUN_DONT_CARE;
     end
 
     `OPC_LUI_5: begin
@@ -271,12 +300,14 @@ always @ (*) begin
         asel = `A_PC;
         bsel = `B_IMM;
         alusel = `ALU_BSEL;
+        brun = `BRUN_DONT_CARE;
     end
     `OPC_AUIPC_5: begin
         // AUIPC
         asel = `A_PC;
         bsel = `B_IMM;
         alusel = `ALU_ADD;
+        brun = `BRUN_DONT_CARE;
     end
     
     endcase
