@@ -3,9 +3,10 @@
 
 module ex_control (
     input [31:0] inst,
-    input brlt, breq,
+    input breq, brlt,
     output brun, 
-    output [1:0] bsel, asel,
+    output [1:0] fwda, fwdb,
+    output [1:0] asel, bsel,
     output [3:0] alusel
 );
 
