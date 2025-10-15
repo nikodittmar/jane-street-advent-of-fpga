@@ -4,10 +4,10 @@
 module ex_control (
     input [31:0] inst,
     input breq, brlt,
-    output brun, 
-    output [1:0] fwda, fwdb,
-    output [1:0] asel, bsel,
-    output [3:0] alusel
+    output reg brun, 
+    output reg asel, bsel,
+    output reg [1:0] fwda, fwdb,
+    output reg [3:0] alusel
 );
 
 wire [4:0] opcode5;

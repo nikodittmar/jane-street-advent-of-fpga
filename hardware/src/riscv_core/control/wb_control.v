@@ -1,118 +1,270 @@
-`include "opcode.vh"
+`include "control_sel.vh"
+`include "../opcode.vh"
 
 module wb_control (
-    input [31:0] inst,
-    output [1:0] wbsel,
-    output regwen, fp_regwen,
+    input [31:0] inst, addr,
+    output reg [1:0] wbsel, dsel,
+    output reg regwen, fp_regwen
+
 );
 
 wire [4:0] opcode5;
 wire [2:0] funct3;
 wire [6:0] funct7;
 
+
+
 assign opcode5 = inst[6:2];
 assign funct3 = inst[14:12];
 assign funct7 = inst[31:25];
 
-case (opcode5)
-`OPC_LUI_5:
-    // LUI
-`OPC_AUIPC_5:
-    // AUIPC
-`OPC_JAL_5:
-    // JAL
-`OPC_JALR_5:
-    // JALR
-`OPC_BRANCH_5:
-    case (funct3)
-    `FNC_BEQ:
-        // BEQ
-    `FNC_BNE:
-        // BNE
-    `FNC_BLT:
-        // BLT
-    `FNC_BGE:
-        // BGE
-    `FNC_BLTU:
-        // BLTU
-    `FNC_BGEU:
-        // BGEU
-    endcase
-`OPC_STORE_5:
-    case (funct3)
-    `FNC_SB:
-        // SB
-    `FNC_SH:
-        // SH
-    `FNC_SW:
-        // SW
-    endcase
-`OPC_LOAD_5:
-    case (funct3)
-    `FNC_LB:
-        // LB
-    `FNC_LH:
-        // LH
-    `FNC_LW:
-        // LW
-    `FNC_LBU:
-        // LBU
-    `FNC_LHU:
-        // LHU
-    endcase
-`OPC_ARI_RTYPE_5:
-    case (funct3)
-    `FNC_ADD_SUB:
-        case (inst[30])
-        `FNC2_ADD:
-        // ADD
-        `FNC2_SUB:
-        // SUB
+always @ (*) begin
+    case (opcode5)
+    `OPC_ARI_RTYPE_5:
+        case (funct3)
+        `FNC_ADD_SUB:
+            case (inst[30])
+            `FNC2_ADD: begin
+                // ADD
+                wbsel = `WB_ALU;
+                dsel = `D_DMEM;
+                regwen = 1'b1;
+            end
+            `FNC2_SUB: begin
+                // SUB
+                wbsel = `WB_ALU;
+                dsel = `D_DMEM;
+                regwen = 1'b1;
+            end
+            endcase
+        `FNC_AND: begin
+            // AND
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_OR: begin
+            // OR
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_XOR: begin
+            // XOR
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_SLL: begin
+            // SLL
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_SRL_SRA:
+            case (inst[30])
+            `FNC2_SRL: begin
+                // SRL
+                wbsel = `WB_ALU;
+                dsel = `D_DMEM;
+                regwen = 1'b1;
+            end
+            `FNC2_SRA: begin
+                // SRA
+                wbsel = `WB_ALU;
+                dsel = `D_DMEM;
+                regwen = 1'b1;
+            end
+            endcase
+        `FNC_SLT: begin
+            // SLT
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_SLTU: begin
+            // SLTU
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
         endcase
-    `FNC_SLL:
-        // SLL
-    `FNC_SLT:
-        // SLT
-    `FNC_SLTU:
-        // SLTU
-    `FNC_XOR:
-        // XOR
-    `FNC_OR:
-        // OR
-    `FNC_AND:
-        // AND
-    `FNC_SRL_SRA:
-        case (inst[30])
-        `FNC2_SRL:
-            // SRL
-        `FNC2_SRA:
-            // SRA
+
+    `OPC_ARI_ITYPE_5:
+        case (funct3)
+        `FNC_ADD_SUB: begin
+            // ADDI
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_SLL: begin
+            // SLLI
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_SLT: begin
+            // SLTI
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_SLTU: begin
+            // SLTIU
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_XOR: begin
+            // XORI
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_OR: begin
+            // ORI
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_AND: begin
+            // ANDI
+            wbsel = `WB_ALU;
+            dsel = `D_DMEM;
+            regwen = 1'b1;
+        end
+        `FNC_SRL_SRA:
+            case (inst[30])
+            `FNC2_SRL: begin
+                // SRLI
+                wbsel = `WB_ALU;
+                dsel = `D_DMEM;
+                regwen = 1'b1;
+            end
+            `FNC2_SRA: begin
+                // SRAI
+                wbsel = `WB_ALU;
+                dsel = `D_DMEM;
+                regwen = 1'b1;
+            end
+            endcase
         endcase
-    endcase
-`OPC_ARI_ITYPE_5:
-    case (funct3)
-    `FNC_ADD_SUB:
-        // ADDI
-    `FNC_SLL:
-        // SLLI
-    `FNC_SLT:
-        // SLTI
-    `FNC_SLTU:
-        // SLTIU
-    `FNC_XOR:
-        // XORI
-    `FNC_OR:
-        // ORI
-    `FNC_AND:
-        // ANDI
-    `FNC_SRL_SRA:
-        case (inst[30])
-        `FNC2_SRL:
-            // SRLI
-        `FNC2_SRA:
-            // SRAI
+    
+    `OPC_LOAD_5:
+        case (funct3)
+        `FNC_LB: begin
+            // LB
+            wbsel = `WB_MEM;
+            regwen = 1'b1;
+            dsel = addr[31] ? `D_UART : `D_DMEM;
+        end
+        `FNC_LH: begin
+            // LH
+            wbsel = `WB_MEM;
+            regwen = 1'b1;
+            dsel = addr[31] ? `D_UART : `D_DMEM;
+        end
+        `FNC_LW: begin
+            // LW
+            wbsel = `WB_MEM;
+            regwen = 1'b1;
+            dsel = addr[31] ? `D_UART : `D_DMEM;
+        end
+        `FNC_LBU: begin
+            // LBU
+            wbsel = `WB_MEM;
+            regwen = 1'b1;
+            dsel = addr[31] ? `D_UART : `D_DMEM;
+        end
+        `FNC_LHU: begin
+            // LHU
+            wbsel = `WB_MEM;
+            regwen = 1'b1;
+            dsel = addr[31] ? `D_UART : `D_DMEM;
+        end
         endcase
+
+    `OPC_STORE_5:
+        case (funct3)
+        `FNC_SB: begin
+            // SB
+            dsel = `D_DMEM;
+            regwen = 1'b0;
+        end
+        `FNC_SH: begin
+            // SH
+            dsel = `D_DMEM;
+            regwen = 1'b0;
+        end
+        `FNC_SW: begin
+            // SW
+            dsel = `D_DMEM;
+            regwen = 1'b0;
+        end
+        endcase
+    
+    `OPC_BRANCH_5:
+        case (funct3)
+        `FNC_BEQ: begin
+            // BEQ
+            dsel = `D_DMEM;
+            regwen = 1'b0;
+        end
+        `FNC_BNE: begin
+            // BNE
+            dsel = `D_DMEM;
+            regwen = 1'b0;
+        end
+        `FNC_BLT: begin
+            // BLT
+            dsel = `D_DMEM;
+            regwen = 1'b0;
+        end
+        `FNC_BGE: begin
+            // BGE
+            dsel = `D_DMEM;
+            regwen = 1'b0;
+        end
+        `FNC_BLTU: begin
+            // BLTU
+            dsel = `D_DMEM;
+            regwen = 1'b0;
+        end
+        `FNC_BGEU: begin
+            // BGEU
+            dsel = `D_DMEM;
+            regwen = 1'b0;
+        end
+        endcase
+    
+    `OPC_JAL_5: begin
+        // JAL
+        wbsel = `WB_PC4;
+        dsel = `D_DMEM;
+        regwen = 1'b1;
+    end
+    `OPC_JALR_5: begin
+        // JALR
+        wbsel = `WB_PC4;
+        dsel = `D_DMEM;
+        regwen = 1'b1;
+    end
+
+    `OPC_LUI_5: begin
+        // LUI
+        wbsel = `WB_ALU;
+        dsel = `D_DMEM;
+        regwen = 1'b1;
+    end
+    `OPC_AUIPC_5: begin
+        // AUIPC
+        wbsel = `WB_ALU;
+        dsel = `D_DMEM;
+        regwen = 1'b1;
+    end
+    
     endcase
-endcase
+end
 
 endmodule

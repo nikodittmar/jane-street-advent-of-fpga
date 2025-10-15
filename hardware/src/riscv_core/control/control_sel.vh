@@ -61,6 +61,10 @@
 `define WDATA_ALU               2'b01
 `define WDATA_FPU               2'b10
 
+// UARTRW sel
+`define UART_READ     1'b0
+`define UART_WRITE    1'b1
+
 // ***** WB STAGE *****
 
 // Dout out sel
