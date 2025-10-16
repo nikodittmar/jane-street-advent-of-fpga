@@ -28,7 +28,7 @@ To handle memory to branch predictor/target generator hazards, we will need to s
 | `nop`            |     |     |     |     |     |     |     |
 | `jalr x0, 0(x1)` |     |     | IF  | ID  | EX  | M   | WB  |
 
-To handle this, we should have the control logic disable the branch predictor/target generator. The following stage will then detect the `jalr` instruction, see that to calculate it we need to wait on the `lw` instruction and therefore initiate a stall for one cycle.
+To handle this, we should have the control logic disable the branch predictor/target generator. The following stage will then detect the `jalr` instruction, see that to calculate it we need to wait on the `lw` instruction and therefore initiate a stall for one cycle. Note that we should still skip even if this load instruction is one cycle apart.
 
 #### ALU
 

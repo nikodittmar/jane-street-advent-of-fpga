@@ -4,6 +4,7 @@
 Notes:
 - Each color represents a pipeline stage
 - Gray is used for components shared by multiple stages
+- Not illustrated but ID control has access to the instructions in the EX, MEM, and WB stages, while EX control has access to the instructions in the MEM and WB stages.
 
 # Resources:
 - [Control Logic Truth Table](https://docs.google.com/spreadsheets/d/1F11mK-QQdbO019NtSGYmiA2lq3mlxW7HmSdNwWFxmQU/edit?usp=sharing)
