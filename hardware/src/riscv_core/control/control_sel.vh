@@ -71,9 +71,9 @@
 `define WDATA_FPU               2'b10
 `define WDATA_DONT_CARE         2'bxx
 
-// UARTRW sel
-`define UART_READ     1'b0
-`define UART_WRITE    1'b1
+// IORW sel
+`define IO_READ     1'b0
+`define IO_WRITE    1'b1
 
 // ***** WB STAGE *****
 

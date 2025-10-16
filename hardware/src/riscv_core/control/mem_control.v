@@ -4,7 +4,7 @@
 module mem_control (
     input [31:0] inst, pc, addr,
     output imemrw,
-    output reg dmemrw, uartrw
+    output reg dmemrw, iorw
 );
 
 // TODO: determine dsel behavior when in BIOS
@@ -29,56 +29,56 @@ always @ (*) begin
             `FNC2_ADD: begin
                 // ADD
                 dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
             end
             `FNC2_SUB: begin
                 // SUB
                 dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
             end
             endcase
         `FNC_AND: begin
             // AND
             dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
         end
         `FNC_OR: begin
             // OR
             dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
         end
         `FNC_XOR: begin
             // XOR
             dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
         end
         `FNC_SLL: begin
             // SLL
             dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
         end
         `FNC_SRL_SRA:
             case (inst[30])
             `FNC2_SRL: begin
                 // SRL
                 dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
             end
             `FNC2_SRA: begin
                 // SRA
                 dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
             end
             endcase
         `FNC_SLT: begin
             // SLT
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_SLTU: begin
             // SLTU
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         endcase
 
@@ -87,49 +87,49 @@ always @ (*) begin
         `FNC_ADD_SUB: begin
             // ADDI
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_SLL: begin
             // SLLI
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_SLT: begin
             // SLTI
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_SLTU: begin
             // SLTIU
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_XOR: begin
             // XORI
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_OR: begin
             // ORI
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_AND: begin
             // ANDI
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_SRL_SRA:
             case (inst[30])
             `FNC2_SRL: begin
                 // SRLI
                 dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
             end
             `FNC2_SRA: begin
                 // SRAI
                 dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
             end
             endcase
         endcase
@@ -139,27 +139,27 @@ always @ (*) begin
         `FNC_LB: begin
             // LB
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_LH: begin
             // LH
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_LW: begin
             // LW
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_LBU: begin
             // LBU
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_LHU: begin
             // LHU
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         endcase
     end
@@ -168,9 +168,9 @@ always @ (*) begin
 
         // Using I/O memory
         case (addr)
-            32'h80000008: uartrw = `UART_WRITE;
-            32'h80000018: uartrw = `UART_WRITE;
-            default: uartrw = `UART_READ;
+            32'h80000008: iorw = `IO_WRITE;
+            32'h80000018: iorw = `IO_WRITE;
+            default: iorw = `IO_READ;
         endcase
 
         case (funct3)
@@ -194,55 +194,55 @@ always @ (*) begin
         `FNC_BEQ: begin
             // BEQ
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_BNE: begin
             // BNE
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_BLT: begin
             // BLT
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_BGE: begin
             // BGE
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_BLTU: begin
             // BLTU
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         `FNC_BGEU: begin
             // BGEU
             dmemrw = 1'b0;
-            uartrw = `UART_READ;
+            iorw = `IO_READ;
         end
         endcase
     
     `OPC_JAL_5: begin
         // JAL
         dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
     end
     `OPC_JALR_5: begin
         // JALR
         dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
     end
 
     `OPC_LUI_5: begin
         // LUI
         dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
     end
     `OPC_AUIPC_5: begin
         // AUIPC
         dmemrw = 1'b0;
-                uartrw = `UART_READ;
+                iorw = `IO_READ;
     end
     
     endcase
