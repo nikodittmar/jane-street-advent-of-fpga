@@ -10,6 +10,7 @@
 `define PC_4                    2'b00
 `define PC_ALU                  2'b01
 `define PC_JUMP                 2'b10
+`define PC_TGT                  2'b11
 
 // Instruction sel
 `define INST_BIOS               1'b0
@@ -87,6 +88,10 @@
 // IORW sel
 `define IO_READ     1'b0
 `define IO_WRITE    1'b1
+
+// PC sel
+`define MEM_PC_4                1'b0
+`define MEM_PC_ALU              1'b1
 
 // ***** WB STAGE *****
 

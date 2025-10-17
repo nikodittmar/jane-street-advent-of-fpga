@@ -2,9 +2,17 @@
 `include "../opcode.vh"
 
 module mem_control (
-    input [31:0] inst, pc, addr,
+    input [31:0] inst, 
+    input [31:0] pc,
+    input [31:0] addr,
+    input [31:0] wb_inst, // next instruction for hazard detection
+    output [1:0] dinsel, // Forwarding MUX selector
+    output [3:0] wea, // Bitmask
+    output brinst, // Branch instruction flag
     output imemrw,
-    output reg dmemrw, iorw
+    output reg dmemrw, 
+    output iorw,
+    output pcsel
 );
 
 // TODO: determine dsel behavior when in BIOS

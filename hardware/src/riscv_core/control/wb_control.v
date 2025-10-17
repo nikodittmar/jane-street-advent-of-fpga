@@ -2,10 +2,12 @@
 `include "../opcode.vh"
 
 module wb_control (
-    input [31:0] inst, addr,
-    output reg [1:0] wbsel, dsel,
-    output reg regwen, fp_regwen
-
+    input [31:0] inst, 
+    input [31:0] addr,
+    output reg [1:0] wbsel, 
+    output reg [1:0] dsel,
+    output [3:0] mask,
+    output reg regwen
 );
 
 wire [4:0] opcode5;
