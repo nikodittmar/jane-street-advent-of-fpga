@@ -17,6 +17,8 @@ module ex_control (
     output br_mispred,
     output br_suc,
     output reg [3:0] alusel
+    output flush,
+    output stall
 );
 
 wire [4:0] opcode5;

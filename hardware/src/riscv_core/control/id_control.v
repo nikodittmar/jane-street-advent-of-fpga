@@ -3,7 +3,14 @@
 
 module id_control (
     input [31:0] inst,
-    output reg [2:0] immsel
+    input [31:0] ex_inst,
+    input [31:0] mem_inst,
+    input [31:0] wb_inst,
+    input stall,
+    input flush
+    output reg [2:0] imm_sel,
+    output target_gen_sel,
+    output fwd_rs1,
 );
 
 wire [4:0] opcode5;
@@ -22,47 +29,47 @@ always @ (*) begin
             case (inst[30])
             `FNC2_ADD: begin
                 // ADD
-                immsel = `IMM_DONT_CARE;
+                imm_sel = `IMM_DONT_CARE;
             end
             `FNC2_SUB: begin
                 // SUB
-                immsel = `IMM_DONT_CARE;
+                imm_sel = `IMM_DONT_CARE;
             end
             endcase
         `FNC_AND: begin
             // AND
-            immsel = `IMM_DONT_CARE;
+            imm_sel = `IMM_DONT_CARE;
         end
         `FNC_OR: begin
             // OR
-            immsel = `IMM_DONT_CARE;
+            imm_sel = `IMM_DONT_CARE;
         end
         `FNC_XOR: begin
             // XOR
-            immsel = `IMM_DONT_CARE;
+            imm_sel = `IMM_DONT_CARE;
         end
         `FNC_SLL: begin
             // SLL
-            immsel = `IMM_DONT_CARE;
+            imm_sel = `IMM_DONT_CARE;
         end
         `FNC_SRL_SRA:
             case (inst[30])
             `FNC2_SRL: begin
                 // SRL
-                immsel = `IMM_DONT_CARE;
+                imm_sel = `IMM_DONT_CARE;
             end
             `FNC2_SRA: begin
                 // SRA
-                immsel = `IMM_DONT_CARE;
+                imm_sel = `IMM_DONT_CARE;
             end
             endcase
         `FNC_SLT: begin
             // SLT
-            immsel = `IMM_DONT_CARE;
+            imm_sel = `IMM_DONT_CARE;
         end
         `FNC_SLTU: begin
             // SLTU
-            immsel = `IMM_DONT_CARE;
+            imm_sel = `IMM_DONT_CARE;
         end
         endcase
 
@@ -70,41 +77,41 @@ always @ (*) begin
         case (funct3)
         `FNC_ADD_SUB: begin
             // ADDI
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_SLL: begin
             // SLLI
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_SLT: begin
             // SLTI
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_SLTU: begin
             // SLTIU
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_XOR: begin
             // XORI
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_OR: begin
             // ORI
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_AND: begin
             // ANDI
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_SRL_SRA:
             case (inst[30])
             `FNC2_SRL: begin
                 // SRLI
-                immsel = `IMM_I;
+                imm_sel = `IMM_I;
             end
             `FNC2_SRA: begin
                 // SRAI
-                immsel = `IMM_I;
+                imm_sel = `IMM_I;
             end
             endcase
         endcase
@@ -113,23 +120,23 @@ always @ (*) begin
         case (funct3)
         `FNC_LB: begin
             // LB
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_LH: begin
             // LH
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_LW: begin
             // LW
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_LBU: begin
             // LBU
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         `FNC_LHU: begin
             // LHU
-            immsel = `IMM_I;
+            imm_sel = `IMM_I;
         end
         endcase
 
@@ -137,15 +144,15 @@ always @ (*) begin
         case (funct3)
         `FNC_SB: begin
             // SB
-            immsel = `IMM_S;
+            imm_sel = `IMM_S;
         end
         `FNC_SH: begin
             // SH
-            immsel = `IMM_S;
+            imm_sel = `IMM_S;
         end
         `FNC_SW: begin
             // SW
-            immsel = `IMM_S;
+            imm_sel = `IMM_S;
         end
         endcase
     
@@ -153,47 +160,47 @@ always @ (*) begin
         case (funct3)
         `FNC_BEQ: begin
             // BEQ
-            immsel = `IMM_B;
+            imm_sel = `IMM_B;
         end
         `FNC_BNE: begin
             // BNE
-            immsel = `IMM_B;
+            imm_sel = `IMM_B;
         end
         `FNC_BLT: begin
             // BLT
-            immsel = `IMM_B;
+            imm_sel = `IMM_B;
         end
         `FNC_BGE: begin
             // BGE
-            immsel = `IMM_B;
+            imm_sel = `IMM_B;
         end
         `FNC_BLTU: begin
             // BLTU
-            immsel = `IMM_B;
+            imm_sel = `IMM_B;
         end
         `FNC_BGEU: begin
             // BGEU
-            immsel = `IMM_B;
+            imm_sel = `IMM_B;
         end
         endcase
     
     `OPC_JAL_5: begin
         // JAL
-        immsel = `IMM_J;
+        imm_sel = `IMM_J;
     end
     `OPC_JALR_5: begin
         // JALR
-        immsel = `IMM_I;
+        imm_sel = `IMM_I;
     end
 
     `OPC_LUI_5: begin
         // LUI
-        immsel = `IMM_U;
+        imm_sel = `IMM_U;
 
     end
     `OPC_AUIPC_5: begin
         // AUIPC
-        immsel = `IMM_U;
+        imm_sel = `IMM_U;
     end
     
     endcase

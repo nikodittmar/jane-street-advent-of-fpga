@@ -3,18 +3,19 @@ module mem_stage (
     input [31:0] ex_pc,
     input [31:0] ex_alu, 
     input [31:0] ex_rd2,
+    input ex_br_suc, // Branch prediction success flag
     input [31:0] ex_inst,
-    input [31:0] wb_wdata,
+    input [31:0] wb_wdata, // Forwarded result from WB stage
+    input [31:0] wb_inst, // WB instruction for hazard detection
     output [31:0] mem_alu,
     output [31:0] mem_pc4,
-    output [31:0] mem_bios_dout, 
     output [31:0] mem_dmem_dout, 
-    output [31:0] mem_uart_dout, 
+    output [31:0] mem_io_dout, 
     output [31:0] mem_inst,
-    output [31:0] mem_bios_addr,
-    output [31:0] mem_imem_addr,
-    output [31:0] mem_imem_wdata,
-    output mem_imem_rw
+    output [31:0] mem_addr,
+    output [31:0] mem_imem_din,
+    output [3:0] mem_imem_wea,
+    output mem_imem_en
 );
     wire mem_reg_rst;
     wire mem_reg_we;

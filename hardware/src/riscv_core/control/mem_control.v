@@ -6,13 +6,12 @@ module mem_control (
     input [31:0] pc,
     input [31:0] addr,
     input [31:0] wb_inst, // next instruction for hazard detection
-    output [1:0] dinsel, // Forwarding MUX selector
+    output [1:0] din_sel, // Forwarding MUX selector
     output [3:0] wea, // Bitmask
-    output brinst, // Branch instruction flag
-    output imemrw,
-    output reg dmemrw, 
-    output iorw,
-    output pcsel
+    output br_inst, // Branch instruction flag
+    output imem_en,
+    output reg dmem_en, 
+    output io_en,
 );
 
 // TODO: determine dsel behavior when in BIOS
@@ -36,57 +35,57 @@ always @ (*) begin
             case (inst[30])
             `FNC2_ADD: begin
                 // ADD
-                dmemrw = 1'b0;
-                iorw = `IO_READ;
+                dmem_en = 1'b0;
+                io_en = `IO_READ;
             end
             `FNC2_SUB: begin
                 // SUB
-                dmemrw = 1'b0;
-                iorw = `IO_READ;
+                dmem_en = 1'b0;
+                io_en = `IO_READ;
             end
             endcase
         `FNC_AND: begin
             // AND
-            dmemrw = 1'b0;
-                iorw = `IO_READ;
+            dmem_en = 1'b0;
+                io_en = `IO_READ;
         end
         `FNC_OR: begin
             // OR
-            dmemrw = 1'b0;
-                iorw = `IO_READ;
+            dmem_en = 1'b0;
+                io_en = `IO_READ;
         end
         `FNC_XOR: begin
             // XOR
-            dmemrw = 1'b0;
-                iorw = `IO_READ;
+            dmem_en = 1'b0;
+                io_en = `IO_READ;
         end
         `FNC_SLL: begin
             // SLL
-            dmemrw = 1'b0;
-                iorw = `IO_READ;
+            dmem_en = 1'b0;
+                io_en = `IO_READ;
         end
         `FNC_SRL_SRA:
             case (inst[30])
             `FNC2_SRL: begin
                 // SRL
-                dmemrw = 1'b0;
-                iorw = `IO_READ;
+                dmem_en = 1'b0;
+                io_en = `IO_READ;
             end
             `FNC2_SRA: begin
                 // SRA
-                dmemrw = 1'b0;
-                iorw = `IO_READ;
+                dmem_en = 1'b0;
+                io_en = `IO_READ;
             end
             endcase
         `FNC_SLT: begin
             // SLT
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_SLTU: begin
             // SLTU
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         endcase
 
@@ -94,50 +93,50 @@ always @ (*) begin
         case (funct3)
         `FNC_ADD_SUB: begin
             // ADDI
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_SLL: begin
             // SLLI
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_SLT: begin
             // SLTI
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_SLTU: begin
             // SLTIU
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_XOR: begin
             // XORI
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_OR: begin
             // ORI
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_AND: begin
             // ANDI
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_SRL_SRA:
             case (inst[30])
             `FNC2_SRL: begin
                 // SRLI
-                dmemrw = 1'b0;
-                iorw = `IO_READ;
+                dmem_en = 1'b0;
+                io_en = `IO_READ;
             end
             `FNC2_SRA: begin
                 // SRAI
-                dmemrw = 1'b0;
-                iorw = `IO_READ;
+                dmem_en = 1'b0;
+                io_en = `IO_READ;
             end
             endcase
         endcase
@@ -146,28 +145,28 @@ always @ (*) begin
         case (funct3)
         `FNC_LB: begin
             // LB
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_LH: begin
             // LH
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_LW: begin
             // LW
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_LBU: begin
             // LBU
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_LHU: begin
             // LHU
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         endcase
     end
@@ -176,23 +175,23 @@ always @ (*) begin
 
         // Using I/O memory
         case (addr)
-            32'h80000008: iorw = `IO_WRITE;
-            32'h80000018: iorw = `IO_WRITE;
-            default: iorw = `IO_READ;
+            32'h80000008: io_en = `IO_WRITE;
+            32'h80000018: io_en = `IO_WRITE;
+            default: io_en = `IO_READ;
         endcase
 
         case (funct3)
         `FNC_SB: begin
             // SB
-            dmemrw = 1'b1;
+            dmem_en = 1'b1;
         end
         `FNC_SH: begin
             // SH
-            dmemrw = 1'b1;
+            dmem_en = 1'b1;
         end
         `FNC_SW: begin
             // SW
-            dmemrw = 1'b1;
+            dmem_en = 1'b1;
         end
         endcase
     end
@@ -201,56 +200,56 @@ always @ (*) begin
         case (funct3)
         `FNC_BEQ: begin
             // BEQ
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_BNE: begin
             // BNE
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_BLT: begin
             // BLT
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_BGE: begin
             // BGE
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_BLTU: begin
             // BLTU
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         `FNC_BGEU: begin
             // BGEU
-            dmemrw = 1'b0;
-            iorw = `IO_READ;
+            dmem_en = 1'b0;
+            io_en = `IO_READ;
         end
         endcase
     
     `OPC_JAL_5: begin
         // JAL
-        dmemrw = 1'b0;
-                iorw = `IO_READ;
+        dmem_en = 1'b0;
+                io_en = `IO_READ;
     end
     `OPC_JALR_5: begin
         // JALR
-        dmemrw = 1'b0;
-                iorw = `IO_READ;
+        dmem_en = 1'b0;
+                io_en = `IO_READ;
     end
 
     `OPC_LUI_5: begin
         // LUI
-        dmemrw = 1'b0;
-                iorw = `IO_READ;
+        dmem_en = 1'b0;
+                io_en = `IO_READ;
     end
     `OPC_AUIPC_5: begin
         // AUIPC
-        dmemrw = 1'b0;
-                iorw = `IO_READ;
+        dmem_en = 1'b0;
+                io_en = `IO_READ;
     end
     
     endcase

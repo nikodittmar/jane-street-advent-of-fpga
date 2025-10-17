@@ -2,7 +2,8 @@
 
 module id_stage (
     input clk,
-    input stall,
+    input ex_stall, // Stall signal from EX stage for data hazard
+    input ex_flush, // Flush signal from EX stage for control hazard
     input [31:0] if_pc,
     input [31:0] if_bios_inst,
     input [31:0] if_imem_inst,
@@ -10,18 +11,18 @@ module id_stage (
     input [31:0] wb_wdata,
     input wb_regwen,
     input [31:0] ex_alu, // Forwarded result for jalr target resolution
-    input [31:0] mem_alu, // Forwarded result for jalr target resolution
-    input [31:0] wb_wdata, // Forwarded result for jalr target resolution
     input [31:0] ex_inst, // EX instruction for hazard detection
+    input [31:0] mem_alu, // Forwarded result for jalr target resolution
     input [31:0] mem_inst, // MEM instruction for hazard detection
+    input [31:0] wb_wdata, // Forwarded result for jalr target resolution
     input [31:0] wb_inst, // WB instruction for hazard detection
-    output id_br_taken, // Branch predictor taken flag
-    output [31:0] id_pc_target, // Branch predictor / target generator output
-    output id_target_taken, // Target taken flag
+    output [31:0] id_pc_target, // Branch predictor/target generator output
+    output id_target_taken, // Use output of branch predictor/target generator flag
     output [31:0] id_pc,
     output [31:0] id_rd1,
     output [31:0] id_rd2,
     output [31:0] id_imm,
+    output id_br_taken, // Branch predictor branch taken flag
     output [31:0] id_inst
 );
     wire id_reg_rst;

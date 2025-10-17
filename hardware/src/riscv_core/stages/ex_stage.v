@@ -6,14 +6,16 @@ module ex_stage (
     input [31:0] id_rd1,
     input [31:0] id_rd2,
     input [31:0] id_imm,
+    input id_br_taken, // Branch predictor taken flag
     input [31:0] id_inst,
     input [31:0] mem_alu, // Forwarded result from Mem stage
-    input [31:0] wb_wdata, // Forwarded result from WB stage
     input [31:0] mem_inst, // MEM instruction for hazard detection
+    input [31:0] wb_wdata, // Forwarded result from WB stage
     input [31:0] wb_inst, // WB instruction for hazard detection
-    input id_br_taken, // Branch predictor taken flag
-    output ex_br_mispredict, // Branch misprediction flag
-    output ex_stall, // Stall flag sent to previous stages
+    output ex_br_suc, // Branch prediction success flag
+    output ex_br_mispred, // Branch mispredict flag
+    output ex_stall, // Stall flag in the event of data hazards
+    output ex_flush, // Flush flag in the event of control hazards
     output [31:0] ex_pc,
     output [31:0] ex_alu,
     output [31:0] ex_rd2,

@@ -2,7 +2,7 @@
 
 ## Stalling
 
-There are two times in which we need to stall. All stalls will originate from the ex stage and will work by sending a signal to the ID and IF stages. This signal will disable the pipeline registers, program counter and bios and instrution memories.
+There are two times in which we need to stall. All stalls will originate from the ex stage and will work by sending a signal to the ID and IF stages. This signal will disable the pipeline registers and program counter for one cycle.
 
 #### Branch Predictor/Target Generator
 
