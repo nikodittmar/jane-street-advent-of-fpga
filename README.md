@@ -5,6 +5,7 @@ Notes:
 - Each color represents a pipeline stage
 - Gray is used for components shared by multiple stages
 - IF and ID stages have an internal stall/flush signal that connects to all pipeline registers and the program counter (not illustrated).
+- IO module is hooked up to top level `serial_in` and `serial_out`.
 
 # Resources:
 - [Control Logic Truth Table](https://docs.google.com/spreadsheets/d/1F11mK-QQdbO019NtSGYmiA2lq3mlxW7HmSdNwWFxmQU/edit?usp=sharing)

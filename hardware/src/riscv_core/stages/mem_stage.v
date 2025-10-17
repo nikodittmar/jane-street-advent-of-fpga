@@ -7,6 +7,8 @@ module mem_stage (
     input [31:0] ex_inst,
     input [31:0] wb_wdata, // Forwarded result from WB stage
     input [31:0] wb_inst, // WB instruction for hazard detection
+    input serial_in,
+    output serial_out,
     output [31:0] mem_alu,
     output [31:0] mem_pc4,
     output [31:0] mem_dmem_dout, 
