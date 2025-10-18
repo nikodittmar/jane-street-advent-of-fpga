@@ -1,11 +1,12 @@
 module pipeline_reg (
+    parameter WIDTH = 32,
     parameter RESET_VAL = 32'b0
 ) (
     input clk,
     input rst,
     input we,
-    input [31:0] in,
-    output reg [31:0] out
+    input [WIDTH - 1:0] in,
+    output reg [WIDTH - 1:0] out
 );
     always @(posedge clk) begin
         if (rst) begin

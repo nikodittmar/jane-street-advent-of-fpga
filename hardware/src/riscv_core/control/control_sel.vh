@@ -77,6 +77,11 @@
 `define ALU_SRA                 4'b1101
 `define ALU_BSEL                4'b1111
 
+// CSR mux sel
+`define CSR_MUX_NUM_INPUTS      2
+`define CSR_IMM                 1'b0
+`define CSR_RD1                 1'b1
+
 // ***** MEM STAGE *****
 
 // Wdata sel

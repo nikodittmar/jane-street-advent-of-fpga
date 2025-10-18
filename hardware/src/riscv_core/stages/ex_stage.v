@@ -2,6 +2,7 @@
 
 module ex_stage (
     input clk,
+    input rst,
     input [31:0] id_pc,
     input [31:0] id_rd1,
     input [31:0] id_rd2,
@@ -30,6 +31,7 @@ module ex_stage (
     wire [31:0] a;
     wire [31:0] b;
 
+
     wire [3:0] alu_sel;
     wire [31:0] alu_res;
 
@@ -38,7 +40,7 @@ module ex_stage (
         .b(b),
         .sel(alu_sel),
 
-        .res(alu_res),
+        .res(alu_res)
     );
 
     // MARK: Branch Comp 
@@ -54,6 +56,37 @@ module ex_stage (
 
         .eq(breq),
         .lt(brlt)
+    );
+
+    // MARK: CSR Register
+
+    wire [31:0] csr_in;
+    wire [31:0] csr_out;
+    wire [31:0] csr_we;
+
+    pipeline_reg csr_reg (
+        .clk(clk),
+        .rst(rst),
+        .we(csr_we),
+        .in(csr_in),
+        .out(csr_out)
+    );
+
+    // MARK: CSR Mux
+
+    wire [$clog2(`CSR_MUX_NUM_INPUTS)-1:0] csr_mux_sel;
+    wire [`CSR_MUX_NUM_INPUTS*32-1:0] csr_mux_in;
+
+    assign csr_mux_in[`CSR_IMM * 32 +: 32] = id_imm;
+    assign csr_mux_in[`CSR_RD1 * 32 +: 32] = id_rd1;
+    
+    mux #(
+        .NUM_INPUTS(`CSR_MUX_NUM_INPUTS)
+    ) csrw_mux (
+        .in(csr_mux_in),
+        .sel(csr_mux_sel),
+
+        .out(csr_in)
     );
 
     // MARK: Forward A
@@ -130,17 +163,28 @@ module ex_stage (
 
     // MARK: Control Logic
 
+    wire br_suc;
+
     ex_control control (
         .inst(id_inst),
+        .mem_inst(mem_inst),
+        .wb_inst(wb_inst),
         .breq(breq),
         .brlt(brlt),
+        .br_taken(id_br_taken),
 
         .brun(brun),
         .fwda(fwda_sel),
         .fwdb(fwdb_sel),
         .asel(a_sel),
         .bsel(b_sel),
-        .alusel(alu_sel)
+        .csr_mux_sel(csr_mux_sel),
+        .csr_en(csr_we),
+        .br_mispred(ex_br_mispred),
+        .br_suc(br_suc),
+        .alusel(alu_sel),
+        .flush(ex_flush),
+        .stall(ex_stall)
     );
 
     pipeline_reg pc_reg (
@@ -168,6 +212,17 @@ module ex_stage (
         .in(id_rd2),
 
         .out(ex_rd2)
+    );
+
+    pipeline_reg #(
+        .WIDTH(1)
+    ) br_suc_reg (
+        .clk(clk),
+        .rst(ex_reg_rst),
+        .we(ex_reg_we),
+        .in(br_suc),
+
+        .out(ex_br_suc)
     );
 
     pipeline_reg inst_reg (

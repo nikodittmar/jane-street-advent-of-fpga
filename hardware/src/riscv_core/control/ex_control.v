@@ -12,8 +12,8 @@ module ex_control (
     output reg brun, 
     output reg [1:0] fwda, fwdb,
     output reg asel, bsel,
-    output csrwsel,
-    output csren,
+    output csr_mux_sel,
+    output csr_en,
     output br_mispred,
     output br_suc,
     output reg [3:0] alusel
