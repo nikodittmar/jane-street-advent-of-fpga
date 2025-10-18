@@ -5,7 +5,8 @@ module if_stage #(
 ) (
     input clk,
     input rst,
-    input stall,
+    input ex_stall,
+    input id_stall,
     input id_target_taken,
     input ex_br_mispred,
     input [31:0] id_target,
@@ -35,13 +36,15 @@ module if_stage #(
     );
 
     // MARK: Program Counter
+    wire pc_stall;
+    assign pc_stall = ex_stall | id_stall;
 
     pipeline_reg #(
         .RESET_VAL(RESET_PC)
     ) program_counter (
         .clk(clk),
         .rst(rst),
-        .we(stall),
+        .we(pc_stall),
         .in(next_pc),
 
         .out(ex_pc)

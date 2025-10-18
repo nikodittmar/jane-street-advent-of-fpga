@@ -2,8 +2,8 @@
 
 module id_stage (
     input clk,
-    input stall,
-    input flush,
+    input ex_stall,
+    input ex_flush,
     input [31:0] id_pc,
     input [31:0] id_bios_inst,
     input [31:0] id_imem_inst,
@@ -20,12 +20,13 @@ module id_stage (
     output [31:0] ex_rd1,
     output [31:0] ex_rd2,
     output [31:0] ex_imm,
-    output [31:0] ex_inst
+    output [31:0] ex_inst,
+    output id_stall
 );
     wire id_reg_rst;
     wire id_reg_we;
-    
-    assign id_reg_we = stall | flush;
+
+    assign id_reg_we = ex_stall | ex_flush;
 
     // MARK: InstSel
 

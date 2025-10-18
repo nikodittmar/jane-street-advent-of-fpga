@@ -3,24 +3,22 @@
 module ex_stage (
     input clk,
     input rst,
-    input [31:0] id_pc,
-    input [31:0] id_rd1,
-    input [31:0] id_rd2,
-    input [31:0] id_imm,
-    input id_br_taken, // Branch predictor taken flag
-    input [31:0] id_inst,
-    input [31:0] mem_alu, // Forwarded result from Mem stage
-    input [31:0] mem_inst, // MEM instruction for hazard detection
+    input [31:0] ex_pc,
+    input [31:0] ex_rd1,
+    input [31:0] ex_rd2,
+    input [31:0] ex_imm,
+    input ex_br_taken, // Branch predictor taken flag
+    input [31:0] ex_inst,
     input [31:0] wb_wdata, // Forwarded result from WB stage
     input [31:0] wb_inst, // WB instruction for hazard detection
-    output ex_br_suc, // Branch prediction success flag
     output ex_br_mispred, // Branch mispredict flag
     output ex_stall, // Stall flag in the event of data hazards
     output ex_flush, // Flush flag in the event of control hazards
-    output [31:0] ex_pc,
-    output [31:0] ex_alu,
-    output [31:0] ex_rd2,
-    output [31:0] ex_inst
+    output mem_br_suc, // Branch prediction success flag
+    output [31:0] mem_pc,
+    output [31:0] mem_alu,
+    output [31:0] mem_rd2,
+    output [31:0] mem_inst
 );
 
     wire ex_reg_rst;
@@ -30,7 +28,6 @@ module ex_stage (
 
     wire [31:0] a;
     wire [31:0] b;
-
 
     wire [3:0] alu_sel;
     wire [31:0] alu_res;
@@ -50,8 +47,8 @@ module ex_stage (
     wire brlt;
 
     branch_comp branch_comp (
-        .d1(id_rd1),
-        .d2(id_rd2),
+        .d1(ex_rd1),
+        .d2(ex_rd2),
         .un(brun),
 
         .eq(breq),
@@ -77,8 +74,8 @@ module ex_stage (
     wire [$clog2(`CSR_MUX_NUM_INPUTS)-1:0] csr_mux_sel;
     wire [`CSR_MUX_NUM_INPUTS*32-1:0] csr_mux_in;
 
-    assign csr_mux_in[`CSR_IMM * 32 +: 32] = id_imm;
-    assign csr_mux_in[`CSR_RD1 * 32 +: 32] = id_rd1;
+    assign csr_mux_in[`CSR_IMM * 32 +: 32] = ex_imm;
+    assign csr_mux_in[`CSR_RD1 * 32 +: 32] = ex_rd1;
     
     mux #(
         .NUM_INPUTS(`CSR_MUX_NUM_INPUTS)
@@ -95,7 +92,7 @@ module ex_stage (
     wire [`EX_FWD_NUM_INPUTS*32-1:0] fwda_in;
     wire [31:0] fwda_out;
 
-    assign fwda_in[`EX_FWD_NONE * 32 +: 32] = id_rd1;
+    assign fwda_in[`EX_FWD_NONE * 32 +: 32] = ex_rd1;
     assign fwda_in[`EX_FWD_MEM * 32 +: 32] = mem_alu;
     assign fwda_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
 
@@ -114,7 +111,7 @@ module ex_stage (
     wire [`EX_FWD_NUM_INPUTS*32-1:0] fwdb_in;
     wire [31:0] fwdb_out;
 
-    assign fwdb_in[`EX_FWD_NONE * 32 +: 32] = id_rd2;
+    assign fwdb_in[`EX_FWD_NONE * 32 +: 32] = ex_rd2;
     assign fwdb_in[`EX_FWD_MEM * 32 +: 32] = mem_alu;
     assign fwdb_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
 
@@ -133,7 +130,7 @@ module ex_stage (
     wire [`A_NUM_INPUTS*32-1:0] a_in;
 
     assign a_in[`A_REG * 32 +: 32] = fwda_out;
-    assign a_in[`A_PC * 32 +: 32] = id_pc;
+    assign a_in[`A_PC * 32 +: 32] = ex_pc;
     
     mux #(
         .NUM_INPUTS(`A_NUM_INPUTS)
@@ -150,7 +147,7 @@ module ex_stage (
     wire [`B_NUM_INPUTS*32-1:0] b_in;
 
     assign b_in[`B_REG * 32 +: 32] = fwdb_out;
-    assign b_in[`B_IMM * 32 +: 32] = id_imm;
+    assign b_in[`B_IMM * 32 +: 32] = ex_imm;
 
     mux #(
         .NUM_INPUTS(`B_NUM_INPUTS)
@@ -166,12 +163,12 @@ module ex_stage (
     wire br_suc;
 
     ex_control control (
-        .inst(id_inst),
+        .inst(ex_inst),
         .mem_inst(mem_inst),
         .wb_inst(wb_inst),
         .breq(breq),
         .brlt(brlt),
-        .br_taken(id_br_taken),
+        .br_taken(ex_br_taken),
 
         .brun(brun),
         .fwda(fwda_sel),
@@ -191,9 +188,9 @@ module ex_stage (
         .clk(clk),
         .rst(ex_reg_rst),
         .we(ex_reg_we),
-        .in(id_pc),
+        .in(ex_pc),
 
-        .out(ex_pc)
+        .out(mem_pc)
     );
     
     pipeline_reg alu_reg (
@@ -202,16 +199,16 @@ module ex_stage (
         .we(ex_reg_we),
         .in(alu_res),
 
-        .out(ex_alu)
+        .out(mem_alu)
     );
 
     pipeline_reg rd2_reg (
         .clk(clk),
         .rst(ex_reg_rst),
         .we(ex_reg_we),
-        .in(id_rd2),
+        .in(ex_rd2),
 
-        .out(ex_rd2)
+        .out(mem_rd2)
     );
 
     pipeline_reg #(
@@ -222,15 +219,15 @@ module ex_stage (
         .we(ex_reg_we),
         .in(br_suc),
 
-        .out(ex_br_suc)
+        .out(mem_br_suc)
     );
 
     pipeline_reg inst_reg (
         .clk(clk),
         .rst(ex_reg_rst),
         .we(ex_reg_we),
-        .in(id_inst),
+        .in(ex_inst),
 
-        .out(ex_inst)
+        .out(mem_inst)
     );
 endmodule
