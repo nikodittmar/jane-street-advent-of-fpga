@@ -3,11 +3,11 @@
 
 module mem_control (
     input [31:0] inst, 
+    input [31:0] wb_inst, // next instruction for hazard detection
     input [31:0] pc,
     input [31:0] addr,
-    input [31:0] wb_inst, // next instruction for hazard detection
-    output [1:0] din_sel, // Forwarding MUX selector
-    output [3:0] wea, // Bitmask
+    output din_sel, // Forwarding MUX selector
+    output [3:0] we, // Bitmask
     output br_inst, // Branch instruction flag
     output imem_en,
     output reg dmem_en, 

@@ -2,15 +2,13 @@
 
 module io (
     input clk,
-    input [31:0] addr, wdata,
-    input iorw,
-    output reg [31:0] rdata,
     input rst,
-
+    input [31:0] addr, din,
+    input io_en,
     input br_inst, br_suc,
-
     input serial_in,
-    output serial_out
+    output serial_out,
+    output reg [31:0] dout
 );
 
 wire [7:0] uart_tx_data_in;
@@ -52,31 +50,31 @@ always @ (posedge clk) begin
 
     case(addr)
         32'h80000000: begin
-            rdata <= {30'b0, uart_rx_data_out_valid, uart_tx_data_in_ready};
+            dout <= {30'b0, uart_rx_data_out_valid, uart_tx_data_in_ready};
         end
         32'h80000004: begin
-            rdata <= {24'b0, uart_rx_data_out};
+            dout <= {24'b0, uart_rx_data_out};
             uart_rx_data_out_ready <= 1'b1;
         end
         32'h80000008: begin
-            uart_tx_data_in <= wdata[7:0];
+            uart_tx_data_in <= din[7:0];
             uart_tx_data_in_valid <= 1'b1;
         end
         32'h80000010: begin
-            rdata <= cycle_ctr;
+            dout <= cycle_ctr;
         end
         32'h80000014: begin
-            rdata <= inst_ctr;
+            dout <= inst_ctr;
         end
         32'h80000018: begin
             cycle_ctr <= 0;
             inst_ctr <= 0;
         end
         32'h8000001c: begin
-            rdata <= br_inst_ctr;
+            dout <= br_inst_ctr;
         end
         32'h80000020: begin
-            rdata <= br_suc_ctr;
+            dout <= br_suc_ctr;
         end
     endcase
 

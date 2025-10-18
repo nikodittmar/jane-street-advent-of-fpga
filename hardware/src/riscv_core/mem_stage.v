@@ -1,68 +1,109 @@
+`include "control_sel.vh"
+
 module mem_stage (
     input clk,
-    input [31:0] ex_pc,
-    input [31:0] ex_alu, 
-    input [31:0] ex_rd2,
-    input ex_br_suc, // Branch prediction success flag
-    input [31:0] ex_inst,
+    input rst,
+    input [31:0] mem_pc,
+    input [31:0] mem_alu, 
+    input [31:0] mem_rd2,
+    input mem_br_suc, // Branch prediction success flag
+    input [31:0] mem_inst,
     input [31:0] wb_wdata, // Forwarded result from WB stage
-    input [31:0] wb_inst, // WB instruction for hazard detection
     input serial_in,
     output serial_out,
-    output [31:0] mem_alu,
-    output [31:0] mem_pc4,
-    output [31:0] mem_dmem_dout, 
-    output [31:0] mem_io_dout, 
-    output [31:0] mem_inst,
-    output [31:0] mem_addr,
+    output [31:0] wb_alu,
+    output [31:0] wb_pc4,
+    output [31:0] wb_dmem_dout, 
+    output [31:0] wb_io_dout, 
+    output [31:0] wb_inst,
+    output [13:0] mem_addr,
     output [31:0] mem_imem_din,
-    output [3:0] mem_imem_wea,
+    output [3:0] mem_imem_we,
     output mem_imem_en
 );
     wire mem_reg_rst;
     wire mem_reg_we;
 
-    // MARK: DMem
+    assign mem_addr = mem_alu[13:0];
 
-    wire [13:0] mem_dmem_addr;
-    wire [31:0] mem_dmem_din, mem_dmem_dout;
-    wire [3:0] dmem_we;
+    wire [3:0] we;
+    assign mem_imem_we = we;
+    
+    wire [31:0] pc4 = mem_pc + 32'd4;
+
+    // MARK: Data In Mux
+
+    wire [$clog2(`DIN_NUM_INPUTS)-1:0] din_mux_sel;
+    wire [`DIN_NUM_INPUTS*32-1:0] din_mux_in;
+    wire [31:0] din;
+    assign mem_imem_din = din;
+
+    assign din_mux_in[`DIN_WDATA * 32 +: 32] = wb_wdata;
+    assign din_mux_in[`DIN_RD2 * 32 +: 32] = mem_rd2;
+
+    mux #(
+        .NUM_INPUTS(`DIN_NUM_INPUTS)
+    ) din_mux (
+        .in(din_mux_in),
+        .sel(din_mux_sel),
+
+        .out(din)
+    );
+
+    // MARK: DMem
     wire dmem_en;
+
     dmem dmem (
       .clk(clk),
-      .en(mem_dmem_en),
-      .we(mem_dmem_we),
-      .addr(mem_dmem_addr),
-      .din(mem_dmem_din),
-      .dout(mem_dmem_dout)
+      .en(dmem_en),
+      .we(we),
+      .addr(mem_addr),
+      .din(din),
+      .dout(wb_dmem_dout)
     );
 
     // MARK: IO
 
-
+    wire io_en;
+    wire br_inst;
 
     io io (
         .clk(clk),
-        // ...
+        .rst(rst),
+        .addr(mem_alu),
+        .din(din),
+        .io_en(io_en),
+        .br_inst(br_inst),
+        .br_suc(mem_br_suc),
+        .serial_in(serial_in),
+
+        .serial_out(serial_out),
+        .dout(wb_io_dout)
     );
 
     // MARK: Control Logic
 
     mem_control control (
         .inst(mem_inst),
-        .pc(),
-        .addr(),
-
-        .imemrw(),
-        .dmemrw(),
-        .iorw(),
+        .wb_inst(wb_inst),
+        .pc(mem_pc),
+        .addr(mem_addr),
+        
+        .din_sel(din_mux_sel),
+        .we(we),
+        .br_inst(br_inst),
+        .imem_en(mem_imem_en),
+        .dmem_en(dmem_en),
+        .io_en(io_en),
     );
+
+    // MARK: Pipeline Registers
 
     pipeline_reg pc_reg (
         .clk(clk),
         .rst(mem_reg_rst),
         .we(mem_reg_we),
-        .in(mem_pc),
+        .in(pc4),
 
         .out(wb_pc)
     );

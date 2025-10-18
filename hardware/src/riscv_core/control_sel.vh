@@ -85,11 +85,12 @@
 
 // ***** MEM STAGE *****
 
-// Wdata sel
-`define WDATA_MEM               2'b00
-`define WDATA_ALU               2'b01
-`define WDATA_FPU               2'b10
-`define WDATA_DONT_CARE         2'bxx
+// Data in sel
+`define DIN_NUM_INPUTS        2
+`define DIN_WDATA             1'b0
+`define DIN_RD2               1'b1
+//`define DIN_FPU               2'b10
+`define DIN_DONT_CARE         1'bx
 
 // IORW sel
 `define IO_READ     1'b0
