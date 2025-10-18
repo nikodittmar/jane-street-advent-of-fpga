@@ -1,3 +1,9 @@
+`include "stages/ex_stage.v"
+`include "stages/id_stage.v"
+`include "stages/if_stage.v"
+`include "stages/mem_stage.v"
+`include "stages/wb_stage.v"
+
 module cpu #(
     parameter CPU_CLOCK_FREQ = 50_000_000,
     parameter RESET_PC = 32'h4000_0000,
@@ -108,6 +114,7 @@ module cpu #(
 
     mem_stage mem_stage (
         .clk(clk),
+        .rst(rst),
         .ex_pc(),
         .ex_alu(), 
         .ex_rd2(),

@@ -1,4 +1,9 @@
-`include "control/control_sel.vh"
+`include "../control/control_sel.vh"
+`include "../reg_file.v"
+`include "../mux.v"
+`include "../pipeline_reg.v"
+`include "../imm_gen.v"
+`include "../control/id_control.v"
 
 module id_stage (
     input clk,
@@ -7,8 +12,6 @@ module id_stage (
     input [31:0] if_pc,
     input [31:0] if_bios_inst,
     input [31:0] if_imem_inst,
-    input [31:0] wb_inst,
-    input [31:0] wb_wdata,
     input wb_regwen,
     input [31:0] ex_alu, // Forwarded result for jalr target resolution
     input [31:0] ex_inst, // EX instruction for hazard detection
@@ -74,6 +77,20 @@ module id_stage (
         .sel(imm_gen_sel),
 
         .imm(imm)
+    );
+
+    // MARK: TargetGen
+    wire [1:0] target_gen_sel;
+    wire [31:0] target;
+    wire target_taken;
+
+    target_gen target_gen (
+        .pc(if_pc),
+        .sel(target_gen_sel),
+        .rd1(id_rd1),
+        .imm(imm),
+        .target(target),
+        .target_taken(target_taken)
     );
 
     // MARK: Control
