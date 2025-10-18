@@ -9,35 +9,60 @@ module cpu #(
     input serial_in,
     output serial_out
 );
+    wire stall;
+    wire flush;
+
+    // Pipelined program counter
+    wire [31:0] if_pc;
+    wire [31:0] id_pc;
+    wire [31:0] ex_pc;
+    wire [31:0] mem_pc;
+    wire [31:0] wb_pc;
+
+    // Pipelined instructions
+    wire [31:0] if_addr; // IF does not own the memory so it outputs an address
+    wire [31:0] if_bios_inst;
+    wire [31:0] if_imem_inst;
+    wire [31:0] id_inst;
+    wire [31:0] ex_inst;
+    wire [31:0] mem_inst;
+    wire [31:0] wb_inst;
+
+    // Branch predictor/target generator signals
+    wire id_target_taken;
+    wire [31:0] id_target;
+    wire ex_br_mispred;
+    wire [31:0] ex_alu;
+
 
     // MARK: Instruction Fetch
 
     if_stage if_stage (
         .clk(clk),
         .rst(rst),
-        .stall(),
-        .id_target_taken(),
-        .ex_branch_mispredict(),
-        .id_target(),
-        .ex_alu(),
+        .stall(stall),
+        .id_target_taken(id_target_taken),
+        .ex_br_mispred(ex_br_mispred),
+        .id_target(id_target),
+        .ex_alu(ex_alu),
 
-        .if_pc(),
-        .if_addr()
+        .if_pc(if_pc),
+        .if_addr(if_addr)
     );
 
     // MARK: Instruction Decode
 
     id_stage id_stage (
         .clk(clk),
-        .stall(),
-        .flush(),
-        .if_pc(),
-        .if_bios_inst(),
-        .if_imem_inst(),
-        .wb_inst(),
+        .stall(stall),
+        .flush(flush),
+        .if_pc(if_pc),
+        .if_bios_inst(if_bios_inst),
+        .if_imem_inst(if_imem_inst),
+        .wb_inst(wb_inst),
         .wb_wdata(),
         .wb_regwen(),
-        .ex_alu(),
+        .ex_alu(ex_alu),
         .ex_inst(),
         .mem_alu(),
         .mem_inst(),
