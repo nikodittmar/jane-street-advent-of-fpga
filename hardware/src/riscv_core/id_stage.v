@@ -24,6 +24,8 @@ module id_stage (
 );
     wire id_reg_rst;
     wire id_reg_we;
+    
+    assign id_reg_we = stall | flush;
 
     // MARK: InstSel
 
