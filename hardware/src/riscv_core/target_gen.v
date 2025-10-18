@@ -1,4 +1,4 @@
-`include "control/control_sel.vh"
+`include "control_sel.vh"
 module target_gen (
     input [31:0] pc,
     input [1:0] sel,

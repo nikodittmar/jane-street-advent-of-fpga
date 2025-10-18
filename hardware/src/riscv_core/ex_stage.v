@@ -1,4 +1,4 @@
-`include "../control/control_sel.vh"
+`include "control_sel.vh"
 
 module ex_stage (
     input clk,

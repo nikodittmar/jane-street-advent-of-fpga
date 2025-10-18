@@ -1,9 +1,4 @@
-`include "../control/control_sel.vh"
-`include "../reg_file.v"
-`include "../mux.v"
-`include "../pipeline_reg.v"
-`include "../imm_gen.v"
-`include "../control/id_control.v"
+`include "control_sel.vh"
 
 module id_stage (
     input clk,

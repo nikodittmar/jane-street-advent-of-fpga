@@ -1,5 +1,5 @@
 `include "control_sel.vh"
-`include "../opcode.vh"
+`include "opcode.vh"
 
 module id_control (
     input [31:0] inst,
