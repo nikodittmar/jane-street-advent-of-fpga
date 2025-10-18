@@ -1,28 +1,50 @@
+`include "../io_circuits/uart.v"
+
 module io (
     input clk,
     input [31:0] addr, wdata,
     input iorw,
     output reg [31:0] rdata,
+    input rst,
 
-    input br_inst, br_pred,
+    input br_inst, br_suc,
 
-    input uart_rx_data_out_valid,
-    output uart_rx_data_out_ready,
-    input [7:0] uart_rx_data_out,
+    input serial_in,
+    output serial_out
+);
 
-    output [7:0] uart_tx_data_in,
-    output uart_tx_data_in_valid,
-    input uart_tx_data_in_ready
+wire [7:0] uart_tx_data_in;
+wire uart_tx_data_in_valid;
+wire uart_tx_data_in_ready;
+
+wire [7:0] uart_rx_data_out;
+wire uart_rx_data_out_valid;
+wire uart_rx_data_out_ready;
+
+uart uart (
+    .clk(clk),
+    .reset(rst),
+
+    .data_in(uart_tx_data_in),
+    .data_in_valid(uart_tx_data_in_valid),
+    .data_in_ready(uart_tx_data_in_ready),
+
+    .data_out(uart_rx_data_out),
+    .data_out_valid(uart_rx_data_out_valid),
+    .data_out_ready(uart_rx_data_out_ready),
+
+    .serial_in(serial_in),
+    .serial_out(serial_out)
 );
 
 reg [31:0] cycle_ctr, inst_ctr;
-reg [31:0] br_inst_ctr, br_pred_ctr;
+reg [31:0] br_inst_ctr, br_suc_ctr;
 
 always @ (posedge clk) begin
 
     cycle_ctr <= cycle_ctr + 1;
     br_inst_ctr <= br_inst ? br_inst_ctr + 1 : br_inst_ctr;
-    br_pred_ctr <= br_pred ? br_pred_ctr + 1 : br_pred_ctr;
+    br_suc_ctr <= br_suc ? br_suc_ctr + 1 : br_suc_ctr;
 
     // TODO: verify data_out_ready logic
     uart_tx_data_in_valid <= 1'b0;
@@ -54,7 +76,7 @@ always @ (posedge clk) begin
             rdata <= br_inst_ctr;
         end
         32'h80000020: begin
-            rdata <= br_pred_ctr;
+            rdata <= br_suc_ctr;
         end
     endcase
 
@@ -69,5 +91,4 @@ always @ (posedge clk) begin
 32'h80000020: Correct branch prediction counter	Read	Number of branches successfully predicted
 */
 end
-
 endmodule
