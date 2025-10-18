@@ -81,16 +81,14 @@ module id_stage (
 
     // MARK: TargetGen
     wire [1:0] target_gen_sel;
-    wire [31:0] target;
-    wire target_taken;
-
+    
     target_gen target_gen (
         .pc(if_pc),
         .sel(target_gen_sel),
         .rd1(id_rd1),
         .imm(imm),
-        .target(target),
-        .target_taken(target_taken)
+        .target(id_pc_target),
+        .target_taken(id_target_taken)
     );
 
     // MARK: Control
@@ -98,7 +96,8 @@ module id_stage (
     id_control control (
         .inst(inst),
         
-        .immsel(imm_gen_sel)
+        .immsel(imm_gen_sel),
+        .target_gen_sel(target_gen_sel)
     );
 
     pipeline_reg pc_reg (
