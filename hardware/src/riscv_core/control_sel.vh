@@ -31,12 +31,13 @@
 `define IMM_J                   3'b100 // J-type immediates
 `define IMM_DONT_CARE           3'bxxx
 
-// Forwarding mux
-`define ID_FWD_NUM_INPUTS       4
-`define ID_FWD_NONE             2'b00
-`define ID_FWD_EX               2'b01
-`define ID_FWD_MEM              2'b10
-`define ID_FWD_WB               2'b11
+// Target generator forwarding mux
+
+`define TGT_GEN_FWD_NUM_INPUTS  4
+`define TGT_GEN_FWD_NONE        2'b00
+`define TGT_GEN_FWD_EX          2'b01
+`define TGT_GEN_FWD_MEM         2'b10
+`define TGT_GEN_FWD_WB          2'b11
 
 // Target generator sel
 `define TGT_JAL                 2'b00

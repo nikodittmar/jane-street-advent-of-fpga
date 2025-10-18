@@ -62,7 +62,7 @@ module ex_stage (
 
     wire [31:0] csr_in;
     wire [31:0] csr_out;
-    wire [31:0] csr_we;
+    wire csr_we;
 
     pipeline_reg csr_reg (
         .clk(clk),

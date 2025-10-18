@@ -6,11 +6,9 @@ module id_control (
     input [31:0] ex_inst,
     input [31:0] mem_inst,
     input [31:0] wb_inst,
-    input stall,
-    input flush,
     output reg [2:0] imm_sel,
     output [1:0] target_gen_sel,
-    output fwd_rs1
+    output [$clog2(`TGT_GEN_FWD_NUM_INPUTS)-1:0] target_gen_fwd_sel
 );
 
 // TODO: target_gen_sel logic
