@@ -7,11 +7,13 @@ module id_control (
     input [31:0] mem_inst,
     input [31:0] wb_inst,
     input stall,
-    input flush
+    input flush,
     output reg [2:0] imm_sel,
-    output target_gen_sel,
-    output fwd_rs1,
+    output [1:0] target_gen_sel,
+    output fwd_rs1
 );
+
+// TODO: target_gen_sel logic
 
 wire [4:0] opcode5;
 wire [2:0] funct3;

@@ -16,7 +16,7 @@ module ex_control (
     output csr_en,
     output br_mispred,
     output br_suc,
-    output reg [3:0] alusel
+    output reg [3:0] alusel,
     output flush,
     output stall
 );

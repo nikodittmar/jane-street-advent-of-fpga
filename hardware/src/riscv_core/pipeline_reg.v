@@ -1,4 +1,4 @@
-module pipeline_reg (
+module pipeline_reg #(
     parameter WIDTH = 32,
     parameter RESET_VAL = 32'b0
 ) (
