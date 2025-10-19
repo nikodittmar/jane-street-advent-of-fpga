@@ -106,7 +106,7 @@
 `define DOUT_NUM_INPUTS         3
 `define DOUT_BIOS               2'b00
 `define DOUT_DMEM               2'b01
-`define DOUT_UART               2'b10
+`define DOUT_IO                 2'b10
 
 // WB sel
 `define WB_NUM_INPUTS           3
