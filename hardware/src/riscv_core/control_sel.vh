@@ -104,6 +104,11 @@
 `define MEM_PC_4                1'b0
 `define MEM_PC_ALU              1'b1
 
+// Memory nibble
+`define ADDR_BIOS               4'b0100
+`define ADDR_IO                 4'b1000
+`define ADDR_DMEM               4'b00?1
+
 // ***** WB STAGE *****
 
 // Dout out sel
@@ -111,11 +116,13 @@
 `define DOUT_BIOS               2'b00
 `define DOUT_DMEM               2'b01
 `define DOUT_IO                 2'b10
+`define DOUT_DONT_CARE          2'bxx
 
 // WB sel
 `define WB_NUM_INPUTS           3
 `define WB_PC4                  2'b00
 `define WB_ALU                  2'b01
 `define WB_MEM                  2'b10
+`define WB_DONT_CARE            2'bxx
 
 `endif // CONTROL_SEL

@@ -11,7 +11,7 @@ module mem_control (
     output br_inst, // Branch instruction flag
     output imem_en,
     output reg dmem_en, 
-    output io_en,
+    output io_en
 );
 
 // TODO: determine dsel behavior when in BIOS

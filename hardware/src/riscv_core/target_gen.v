@@ -9,15 +9,6 @@ module target_gen (
     output reg target_taken
 );
 
-// Refer to control_sel.vh for sel mappings 
-
-// For jal, target = imm + pc, target_taken = 1
-
-// For jalr, target = imm + rd1, target_taken = 1
-
-// For branches, use forward backward prediction to determine if we should take the branch. 
-// Set the address accordingly and target taken should only be 1 if we took the branch.
-
 always @ (*) begin
     target = 0;
     target_taken = 0;
@@ -25,19 +16,16 @@ always @ (*) begin
     if (en) begin
         case(sel)
         `TGT_GEN_JAL: begin
-            target = imm + pc;
+            target = pc + $signed(imm);
             target_taken = 1;
         end
         `TGT_GEN_JALR: begin
-            target = imm + pc;
+            target = pc + $signed(rd1);
             target_taken = 1;
         end
         `TGT_GEN_BR: begin
             if ($signed(imm) < 0) begin
-                target = pc + imm;
-                target_taken = 1;
-            end else begin
-                target = 32'bx;
+                target = pc + $signed(imm);
                 target_taken = 1;
             end
         end

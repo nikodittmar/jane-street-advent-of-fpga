@@ -96,7 +96,7 @@ module ex_stage (
     assign fwda_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
 
     mux #(
-        .NUM_INPUTS(`EX_FWD_NUM_INPUTS),
+        .NUM_INPUTS(`EX_FWD_NUM_INPUTS)
     ) fwda_mux (
         .in(fwda_in),
         .sel(fwda_sel),

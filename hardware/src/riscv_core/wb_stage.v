@@ -39,7 +39,7 @@ module wb_stage (
 
     assign wb_in[`WB_PC4 * 32 +: 32] = wb_pc4;
     assign wb_in[`WB_ALU * 32 +: 32] = wb_alu;
-    assign wb_in[`WB_MEM * 32 +: 32] = mem;
+    assign wb_in[`WB_MEM * 32 +: 32] = masked_mem;
 
     mux #(
         .NUM_INPUTS(`WB_NUM_INPUTS),
@@ -52,9 +52,13 @@ module wb_stage (
 
     // MARK: Memory Mask
 
+    wire mask_un;
+
     mem_mask mem_mask ( 
         .din(mem),
         .mask(mask),
+        .un(mask_un),
+        
         .dout(masked_mem)
     );
 
@@ -63,9 +67,11 @@ module wb_stage (
     wb_control control (
         .inst(wb_inst),
         .addr(wb_alu),
+
         .wb_sel(wb_sel),
         .dout_sel(dout_sel),
         .mask(mask),
+        .mask_un(mask_un),
         .regwen(wb_regwen)
     );
 

@@ -1,4 +1,4 @@
-`include "../src/riscv_core/control/control_sel.vh"
+`include "../src/riscv_core/control_sel.vh"
 `timescale 1ns/1ns
 
 module imm_gen_tb();
