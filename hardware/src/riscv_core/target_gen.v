@@ -2,6 +2,7 @@
 module target_gen (
     input [31:0] pc,
     input [1:0] sel,
+    input en,
     input [31:0] rd1,
     input [31:0] imm,
     output reg [31:0] target,
@@ -18,25 +19,30 @@ module target_gen (
 // Set the address accordingly and target taken should only be 1 if we took the branch.
 
 always @ (*) begin
-    case(sel)
-    `TGT_JAL: begin
-        target = imm + pc;
-        target_taken = 1;
-    end
-    `TGT_JALR: begin
-        target = imm + pc;
-        target_taken = 1;
-    end
-    `TGT_BR: begin
-        if ($signed(imm) < 0) begin
-            target = pc + imm;
-            target_taken = 1;
-        end else begin
-            target = 32'bx;
+    target = 0;
+    target_taken = 0;
+
+    if (en) begin
+        case(sel)
+        `TGT_GEN_JAL: begin
+            target = imm + pc;
             target_taken = 1;
         end
+        `TGT_GEN_JALR: begin
+            target = imm + pc;
+            target_taken = 1;
+        end
+        `TGT_GEN_BR: begin
+            if ($signed(imm) < 0) begin
+                target = pc + imm;
+                target_taken = 1;
+            end else begin
+                target = 32'bx;
+                target_taken = 1;
+            end
+        end
+        endcase
     end
-    endcase
 end
 
 endmodule

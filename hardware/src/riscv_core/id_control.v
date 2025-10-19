@@ -6,12 +6,13 @@ module id_control (
     input [31:0] ex_inst,
     input [31:0] mem_inst,
     input [31:0] wb_inst,
-    output reg [2:0] imm_sel,
-    output [1:0] target_gen_sel,
-    output [$clog2(`TGT_GEN_FWD_NUM_INPUTS)-1:0] target_gen_fwd_sel
-);
 
-// TODO: target_gen_sel logic
+    output reg [2:0] imm_sel,
+    output reg [1:0] target_gen_sel,
+    output reg [$clog2(`TGT_GEN_FWD_NUM_INPUTS)-1:0] target_gen_fwd_sel,
+    output reg target_gen_en,
+    output reg stall
+);
 
 wire [4:0] opcode5;
 wire [2:0] funct3;
@@ -21,7 +22,43 @@ assign opcode5 = inst[6:2];
 assign funct3 = inst[14:12];
 assign funct7 = inst[31:25];
 
-always @ (*) begin
+wire [4:0] rs1;
+wire [4:0] rs2;
+wire [4:0] ex_rd;
+wire [4:0] mem_rd;
+wire [4:0] wb_rd;
+wire id_jump_inst;
+wire ex_load_inst;
+wire mem_load_inst;
+
+assign rs1 = inst[19:15];
+assign rs2 = inst[24:20];
+assign ex_rd = ex_inst[11:7];
+assign mem_rd = mem_inst[11:7];
+assign wb_rd = wb_inst[11:7];
+assign id_jump_inst = inst[6:2] == `OPC_JAL_5 | inst[6:2] == `OPC_JALR_5;
+assign ex_load_inst = ex_inst[6:2] == `OPC_LOAD_5;
+assign mem_load_inst = mem_inst[6:2] == `OPC_LOAD_5;
+
+always @(*) begin
+    imm_sel = `IMM_DONT_CARE;
+    target_gen_sel = `TGT_GEN_DONT_CARE;
+    target_gen_fwd_sel = `TGT_GEN_FWD_NONE;
+    target_gen_en = 1'b0;
+    stall = 1'b0;
+
+    if (rs1 == ex_rd) begin 
+        target_gen_fwd_sel = `TGT_GEN_FWD_EX;
+    end else if (rs1 == mem_rd) begin
+        target_gen_fwd_sel = `TGT_GEN_FWD_MEM;
+    end else if (rs1 == wb_rd) begin 
+        target_gen_fwd_sel = `TGT_GEN_FWD_WB;
+    end
+
+    if (ex_load_inst && (rs2 == ex_rd || rs1 == ex_rd)) begin 
+        stall = 1'b1;
+    end
+
     case (opcode5)
     `OPC_ARI_RTYPE_5:
         case (funct3)
@@ -29,47 +66,37 @@ always @ (*) begin
             case (inst[30])
             `FNC2_ADD: begin
                 // ADD
-                imm_sel = `IMM_DONT_CARE;
             end
             `FNC2_SUB: begin
                 // SUB
-                imm_sel = `IMM_DONT_CARE;
             end
             endcase
         `FNC_AND: begin
             // AND
-            imm_sel = `IMM_DONT_CARE;
         end
         `FNC_OR: begin
             // OR
-            imm_sel = `IMM_DONT_CARE;
         end
         `FNC_XOR: begin
             // XOR
-            imm_sel = `IMM_DONT_CARE;
         end
         `FNC_SLL: begin
             // SLL
-            imm_sel = `IMM_DONT_CARE;
         end
         `FNC_SRL_SRA:
             case (inst[30])
             `FNC2_SRL: begin
                 // SRL
-                imm_sel = `IMM_DONT_CARE;
             end
             `FNC2_SRA: begin
                 // SRA
-                imm_sel = `IMM_DONT_CARE;
             end
             endcase
         `FNC_SLT: begin
             // SLT
-            imm_sel = `IMM_DONT_CARE;
         end
         `FNC_SLTU: begin
             // SLTU
-            imm_sel = `IMM_DONT_CARE;
         end
         endcase
 
@@ -115,7 +142,6 @@ always @ (*) begin
             end
             endcase
         endcase
-    
     `OPC_LOAD_5:
         case (funct3)
         `FNC_LB: begin
@@ -139,7 +165,6 @@ always @ (*) begin
             imm_sel = `IMM_I;
         end
         endcase
-
     `OPC_STORE_5:
         case (funct3)
         `FNC_SB: begin
@@ -155,54 +180,67 @@ always @ (*) begin
             imm_sel = `IMM_S;
         end
         endcase
-    
     `OPC_BRANCH_5:
         case (funct3)
         `FNC_BEQ: begin
             // BEQ
+            target_gen_en = 1'b1;
+            target_gen_sel = `TGT_GEN_BR;
             imm_sel = `IMM_B;
         end
         `FNC_BNE: begin
             // BNE
+            target_gen_en = 1'b1;
+            target_gen_sel = `TGT_GEN_BR;
             imm_sel = `IMM_B;
         end
         `FNC_BLT: begin
             // BLT
+            target_gen_en = 1'b1;
+            target_gen_sel = `TGT_GEN_BR;
             imm_sel = `IMM_B;
         end
         `FNC_BGE: begin
             // BGE
+            target_gen_en = 1'b1;
+            target_gen_sel = `TGT_GEN_BR;
             imm_sel = `IMM_B;
         end
         `FNC_BLTU: begin
             // BLTU
+            target_gen_en = 1'b1;
+            target_gen_sel = `TGT_GEN_BR;
             imm_sel = `IMM_B;
         end
         `FNC_BGEU: begin
             // BGEU
+            target_gen_en = 1'b1;
+            target_gen_sel = `TGT_GEN_BR;
             imm_sel = `IMM_B;
         end
         endcase
-    
     `OPC_JAL_5: begin
         // JAL
+        target_gen_en = 1'b0;
+        target_gen_sel = `TGT_GEN_JAL;
         imm_sel = `IMM_J;
     end
     `OPC_JALR_5: begin
         // JALR
+        if (!ex_load_inst || rs1 != ex_rd) begin
+            target_gen_en = 1'b1;
+        end
+        target_gen_sel = `TGT_GEN_JALR;
         imm_sel = `IMM_I;
     end
-
     `OPC_LUI_5: begin
         // LUI
         imm_sel = `IMM_U;
-
     end
     `OPC_AUIPC_5: begin
         // AUIPC
         imm_sel = `IMM_U;
     end
-    
     endcase
 end
 

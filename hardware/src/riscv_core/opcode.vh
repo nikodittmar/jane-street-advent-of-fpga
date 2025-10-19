@@ -27,6 +27,9 @@
 `define OPC_ARI_RTYPE   7'b0110011
 `define OPC_ARI_ITYPE   7'b0010011
 
+// CSR instruction
+`define OPC_CSR         7'b1110011
+
 // Floating point instructions
 `define OPC_FP          7'b1010011
 
@@ -47,6 +50,9 @@
 `define OPC_LOAD_5      5'b00000
 `define OPC_ARI_RTYPE_5 5'b01100
 `define OPC_ARI_ITYPE_5 5'b00100
+
+// 5-bit CSR opcodes
+`define OPC_CSR_5       5'b11100
 
 // 5-bit floating point opcodes
 `define OPC_FP_STORE_5  5'b01001
@@ -83,6 +89,10 @@
 `define FNC_OR          3'b110
 `define FNC_AND         3'b111
 `define FNC_SRL_SRA     3'b101
+
+// CSR function codes
+`define FNC_CSRRW       3'b001
+`define FNC_CSRRWI      3'b101
 
 // ADD and SUB use the same opcode + function code
 // SRA and SRL also use the same opcode + function code

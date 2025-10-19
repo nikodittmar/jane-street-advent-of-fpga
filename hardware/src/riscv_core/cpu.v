@@ -62,7 +62,6 @@ module cpu #(
     if_stage if_stage (
         .clk(clk),
         .rst(rst),
-        .ex_stall(ex_stall),
         .id_stall(id_stall),
         .id_target_taken(id_target_taken),
         .ex_br_mispred(ex_br_mispred),
@@ -77,7 +76,6 @@ module cpu #(
 
     id_stage id_stage (
         .clk(clk),
-        .ex_stall(ex_stall),
         .ex_flush(ex_flush),
         .id_pc(id_pc),
         .id_bios_inst(id_bios_inst),
@@ -115,7 +113,6 @@ module cpu #(
         .wb_inst(wb_inst),
 
         .ex_br_mispred(ex_br_mispred),
-        .ex_stall(ex_stall),
         .ex_flush(ex_flush),
         .mem_br_suc(mem_br_suc),
         .mem_pc(mem_pc),

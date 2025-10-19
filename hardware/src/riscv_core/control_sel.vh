@@ -40,10 +40,10 @@
 `define TGT_GEN_FWD_WB          2'b11
 
 // Target generator sel
-`define TGT_JAL                 2'b00
-`define TGT_JALR                2'b01
-`define TGT_BR                  2'b10
-`define TGT_DONT_CARE           2'bxx
+`define TGT_GEN_JAL                 2'b00
+`define TGT_GEN_JALR                2'b01
+`define TGT_GEN_BR                  2'b10
+`define TGT_GEN_DONT_CARE           2'bxx
 
 // ***** EX STAGE *****
 
@@ -60,11 +60,13 @@
 `define A_NUM_INPUTS            2
 `define A_REG                   1'b0
 `define A_PC                    1'b1
+`define A_DONT_CARE             1'bx
 
 // ALU B input sel
 `define B_NUM_INPUTS            2
 `define B_REG                   1'b0
 `define B_IMM                   1'b1
+`define B_DONT_CARE             1'bx
 
 // ALU sel
 `define ALU_ADD                 4'b0000
@@ -77,11 +79,13 @@
 `define ALU_SUB                 4'b1100
 `define ALU_SRA                 4'b1101
 `define ALU_BSEL                4'b1111
+`define ALU_DONT_CARE           4'bxxxx
 
 // CSR mux sel
 `define CSR_MUX_NUM_INPUTS      2
 `define CSR_IMM                 1'b0
 `define CSR_RD1                 1'b1
+`define CSR_DONT_CARE           1'bx
 
 // ***** MEM STAGE *****
 

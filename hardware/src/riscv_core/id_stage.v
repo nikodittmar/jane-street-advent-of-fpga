@@ -2,7 +2,6 @@
 
 module id_stage (
     input clk,
-    input ex_stall,
     input ex_flush,
     input [31:0] id_pc,
     input [31:0] id_bios_inst,
@@ -26,7 +25,7 @@ module id_stage (
     wire id_reg_rst;
     wire id_reg_we;
 
-    assign id_reg_we = ex_stall | ex_flush;
+    assign id_reg_we = id_stall | ex_flush;
 
     // MARK: InstSel
 
@@ -98,10 +97,13 @@ module id_stage (
 
     // MARK: TargetGen
     wire [1:0] target_gen_sel;
+    wire target_gen_en;
+
     
     target_gen target_gen (
         .pc(id_pc),
         .sel(target_gen_sel),
+        .en(target_gen_en),
         .rd1(target_gen_rd1),
         .imm(imm),
         .target(if_pc_target),
@@ -118,7 +120,9 @@ module id_stage (
 
         .imm_sel(imm_sel),
         .target_gen_sel(target_gen_sel),
-        .target_gen_fwd_sel(target_gen_fwd_sel)
+        .target_gen_fwd_sel(target_gen_fwd_sel),
+        .target_gen_en(target_gen_en),
+        .stall(id_stall)
     );
 
     // MARK: Pipeline registers

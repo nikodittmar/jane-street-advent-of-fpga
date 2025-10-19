@@ -12,7 +12,6 @@ module ex_stage (
     input [31:0] wb_wdata, // Forwarded result from WB stage
     input [31:0] wb_inst, // WB instruction for hazard detection
     output ex_br_mispred, // Branch mispredict flag
-    output ex_stall, // Stall flag in the event of data hazards
     output ex_flush, // Flush flag in the event of control hazards
     output mem_br_suc, // Branch prediction success flag
     output [31:0] mem_pc,
@@ -180,8 +179,7 @@ module ex_stage (
         .br_mispred(ex_br_mispred),
         .br_suc(br_suc),
         .alusel(alu_sel),
-        .flush(ex_flush),
-        .stall(ex_stall)
+        .flush(ex_flush)
     );
 
     pipeline_reg pc_reg (
