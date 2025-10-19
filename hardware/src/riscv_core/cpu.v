@@ -34,19 +34,42 @@ module cpu #(
     wire ex_br_mispred;
     wire [31:0] ex_alu;
 
+    wire ex_stall;
+    wire id_stall;
+    wire ex_flush;
+    wire [31:0] id_bios_inst;
+    wire [31:0] id_imem_inst;
+    wire id_regwen;
+    wire [31:0] if_pc_target;
+    wire if_target_taken;
+    wire ex_br_taken;
+    wire [31:0] ex_rd1;
+    wire [31:0] ex_rd2;
+    wire [31:0] ex_imm;
+    wire mem_br_suc;
+    wire [31:0] mem_rd2;
+    wire [31:0] wb_alu;
+    wire [31:0] wb_pc4;
+    wire [31:0] wb_dmem_dout;
+    wire [31:0] wb_io_dout;
+    wire [31:0] mem_addr;
+    wire [31:0] mem_dmem_dout;
+    wire [31:0] mem_io_dout;
+    wire wb_regwen;
 
     // MARK: Instruction Fetch
 
     if_stage if_stage (
         .clk(clk),
         .rst(rst),
-        .stall(stall),
+        .ex_stall(ex_stall),
+        .id_stall(id_stall),
         .id_target_taken(id_target_taken),
         .ex_br_mispred(ex_br_mispred),
         .id_target(id_target),
         .ex_alu(ex_alu),
 
-        .if_pc(if_pc),
+        .ex_pc(ex_pc),
         .if_addr(if_addr)
     );
 
@@ -54,54 +77,51 @@ module cpu #(
 
     id_stage id_stage (
         .clk(clk),
-        .stall(stall),
-        .flush(flush),
-        .if_pc(if_pc),
-        .if_bios_inst(if_bios_inst),
-        .if_imem_inst(if_imem_inst),
-        .wb_inst(wb_inst),
-        .wb_wdata(),
-        .wb_regwen(),
+        .ex_stall(ex_stall),
+        .ex_flush(ex_flush),
+        .id_pc(id_pc),
+        .id_bios_inst(id_bios_inst),
+        .id_imem_inst(id_imem_inst),
+        .id_regwen(id_regwen),
         .ex_alu(ex_alu),
-        .ex_inst(),
-        .mem_alu(),
-        .mem_inst(),
-        .wb_wdata(),
-        .wb_inst(),
+        .mem_alu(mem_alu),
+        .mem_inst(mem_inst),
+        .wb_wdata(wb_wdata),
+        .wb_inst(wb_inst),
 
-        .id_pc_target(),
-        .id_target_taken(),
-        .id_br_taken(),
-        .id_pc(),
-        .id_rd1(),
-        .id_rd2(),
-        .id_imm(),
-        .id_inst()
+        .if_pc_target(if_pc_target),
+        .if_target_taken(if_target_taken),
+        .ex_br_taken(ex_br_taken),
+        .ex_pc(ex_pc),
+        .ex_rd1(ex_rd1),
+        .ex_rd2(ex_rd2),
+        .ex_imm(ex_imm),
+        .ex_inst(ex_inst),
+        .id_stall(id_stall)
     );
 
     // MARK: Execute
 
     ex_stage ex_stage (
         .clk(clk),
-        .id_pc(),
-        .id_rd1(),
-        .id_rd2(),
-        .id_imm(),
-        .id_br_taken(),
-        .id_inst(),
-        .mem_alu(),
-        .mem_inst(),
-        .wb_wdata(),
-        .wb_inst(),
+        .rst(rst),
+        .ex_pc(ex_pc),
+        .ex_rd1(ex_rd1),
+        .ex_rd2(ex_rd2),
+        .ex_imm(ex_imm),
+        .ex_br_taken(ex_br_taken),
+        .ex_inst(ex_inst),
+        .wb_wdata(wb_wdata),
+        .wb_inst(wb_inst),
 
-        .ex_br_suc(),
-        .ex_br_mispred(),
-        .ex_stall(),
-        .ex_flush(),
-        .ex_pc(),
-        .ex_alu(),
-        .ex_rd2(),
-        .ex_inst()
+        .ex_br_mispred(ex_br_mispred),
+        .ex_stall(ex_stall),
+        .ex_flush(ex_flush),
+        .mem_br_suc(mem_br_suc),
+        .mem_pc(mem_pc),
+        .mem_alu(mem_alu),
+        .mem_rd2(mem_rd2),
+        .mem_inst(mem_inst)
     );
 
     // MARK: Memory
@@ -109,41 +129,40 @@ module cpu #(
     mem_stage mem_stage (
         .clk(clk),
         .rst(rst),
-        .ex_pc(),
-        .ex_alu(), 
-        .ex_rd2(),
-        .ex_br_suc(),
-        .ex_inst(),
-        .wb_wdata(),
-        .wb_inst(),
+        .mem_pc(mem_pc),
+        .mem_alu(mem_alu), 
+        .mem_rd2(mem_rd2),
+        .mem_br_suc(mem_br_suc),
+        .mem_inst(mem_inst),
+        .wb_wdata(wb_wdata),
         .serial_in(serial_in),
 
         .serial_out(serial_out),
-        .mem_alu(),
-        .mem_pc4(),
-        .mem_dmem_dout(), 
-        .mem_io_dout(), 
-        .mem_inst(),
-        .mem_addr(),
-        .mem_imem_din(),
-        .mem_imem_wea(),
-        .mem_imem_en()
+        .wb_alu(wb_alu),
+        .wb_pc4(wb_pc4),
+        .wb_dmem_dout(wb_dmem_dout), 
+        .wb_io_dout(wb_io_dout), 
+        .wb_inst(wb_inst),
+        .mem_addr(mem_addr),
+        .mem_imem_din(mem_imem_din),
+        .mem_imem_we(mem_imem_we),
+        .mem_imem_en(mem_imem_en)
     );
 
     // MARK: Writeback
 
     wb_stage wb_stage (
         .clk(clk),
-        .mem_alu(),
-        .mem_pc4(),
-        .mem_bios_dout(), 
-        .mem_dmem_dout(), 
-        .mem_io_dout(), 
-        .mem_inst(),
+        .mem_alu(mem_alu),
+        .mem_pc4(mem_pc4),
+        .mem_bios_dout(mem_bios_dout), 
+        .mem_dmem_dout(mem_dmem_dout), 
+        .mem_io_dout(mem_io_dout), 
+        .mem_inst(mem_inst),
 
-        .wb_regwen(),
-        .wb_inst(),
-        .wb_wdata()
+        .wb_regwen(wb_regwen),
+        .wb_inst(wb_inst),
+        .wb_wdata(wb_wdata)
     );
 
     // MARK: Shared
