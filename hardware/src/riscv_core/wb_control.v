@@ -7,8 +7,8 @@ module wb_control (
     
     output reg [1:0] wb_sel, 
     output reg [1:0] dout_sel,
-    output [3:0] mask,
-    output mask_un,
+    output reg [3:0] mask,
+    output reg mask_un,
     output reg regwen
 );
 

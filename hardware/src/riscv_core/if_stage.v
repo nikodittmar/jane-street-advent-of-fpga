@@ -10,6 +10,7 @@ module if_stage #(
     input ex_br_mispred,
     input [31:0] id_target,
     input [31:0] ex_alu,
+    
     output [31:0] ex_pc,
     output [31:0] if_addr
 );  

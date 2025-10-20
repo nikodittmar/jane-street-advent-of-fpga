@@ -11,6 +11,7 @@ module ex_stage (
     input [31:0] ex_inst,
     input [31:0] wb_wdata, // Forwarded result from WB stage
     input [31:0] wb_inst, // WB instruction for hazard detection
+    
     output ex_br_mispred, // Branch mispredict flag
     output ex_flush, // Flush flag in the event of control hazards
     output mem_br_suc, // Branch prediction success flag
@@ -57,7 +58,7 @@ module ex_stage (
     // MARK: CSR Register
 
     wire [31:0] csr_in;
-    wire [31:0] csr_out;
+    wire [31:0] tohost_csr;
     wire csr_we;
 
     pipeline_reg csr_reg (
@@ -65,7 +66,7 @@ module ex_stage (
         .rst(rst),
         .we(csr_we),
         .in(csr_in),
-        .out(csr_out)
+        .out(tohost_csr)
     );
 
     // MARK: CSR Mux

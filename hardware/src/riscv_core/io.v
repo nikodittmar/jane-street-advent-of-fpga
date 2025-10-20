@@ -1,23 +1,29 @@
+`include "control_sel.vh"
 `include "../io_circuits/uart.v"
 
 module io (
     input clk,
     input rst,
-    input [31:0] addr, din,
+    input [31:0] addr, 
+    input [31:0] din,
     input io_en,
-    input br_inst, br_suc,
+    input br_inst, 
+    input br_suc,
     input serial_in,
     output serial_out,
     output reg [31:0] dout
 );
 
-wire [7:0] uart_tx_data_in;
-wire uart_tx_data_in_valid;
+reg [7:0] uart_tx_data_in;
+reg [7:0] next_uart_tx_data_in;
+reg uart_tx_data_in_valid;
+reg next_uart_tx_data_in_valid;
 wire uart_tx_data_in_ready;
 
 wire [7:0] uart_rx_data_out;
 wire uart_rx_data_out_valid;
-wire uart_rx_data_out_ready;
+reg uart_rx_data_out_ready;
+reg next_uart_rx_data_out_ready;
 
 uart uart (
     .clk(clk),
@@ -35,58 +41,84 @@ uart uart (
     .serial_out(serial_out)
 );
 
-reg [31:0] cycle_ctr, inst_ctr;
-reg [31:0] br_inst_ctr, br_suc_ctr;
+reg [31:0] cycle_cnt;
+reg [31:0] inst_cnt;
+
+reg [31:0] br_inst_cnt;
+reg [31:0] br_suc_cnt;
+
+reg [31:0] next_dout;
+
+reg [31:0] next_cycle_cnt;
+reg [31:0] next_inst_cnt;
+
+reg [31:0] next_br_inst_cnt;
+reg [31:0] next_br_suc_cnt;
 
 always @ (posedge clk) begin
+    cycle_cnt <= next_cycle_cnt;
+    inst_cnt <= next_inst_cnt;
 
-    cycle_ctr <= cycle_ctr + 1;
-    br_inst_ctr <= br_inst ? br_inst_ctr + 1 : br_inst_ctr;
-    br_suc_ctr <= br_suc ? br_suc_ctr + 1 : br_suc_ctr;
+    br_inst_cnt <= next_br_inst_cnt;
+    br_suc_cnt <= next_br_suc_cnt;
+    
+    dout <= next_dout;
 
-    // TODO: verify data_out_ready logic
-    uart_tx_data_in_valid <= 1'b0;
-    uart_rx_data_out_ready <= 1'b0;
+    uart_tx_data_in <= next_uart_tx_data_in;
+    uart_tx_data_in_valid <= next_uart_tx_data_in_valid;
+    uart_rx_data_out_ready <= next_uart_rx_data_out_ready;
+end
 
-    case(addr)
-        32'h80000000: begin
-            dout <= {30'b0, uart_rx_data_out_valid, uart_tx_data_in_ready};
-        end
-        32'h80000004: begin
-            dout <= {24'b0, uart_rx_data_out};
-            uart_rx_data_out_ready <= 1'b1;
-        end
-        32'h80000008: begin
-            uart_tx_data_in <= din[7:0];
-            uart_tx_data_in_valid <= 1'b1;
-        end
-        32'h80000010: begin
-            dout <= cycle_ctr;
-        end
-        32'h80000014: begin
-            dout <= inst_ctr;
-        end
-        32'h80000018: begin
-            cycle_ctr <= 0;
-            inst_ctr <= 0;
-        end
-        32'h8000001c: begin
-            dout <= br_inst_ctr;
-        end
-        32'h80000020: begin
-            dout <= br_suc_ctr;
-        end
-    endcase
+always @(*) begin
+    next_cycle_cnt = cycle_cnt + 32'b1;
+    next_inst_cnt = inst_cnt + 32'b1; // TODO: ignore for now, not needed for initial tests
 
-/*
-32'h80000000: UART control	Read	{30'b0, uart_rx_data_out_valid, uart_tx_data_in_ready}
-32'h80000004: UART receiver data	Read	{24'b0, uart_rx_data_out}
-32'h80000008: UART transmitter data	Write	{24'b0, uart_tx_data_in}
-32'h80000010: Cycle counter	Read	Clock cycles elapsed
-32'h80000014: Instruction counter	Read	Number of instructions executed
-32'h80000018: Reset counters to 0	Write	N/A
-32'h8000001c: Total branch instruction counter	Read	Number of branch instructions encounted
-32'h80000020: Correct branch prediction counter	Read	Number of branches successfully predicted
-*/
+    next_br_inst_cnt = br_inst ? br_inst_cnt + 1 : br_inst_cnt;
+    next_br_suc_cnt = br_suc ? br_suc_cnt + 1 : br_suc_cnt;
+    next_dout = 32'b0;
+
+    next_uart_tx_data_in = uart_tx_data_in;
+    next_uart_tx_data_in_valid = uart_tx_data_in_valid;
+
+    next_uart_rx_data_out_ready = 1'b0;
+
+    if (uart_tx_data_in_valid && uart_tx_data_in_ready) begin
+        next_uart_tx_data_in_valid = 1'b0;
+    end
+
+    if (io_en) begin
+        case(addr)
+        `MEM_IO_UART_CTRL: begin
+            next_dout = { 30'b0, uart_rx_data_out_valid, uart_tx_data_in_ready };
+        end
+        `MEM_IO_UART_RDATA: begin
+            next_dout = { 24'b0, uart_rx_data_out };
+            next_uart_rx_data_out_ready = 1'b1;
+        end
+        `MEM_IO_UART_TDATA: begin
+            next_uart_tx_data_in = din[7:0];
+            next_uart_tx_data_in_valid = 1'b1;
+        end
+        `MEM_IO_CYCLE_CNT: begin
+            next_dout = cycle_cnt;
+        end
+        `MEM_IO_INST_CNT: begin
+            next_dout = inst_cnt;
+        end
+        `MEM_IO_RST_CNT: begin 
+            next_cycle_cnt = 32'b0;
+            next_inst_cnt = 32'b0;
+
+            next_br_inst_cnt = 32'b0;
+            next_br_suc_cnt = 32'b0;
+        end 
+        `MEM_IO_BR_INST_CNT: begin 
+            next_dout = br_inst_cnt;
+        end
+        `MEM_IO_BR_SUC_CNT: begin 
+            next_dout = br_suc_cnt;
+        end
+        endcase
+    end
 end
 endmodule

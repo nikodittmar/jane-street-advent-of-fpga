@@ -25,7 +25,7 @@ module wb_stage (
     assign dout_mux_in[`DOUT_IO * 32 +: 32] = wb_io_dout;
 
     mux #(
-        .NUM_INPUTS(`DOUT_NUM_INPUTS),
+        .NUM_INPUTS(`DOUT_NUM_INPUTS)
     ) dout_mux (
         .in(dout_mux_in),
         .sel(dout_sel),
@@ -42,7 +42,7 @@ module wb_stage (
     assign wb_in[`WB_MEM * 32 +: 32] = masked_mem;
 
     mux #(
-        .NUM_INPUTS(`WB_NUM_INPUTS),
+        .NUM_INPUTS(`WB_NUM_INPUTS)
     ) wb_mux (
         .in(wb_in),
         .sel(wb_sel),
@@ -74,5 +74,4 @@ module wb_stage (
         .mask_un(mask_un),
         .regwen(wb_regwen)
     );
-
 endmodule

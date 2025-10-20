@@ -12,6 +12,7 @@ module id_stage (
     input [31:0] mem_inst, // MEM instruction for hazard detection
     input [31:0] wb_wdata, // Forwarded result for jalr target resolution
     input [31:0] wb_inst, // WB instruction for hazard detection
+    
     output [31:0] if_pc_target, // Branch predictor/target generator output
     output if_target_taken, // Use output of branch predictor/target generator flag
     output ex_br_taken, // Branch predictor branch taken flag
@@ -26,6 +27,7 @@ module id_stage (
     wire id_reg_we;
 
     assign id_reg_we = id_stall | ex_flush;
+    assign id_reg_rst = id_stall | ex_flush;
 
     // MARK: InstSel
 
@@ -163,7 +165,9 @@ module id_stage (
         .out(ex_imm)
     );
 
-    pipeline_reg inst_reg (
+    pipeline_reg #(
+        .RESET_VAL(`NOP)
+    ) inst_reg (
         .clk(clk),
         .rst(id_reg_rst),
         .we(id_reg_we),

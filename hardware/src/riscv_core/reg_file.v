@@ -5,6 +5,9 @@ module reg_file (
     input [31:0] wd,
     output [31:0] rd1, rd2
 );
+
+    parameter DEPTH = 32;
+
     // Only store x1-x31 (x0 not physically stored)
     reg [31:0] mem [1:31];
 

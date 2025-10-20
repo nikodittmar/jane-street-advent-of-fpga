@@ -10,6 +10,7 @@ module mem_stage (
     input [31:0] mem_inst,
     input [31:0] wb_wdata, // Forwarded result from WB stage
     input serial_in,
+
     output serial_out,
     output [31:0] wb_alu,
     output [31:0] wb_pc4,
@@ -24,19 +25,19 @@ module mem_stage (
     wire mem_reg_rst;
     wire mem_reg_we;
 
-    assign mem_addr = mem_alu[13:0];
-
     wire [3:0] we;
-    assign mem_imem_we = we;
-    
     wire [31:0] pc4 = mem_pc + 32'd4;
+    wire [31:0] din;
+
+    assign mem_imem_we = we;
+    assign mem_imem_din = din;
+    assign mem_addr = mem_alu[15:2];
 
     // MARK: Data In Mux
 
     wire [$clog2(`DIN_NUM_INPUTS)-1:0] din_mux_sel;
     wire [`DIN_NUM_INPUTS*32-1:0] din_mux_in;
-    wire [31:0] din;
-    assign mem_imem_din = din;
+    wire [31:0] din_mux_out;
 
     assign din_mux_in[`DIN_WDATA * 32 +: 32] = wb_wdata;
     assign din_mux_in[`DIN_RD2 * 32 +: 32] = mem_rd2;
@@ -47,7 +48,20 @@ module mem_stage (
         .in(din_mux_in),
         .sel(din_mux_sel),
 
-        .out(din)
+        .out(din_mux_out)
+    );
+
+    // MARK: Memory Packer
+
+    wire [1:0] store_size;
+
+    mem_pack mem_pack (
+        .in(din_mux_out),
+        .offset(mem_alu[1:0]),
+        .size(store_size),
+
+        .out(din),
+        .we(we)
     );
 
     // MARK: DMem
@@ -59,6 +73,7 @@ module mem_stage (
       .we(we),
       .addr(mem_addr),
       .din(din),
+
       .dout(wb_dmem_dout)
     );
 
@@ -84,17 +99,17 @@ module mem_stage (
     // MARK: Control Logic
 
     mem_control control (
-        .inst(mem_inst),
-        .wb_inst(wb_inst),
         .pc(mem_pc),
         .addr(mem_addr),
+        .inst(mem_inst),
+        .wb_inst(wb_inst),
         
         .din_sel(din_mux_sel),
-        .we(we),
+        .size(store_size),
         .br_inst(br_inst),
         .imem_en(mem_imem_en),
         .dmem_en(dmem_en),
-        .io_en(io_en),
+        .io_en(io_en)
     );
 
     // MARK: Pipeline Registers
@@ -105,7 +120,7 @@ module mem_stage (
         .we(mem_reg_we),
         .in(pc4),
 
-        .out(wb_pc)
+        .out(wb_pc4)
     );
     
     pipeline_reg alu_reg (

@@ -18,6 +18,9 @@
 
 // ***** ID STAGE *****
 
+// Nop instruction
+`define NOP                     32'h0000_0013
+
 // Instruction sel
 `define INST_SEL_NUM_INPUTS     2
 `define INST_BIOS               1'b0
@@ -96,10 +99,6 @@
 //`define DIN_FPU               2'b10
 `define DIN_DONT_CARE         1'bx
 
-// IORW sel
-`define IO_READ     1'b0
-`define IO_WRITE    1'b1
-
 // PC sel
 `define MEM_PC_4                1'b0
 `define MEM_PC_ALU              1'b1
@@ -108,6 +107,24 @@
 `define ADDR_BIOS               4'b0100
 `define ADDR_IO                 4'b1000
 `define ADDR_DMEM               4'b00?1
+`define ADDR_IMEM               4'b001?
+`define ADDR_IDMEM              4'b00??
+
+// Memory pack size
+`define MEM_SIZE_BYTE           2'b00
+`define MEM_SIZE_HALF           2'b01
+`define MEM_SIZE_WORD           2'b10
+`define MEM_SIZE_UNDEFINED      2'bxx
+
+// Memory mapped I/O
+`define MEM_IO_UART_CTRL        32'h800_0000
+`define MEM_IO_UART_RDATA       32'h800_0004
+`define MEM_IO_UART_TDATA       32'h800_0008
+`define MEM_IO_CYCLE_CNT        32'h800_0010
+`define MEM_IO_INST_CNT         32'h800_0014
+`define MEM_IO_RST_CNT          32'h800_0018
+`define MEM_IO_BR_INST_CNT      32'h800_001c
+`define MEM_IO_BR_SUC_CNT       32'h800_0020
 
 // ***** WB STAGE *****
 

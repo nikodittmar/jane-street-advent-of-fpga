@@ -3,6 +3,7 @@
 module if_control (
     input br_mispred,
     input target_taken,
+    
     output reg [1:0] pc_sel
 );
 

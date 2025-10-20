@@ -1,6 +1,6 @@
 module pipeline_reg #(
     parameter WIDTH = 32,
-    parameter RESET_VAL = 32'b0
+    parameter RESET_VAL = {WIDTH{1'b0}}
 ) (
     input clk,
     input rst,
