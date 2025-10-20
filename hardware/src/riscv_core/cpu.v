@@ -1,3 +1,6 @@
+`include "../memories/imem.v"
+`include "../memories/bios_mem.v"
+
 module cpu #(
     parameter CPU_CLOCK_FREQ = 50_000_000,
     parameter RESET_PC = 32'h4000_0000,
@@ -62,6 +65,9 @@ module cpu #(
 
     // provide a generic MEM-side word address (used for IMEM writes)
     wire [13:0] mem_addr;
+
+    wire [31:0] wb_bios_dout;
+    wire [31:0] wb_wdata;
 
     // MARK: Instruction Fetch
 
