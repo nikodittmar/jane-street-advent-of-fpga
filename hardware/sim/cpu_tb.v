@@ -42,7 +42,7 @@ module cpu_tb();
   // DMem can be R/W as long as the addr bits [31:28] is 4'b00x1
   cpu # (
     .CPU_CLOCK_FREQ(CPU_CLOCK_FREQ),
-    .RESET_PC(32'h4000_0000) // Is this an issue?
+    .RESET_PC(32'h1000_0000)
   ) cpu (
     .clk(clk),
     .rst(rst),

@@ -24,6 +24,16 @@ assign opcode5 = inst[6:2];
 assign funct3 = inst[14:12];
 assign funct7 = inst[31:25];
 
+wire [4:0] rs2;
+
+wire [4:0] wb_rd;
+wire wb_has_rd;
+
+assign rs2 = inst[24:20];
+
+assign wb_rd = wb_inst[11:7];
+assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH;
+
 always @ (*) begin
     din_sel = `DIN_DONT_CARE;
     size = `MEM_SIZE_UNDEFINED;
@@ -141,6 +151,12 @@ always @ (*) begin
             imem_en = 1'b1;
         end else begin 
             dmem_en = 1'b1;
+        end
+
+        if (wb_has_rd && rs2 == wb_rd) begin
+            din_sel = `DIN_WDATA;
+        end else begin 
+            din_sel = `DIN_RD2;
         end
 
         case (funct3)

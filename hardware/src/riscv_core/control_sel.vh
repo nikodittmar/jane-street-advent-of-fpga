@@ -13,10 +13,6 @@
 `define PC_TGT                  2'b10
 `define PC_RST                  2'b11
 
-// Instruction sel
-`define INST_BIOS               1'b0
-`define INST_IMEM               1'b1
-
 // ***** ID STAGE *****
 
 // Nop instruction
@@ -24,8 +20,8 @@
 
 // Instruction sel
 `define INST_SEL_NUM_INPUTS     2
-`define INST_BIOS               1'b0
-`define INST_IMEM               1'b1
+`define INST_IMEM               1'b0
+`define INST_BIOS               1'b1
 
 // Immediate generator sel
 `define IMM_I                   3'b000 // I-type immediates
