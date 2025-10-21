@@ -14,8 +14,8 @@ module id_stage (
     input [31:0] wb_wdata, // Forwarded result for jalr target resolution
     input [31:0] wb_inst, // WB instruction for hazard detection
     
-    output [31:0] if_pc_target, // Branch predictor/target generator output
-    output if_target_taken, // Use output of branch predictor/target generator flag
+    output [31:0] id_target, // Branch predictor/target generator output
+    output id_target_taken, // Use output of branch predictor/target generator flag
     output ex_br_taken, // Branch predictor branch taken flag
     output [31:0] ex_pc,
     output [31:0] ex_rd1,
@@ -109,8 +109,8 @@ module id_stage (
         .en(target_gen_en),
         .rd1(target_gen_rd1),
         .imm(imm),
-        .target(if_pc_target),
-        .target_taken(if_target_taken)
+        .target(id_target),
+        .target_taken(id_target_taken)
     );
 
     // MARK: Control

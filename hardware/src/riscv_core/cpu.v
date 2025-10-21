@@ -43,8 +43,6 @@ module cpu #(
     wire [31:0] id_bios_inst;
     wire [31:0] id_imem_inst;
     wire wb_regwen;
-    wire [31:0] if_pc_target;
-    wire if_target_taken;
     wire ex_br_taken;
     wire [31:0] ex_rd1;
     wire [31:0] ex_rd2;
@@ -107,8 +105,8 @@ module cpu #(
         .wb_wdata(wb_wdata),
         .wb_inst(wb_inst),
 
-        .if_pc_target(if_pc_target),
-        .if_target_taken(if_target_taken),
+        .id_target(id_target),
+        .id_target_taken(id_target_taken),
         .ex_br_taken(ex_br_taken),
         .ex_pc(ex_pc),
         .ex_rd1(ex_rd1),
@@ -132,6 +130,7 @@ module cpu #(
         .wb_wdata(wb_wdata),
         .wb_inst(wb_inst),
 
+        .ex_alu(ex_alu),
         .ex_br_mispred(ex_br_mispred),
         .ex_flush(ex_flush),
         .mem_br_suc(mem_br_suc),

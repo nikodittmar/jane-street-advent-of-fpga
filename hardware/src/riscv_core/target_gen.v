@@ -20,7 +20,7 @@ always @ (*) begin
             target_taken = 1;
         end
         `TGT_GEN_JALR: begin
-            target = pc + $signed(rd1);
+            target = $signed(rd1) + $signed(imm);
             target_taken = 1;
         end
         `TGT_GEN_BR: begin

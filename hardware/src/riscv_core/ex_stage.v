@@ -12,6 +12,7 @@ module ex_stage (
     input [31:0] wb_wdata, // Forwarded result from WB stage
     input [31:0] wb_inst, // WB instruction for hazard detection
     
+    output [31:0] ex_alu,
     output ex_br_mispred, // Branch mispredict flag
     output ex_flush, // Flush flag in the event of control hazards
     output mem_br_suc, // Branch prediction success flag
@@ -33,14 +34,13 @@ module ex_stage (
     wire [31:0] b;
 
     wire [3:0] alu_sel;
-    wire [31:0] alu_res;
 
     alu alu (
         .a(a),
         .b(b),
         .sel(alu_sel),
 
-        .res(alu_res)
+        .res(ex_alu)
     );
 
     // MARK: Branch Comp 
@@ -199,7 +199,7 @@ module ex_stage (
         .clk(clk),
         .rst(ex_reg_rst),
         .we(ex_reg_we),
-        .in(alu_res),
+        .in(ex_alu),
 
         .out(mem_alu)
     );

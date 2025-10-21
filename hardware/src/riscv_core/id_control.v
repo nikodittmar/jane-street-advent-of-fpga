@@ -241,7 +241,7 @@ always @(*) begin
         endcase
     `OPC_JAL_5: begin
         // JAL
-        target_gen_en = 1'b0;
+        target_gen_en = 1'b1;
         target_gen_sel = `TGT_GEN_JAL;
         imm_sel = `IMM_J;
     end
