@@ -29,14 +29,28 @@ assign funct3 = inst[14:12];
 assign funct7 = inst[31:25];
 
 wire [4:0] rs1;
+wire has_rs1;
+
 wire [4:0] rs2;
+wire has_rs2;
+
 wire [4:0] mem_rd;
+wire mem_has_rd;
+
 wire [4:0] wb_rd;
+wire wb_has_rd;
 
 assign rs1 = inst[19:15];
+assign has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] != `OPC_JAL && (inst[6:0] != `OPC_CSR || inst[14:12] == `FNC_CSRRW);
+
 assign rs2 = inst[24:20];
+assign has_rs2 = inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH;
+
 assign mem_rd = mem_inst[11:7];
+assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH;
+
 assign wb_rd = wb_inst[11:7];
+assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH;
 
 always @(*) begin
     brun = `BRUN_DONT_CARE;
@@ -52,15 +66,15 @@ always @(*) begin
     flush = 1'b0;
 
 
-    if (rs1 == mem_rd) begin 
+    if (has_rs1 && mem_has_rd && rs1 == mem_rd) begin 
         fwda = `EX_FWD_MEM;
-    end else if (rs1 == wb_rd) begin
+    end else if (has_rs1 && wb_has_rd && rs1 == wb_rd) begin
         fwda = `EX_FWD_WB;
     end
 
-    if (rs2 == mem_rd) begin 
+    if (has_rs2 && mem_has_rd && rs2 == mem_rd) begin 
         fwdb = `EX_FWD_MEM;
-    end else if (rs2 == wb_rd) begin
+    end else if (has_rs2 && wb_has_rd && rs2 == wb_rd) begin
         fwdb = `EX_FWD_WB;
     end
 

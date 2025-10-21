@@ -15,7 +15,7 @@ module if_stage #(
     output [31:0] if_addr
 );  
     wire [31:0] next_pc;
-    assign if_addr = next_pc;
+    assign if_addr = id_pc;
 
     // MARK: PC Mux
 

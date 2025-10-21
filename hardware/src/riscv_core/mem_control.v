@@ -11,7 +11,8 @@ module mem_control (
     output reg [1:0] size, // Store size
     output reg br_inst, // Branch instruction flag
     output reg imem_en,
-    output reg dmem_en, 
+    output reg dmem_en,
+    output reg bios_en,
     output reg io_en
 );
 
@@ -30,6 +31,7 @@ always @ (*) begin
     imem_en = 1'b0;
     dmem_en = 1'b0; 
     io_en = 1'b0;
+    bios_en = 1'b0;
 
     case (opcode5)
     `OPC_ARI_RTYPE_5:
@@ -106,66 +108,53 @@ always @ (*) begin
         endcase
     
     `OPC_LOAD_5: begin
+
+        casez (addr[31:28])
+        `ADDR_IO: io_en = 1'b1;
+        `ADDR_BIOS: bios_en = 1'b1;
+        `ADDR_DMEM: dmem_en = 1'b1;
+        endcase
+
         case (funct3)
         `FNC_LB: begin
             // LB
-            dmem_en = 1'b1;
         end
         `FNC_LH: begin
             // LH
-            dmem_en = 1'b1;
         end
         `FNC_LW: begin
             // LW
-            dmem_en = 1'b1;
         end
         `FNC_LBU: begin
             // LBU
-            dmem_en = 1'b1;
         end
         `FNC_LHU: begin
             // LHU
-            dmem_en = 1'b1;
         end
         endcase
     end
     `OPC_STORE_5: begin
+
+        if (addr[31:28] == `ADDR_IO) begin
+            io_en = 1'b1;
+        end else if (pc[30]) begin
+            imem_en = 1'b1;
+        end else begin 
+            dmem_en = 1'b1;
+        end
+
         case (funct3)
         `FNC_SB: begin
             // SB
             size = `MEM_SIZE_BYTE;
-
-            if (addr[31:28] == `ADDR_IO) begin
-                io_en = 1'b1;
-            end else if (pc[30]) begin
-                imem_en = 1'b1;
-            end else begin 
-                dmem_en = 1'b1;
-            end
         end
         `FNC_SH: begin
             // SH
             size = `MEM_SIZE_HALF;
-
-            if (addr[31:28] == `ADDR_IO) begin
-                io_en = 1'b1;
-            end else if (pc[30]) begin
-                imem_en = 1'b1;
-            end else begin 
-                dmem_en = 1'b1;
-            end
         end
         `FNC_SW: begin
             // SW
             size = `MEM_SIZE_WORD;
-
-            if (addr[31:28] == `ADDR_IO) begin
-                io_en = 1'b1;
-            end else if (pc[30]) begin
-                imem_en = 1'b1;
-            end else begin 
-                dmem_en = 1'b1;
-            end
         end
         endcase
     end

@@ -74,4 +74,5 @@ module wb_stage (
         .mask_un(mask_un),
         .regwen(wb_regwen)
     );
+
 endmodule
