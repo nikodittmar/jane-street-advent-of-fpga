@@ -5,28 +5,32 @@ module target_gen (
     input en,
     input [31:0] rd1,
     input [31:0] imm,
+
     output reg [31:0] target,
-    output reg target_taken
+    output reg target_taken,
+    output reg branch_taken
 );
 
 always @ (*) begin
-    target = 0;
-    target_taken = 0;
+    target = 32'b0;
+    target_taken = 1'b0;
+    branch_taken = 1'b0;
 
     if (en) begin
         case(sel)
         `TGT_GEN_JAL: begin
             target = pc + $signed(imm);
-            target_taken = 1;
+            target_taken = 1'b1;
         end
         `TGT_GEN_JALR: begin
             target = $signed(rd1) + $signed(imm);
-            target_taken = 1;
+            target_taken = 1'b1;
         end
         `TGT_GEN_BR: begin
             if ($signed(imm) < 0) begin
                 target = pc + $signed(imm);
-                target_taken = 1;
+                target_taken = 1'b1;
+                branch_taken = 1'b1;
             end
         end
         endcase

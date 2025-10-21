@@ -77,7 +77,7 @@ module ex_stage (
     wire [$clog2(`CSR_MUX_NUM_INPUTS)-1:0] csr_mux_sel;
     wire [`CSR_MUX_NUM_INPUTS*32-1:0] csr_mux_in;
 
-    assign csr_mux_in[`CSR_IMM * 32 +: 32] = ex_imm;
+    assign csr_mux_in[`CSR_IMM * 32 +: 32] = { 27'b0, ex_inst[19:15]};
     assign csr_mux_in[`CSR_RD1 * 32 +: 32] = ex_rd1;
     
     mux #(

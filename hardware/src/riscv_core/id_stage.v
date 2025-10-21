@@ -101,7 +101,7 @@ module id_stage (
     // MARK: TargetGen
     wire [1:0] target_gen_sel;
     wire target_gen_en;
-
+    wire br_taken;
     
     target_gen target_gen (
         .pc(id_pc),
@@ -109,8 +109,10 @@ module id_stage (
         .en(target_gen_en),
         .rd1(target_gen_rd1),
         .imm(imm),
+
         .target(id_target),
-        .target_taken(id_target_taken)
+        .target_taken(id_target_taken),
+        .branch_taken(br_taken)
     );
 
     // MARK: Control
@@ -164,6 +166,17 @@ module id_stage (
         .in(imm),
 
         .out(ex_imm)
+    );
+
+    pipeline_reg #(
+        .WIDTH(1)
+    ) br_taken_reg (
+        .clk(clk),
+        .rst(id_reg_rst),
+        .we(id_reg_we),
+        .in(br_taken),
+
+        .out(ex_br_taken)
     );
 
     pipeline_reg #(
