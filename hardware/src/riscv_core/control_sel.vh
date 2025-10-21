@@ -10,7 +10,7 @@
 `define PC_MUX_NUM_INPUTS       3
 `define PC_4                    2'b00
 `define PC_ALU                  2'b01
-`define PC_TGT                  2'b01
+`define PC_TGT                  2'b10
 
 // Instruction sel
 `define INST_BIOS               1'b0

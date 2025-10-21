@@ -80,7 +80,7 @@ module cpu #(
         .id_target(id_target),
         .ex_alu(ex_alu),
 
-        .ex_pc(ex_pc),
+        .id_pc(id_pc),
         .if_addr(if_addr)
     );
 
@@ -93,6 +93,7 @@ module cpu #(
 
     id_stage id_stage (
         .clk(clk),
+        .rst(rst),
         .ex_flush(ex_flush),
         .id_pc(id_pc),
         .id_bios_inst(id_bios_inst),

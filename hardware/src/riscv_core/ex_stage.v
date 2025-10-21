@@ -24,6 +24,9 @@ module ex_stage (
     wire ex_reg_rst;
     wire ex_reg_we;
 
+    assign ex_reg_we = ~rst;
+    assign ex_reg_rst = rst;
+
     // MARK: ALU
 
     wire [31:0] a;
@@ -221,7 +224,9 @@ module ex_stage (
         .out(mem_br_suc)
     );
 
-    pipeline_reg inst_reg (
+    pipeline_reg #(
+        .RESET_VAL(`NOP)
+    ) inst_reg (
         .clk(clk),
         .rst(ex_reg_rst),
         .we(ex_reg_we),

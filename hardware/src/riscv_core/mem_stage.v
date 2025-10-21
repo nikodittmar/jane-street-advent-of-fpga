@@ -25,6 +25,9 @@ module mem_stage (
     wire mem_reg_rst;
     wire mem_reg_we;
 
+    assign mem_reg_we = ~rst;
+    assign mem_reg_rst = rst;
+
     wire [3:0] we;
     wire [31:0] pc4 = mem_pc + 32'd4;
     wire [31:0] din;
@@ -100,7 +103,7 @@ module mem_stage (
 
     mem_control control (
         .pc(mem_pc),
-        .addr(mem_addr),
+        .addr(mem_alu),
         .inst(mem_inst),
         .wb_inst(wb_inst),
         
@@ -132,7 +135,9 @@ module mem_stage (
         .out(wb_alu)
     );
 
-    pipeline_reg inst_reg (
+    pipeline_reg #(
+        .RESET_VAL(`NOP)
+    ) inst_reg (
         .clk(clk),
         .rst(mem_reg_rst),
         .we(mem_reg_we),
