@@ -25,6 +25,7 @@ module if_stage #(
     assign pc_mux_in[`PC_4 * 32 +: 32] = id_pc + 32'd4;
     assign pc_mux_in[`PC_ALU * 32 +: 32] = ex_alu;
     assign pc_mux_in[`PC_TGT * 32 +: 32] = id_target;
+    assign pc_mux_in[`PC_RST * 32 +: 32] = RESET_PC;
 
     mux #(
         .NUM_INPUTS(`PC_MUX_NUM_INPUTS)
@@ -52,10 +53,10 @@ module if_stage #(
     // MARK: Control Logic
 
     if_control control (
+        .rst(rst),
         .br_mispred(ex_br_mispred),
         .target_taken(id_target_taken),
 
         .pc_sel(pc_sel)
     );
-
 endmodule

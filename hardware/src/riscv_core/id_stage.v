@@ -7,7 +7,7 @@ module id_stage (
     input [31:0] id_pc,
     input [31:0] id_bios_inst,
     input [31:0] id_imem_inst,
-    input id_regwen,
+    input wb_regwen,
     input [31:0] ex_alu, // Forwarded result for jalr target resolution
     input [31:0] mem_alu, // Forwarded result for jalr target resolution
     input [31:0] mem_inst, // MEM instruction for hazard detection
@@ -59,7 +59,7 @@ module id_stage (
 
     reg_file reg_file (
         .clk(clk),
-        .we(id_regwen),
+        .we(wb_regwen),
         .ra1(ra1), .ra2(ra2), .wa(wa),
         .wd(wb_wdata),
 

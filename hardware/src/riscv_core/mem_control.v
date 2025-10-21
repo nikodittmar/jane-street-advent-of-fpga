@@ -109,18 +109,23 @@ always @ (*) begin
         case (funct3)
         `FNC_LB: begin
             // LB
+            dmem_en = 1'b1;
         end
         `FNC_LH: begin
             // LH
+            dmem_en = 1'b1;
         end
         `FNC_LW: begin
             // LW
+            dmem_en = 1'b1;
         end
         `FNC_LBU: begin
             // LBU
+            dmem_en = 1'b1;
         end
         `FNC_LHU: begin
             // LHU
+            dmem_en = 1'b1;
         end
         endcase
     end

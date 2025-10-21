@@ -42,7 +42,7 @@ module cpu #(
     wire ex_flush;
     wire [31:0] id_bios_inst;
     wire [31:0] id_imem_inst;
-    wire id_regwen;
+    wire wb_regwen;
     wire [31:0] if_pc_target;
     wire if_target_taken;
     wire ex_br_taken;
@@ -71,7 +71,9 @@ module cpu #(
 
     // MARK: Instruction Fetch
 
-    if_stage if_stage (
+    if_stage #(
+        .RESET_PC(RESET_PC)
+    ) if_stage (
         .clk(clk),
         .rst(rst),
         .id_stall(id_stall),
@@ -98,7 +100,7 @@ module cpu #(
         .id_pc(id_pc),
         .id_bios_inst(id_bios_inst),
         .id_imem_inst(id_imem_inst),
-        .id_regwen(id_regwen),
+        .wb_regwen(wb_regwen),
         .ex_alu(ex_alu),
         .mem_alu(mem_alu),
         .mem_inst(mem_inst),
