@@ -22,10 +22,9 @@ module if_stage #(
     wire [$clog2(`PC_MUX_NUM_INPUTS)-1:0] pc_sel;
     wire [`PC_MUX_NUM_INPUTS*32-1:0] pc_mux_in;
 
-    assign pc_mux_in[`PC_4 * 32 +: 32] = id_pc + 32'd4;
+    assign pc_mux_in[`PC_4 * 32 +: 32] = id_stall ? id_pc : id_pc + 32'd4;
     assign pc_mux_in[`PC_ALU * 32 +: 32] = ex_alu;
     assign pc_mux_in[`PC_TGT * 32 +: 32] = id_target;
-    assign pc_mux_in[`PC_RST * 32 +: 32] = RESET_PC;
 
     mux #(
         .NUM_INPUTS(`PC_MUX_NUM_INPUTS)
@@ -40,7 +39,7 @@ module if_stage #(
     wire program_counter_we = ~id_stall;
 
     pipeline_reg #(
-        .RESET_VAL(RESET_PC)
+        .RESET_VAL(RESET_PC - 4)
     ) program_counter (
         .clk(clk),
         .rst(rst),
@@ -53,7 +52,6 @@ module if_stage #(
     // MARK: Control Logic
 
     if_control control (
-        .rst(rst),
         .br_mispred(ex_br_mispred),
         .target_taken(id_target_taken),
 

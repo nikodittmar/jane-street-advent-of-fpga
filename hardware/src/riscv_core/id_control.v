@@ -28,6 +28,8 @@ wire has_rs1;
 wire [4:0] rs2;
 wire has_rs2;
 
+wire is_store;
+
 wire [4:0] ex_rd;
 wire ex_has_rd;
 
@@ -46,6 +48,8 @@ assign has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] !
 
 assign rs2 = inst[24:20];
 assign has_rs2 = inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH;
+
+assign is_store = inst[6:0] == `OPC_STORE;
 
 assign ex_rd = ex_inst[11:7];
 assign ex_has_rd = ex_inst[6:0] != `OPC_STORE && ex_inst[6:0] != `OPC_BRANCH;
@@ -75,7 +79,7 @@ always @(*) begin
         target_gen_fwd_sel = `TGT_GEN_FWD_WB;
     end
 
-    if (ex_load_inst && ((has_rs2 && rs2 == ex_rd) || (has_rs1 && rs1 == ex_rd))) begin 
+    if ((is_store && rs1 == ex_rd) || (!is_store && ex_load_inst && ((has_rs2 && rs2 == ex_rd) || (has_rs1 && rs1 == ex_rd)))) begin 
         stall = 1'b1;
     end
 

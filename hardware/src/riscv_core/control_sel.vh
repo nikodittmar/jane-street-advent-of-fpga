@@ -7,11 +7,10 @@
 // ***** IF STAGE *****
 
 // PC sel
-`define PC_MUX_NUM_INPUTS       4
+`define PC_MUX_NUM_INPUTS       3
 `define PC_4                    2'b00
 `define PC_ALU                  2'b01
 `define PC_TGT                  2'b10
-`define PC_RST                  2'b11
 
 // ***** ID STAGE *****
 

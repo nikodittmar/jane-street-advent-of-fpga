@@ -28,7 +28,7 @@ module id_stage (
     wire id_reg_we;
 
     assign id_reg_we = ~id_stall;
-    assign id_reg_rst = ex_flush | rst;
+    assign id_reg_rst = id_stall | ex_flush | rst;
 
     // MARK: InstSel
 
@@ -189,4 +189,5 @@ module id_stage (
 
         .out(ex_inst)
     );
+    
 endmodule

@@ -43,21 +43,6 @@ module ex_stage (
         .res(ex_alu)
     );
 
-    // MARK: Branch Comp 
-
-    wire brun;
-    wire breq;
-    wire brlt;
-
-    branch_comp branch_comp (
-        .d1(ex_rd1),
-        .d2(ex_rd2),
-        .un(brun),
-
-        .eq(breq),
-        .lt(brlt)
-    );
-
     // MARK: CSR Register
 
     wire [31:0] csr_in;
@@ -125,6 +110,21 @@ module ex_stage (
         .sel(fwdb_sel),
 
         .out(fwdb_out)
+    );
+
+    // MARK: Branch Comp 
+
+    wire brun;
+    wire breq;
+    wire brlt;
+
+    branch_comp branch_comp (
+        .d1(fwda_out),
+        .d2(fwdb_out),
+        .un(brun),
+
+        .eq(breq),
+        .lt(brlt)
     );
 
     // MARK: A Sel

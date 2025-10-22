@@ -1,7 +1,6 @@
 `include "control_sel.vh"
 
 module if_control (
-    input rst,
     input br_mispred,
     input target_taken,
     
@@ -15,9 +14,7 @@ module if_control (
             pc_sel = `PC_ALU;
         end else if (target_taken) begin 
             pc_sel = `PC_TGT;
-        end else if (rst) begin
-            pc_sel = `PC_RST;
-        end 
+        end
     end
 
 endmodule
