@@ -32,7 +32,7 @@ module id_stage (
 
     // MARK: InstSel
 
-    wire [31:0] inst;
+    wire [31:0] id_inst;
 
     wire [$clog2(`INST_SEL_NUM_INPUTS)-1:0] inst_sel = id_pc[30];
     wire [`INST_SEL_NUM_INPUTS*32-1:0] inst_mux_in;
@@ -46,13 +46,13 @@ module id_stage (
         .in(inst_mux_in),
         .sel(inst_sel),
 
-        .out(inst)
+        .out(id_inst)
     );
 
     // MARK: RegFile
 
-    wire [4:0] ra1 = inst[19:15];
-    wire [4:0] ra2 = inst[24:20];
+    wire [4:0] ra1 = id_inst[19:15];
+    wire [4:0] ra2 = id_inst[24:20];
     wire [4:0] wa = wb_inst[11:7];
     wire [31:0] rd1;
     wire [31:0] rd2;
@@ -72,7 +72,7 @@ module id_stage (
     wire [31:0] imm;
 
     imm_gen imm_gen (
-        .inst(inst),
+        .inst(id_inst),
         .sel(imm_sel),
 
         .imm(imm)
@@ -118,7 +118,7 @@ module id_stage (
     // MARK: Control
 
     id_control control (
-        .inst(inst),
+        .inst(id_inst),
         .ex_inst(ex_inst),
         .mem_inst(mem_inst),
         .wb_inst(wb_inst),
@@ -185,7 +185,7 @@ module id_stage (
         .clk(clk),
         .rst(id_reg_rst),
         .we(id_reg_we),
-        .in(inst),
+        .in(id_inst),
 
         .out(ex_inst)
     );

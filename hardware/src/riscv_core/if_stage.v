@@ -14,15 +14,35 @@ module if_stage #(
     output [31:0] id_pc,
     output [31:0] if_addr
 );  
+    wire [31:0] if_pc;
+    assign if_addr = if_pc;
+
+    wire [31:0] pc4;
+    assign pc4 = if_pc + 32'd4;
+
     wire [31:0] next_pc;
-    assign if_addr = next_pc;
+
+    // MARK: Program Counter
+
+    wire pc_we = ~id_stall;
+
+    pipeline_reg #(
+        .RESET_VAL(RESET_PC)
+    ) program_counter (
+        .clk(clk),
+        .rst(rst),
+        .we(pc_we),
+        .in(pc4),
+
+        .out(next_pc)
+    );
 
     // MARK: PC Mux
 
     wire [$clog2(`PC_MUX_NUM_INPUTS)-1:0] pc_sel;
     wire [`PC_MUX_NUM_INPUTS*32-1:0] pc_mux_in;
 
-    assign pc_mux_in[`PC_4 * 32 +: 32] = id_stall ? id_pc : id_pc + 32'd4;
+    assign pc_mux_in[`PC_4 * 32 +: 32] = id_stall ? id_pc : next_pc;
     assign pc_mux_in[`PC_ALU * 32 +: 32] = ex_alu;
     assign pc_mux_in[`PC_TGT * 32 +: 32] = id_target;
 
@@ -32,21 +52,7 @@ module if_stage #(
         .in(pc_mux_in),
         .sel(pc_sel),
 
-        .out(next_pc)
-    );
-
-    // MARK: Program Counter
-    wire program_counter_we = ~id_stall;
-
-    pipeline_reg #(
-        .RESET_VAL(RESET_PC - 4)
-    ) program_counter (
-        .clk(clk),
-        .rst(rst),
-        .we(program_counter_we),
-        .in(next_pc),
-
-        .out(id_pc)
+        .out(if_pc)
     );
 
     // MARK: Control Logic
@@ -57,4 +63,16 @@ module if_stage #(
 
         .pc_sel(pc_sel)
     );
+
+    // MARK: Pipeline Registers
+
+    pipeline_reg pc_reg (
+        .clk(clk),
+        .rst(rst),
+        .we(pc_we),
+        .in(if_pc),
+
+        .out(id_pc)
+    );
+
 endmodule

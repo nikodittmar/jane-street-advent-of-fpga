@@ -79,7 +79,12 @@ always @(*) begin
         target_gen_fwd_sel = `TGT_GEN_FWD_WB;
     end
 
-    if ((is_store && rs1 == ex_rd) || (!is_store && ex_load_inst && ((has_rs2 && rs2 == ex_rd) || (has_rs1 && rs1 == ex_rd)))) begin 
+    if (ex_load_inst && // Only need to stall for load use data hazards
+        ((is_store && rs1 == ex_rd) || // We only need to stall for store instructions with a data hazard surrounding the address
+            (!is_store && // Store instructions do not need stalling for their store data
+            ex_has_rd && // Only stall if ex actually writes to rd
+            ((has_rs1 && rs1 == ex_rd) || (has_rs2 && rs2 == ex_rd))))) // Only stall if we use a register that was written to
+    begin
         stall = 1'b1;
     end
 
