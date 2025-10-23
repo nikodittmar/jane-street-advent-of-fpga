@@ -1,6 +1,3 @@
-`include "../memories/imem.v"
-`include "../memories/bios_mem.v"
-
 module cpu #(
     parameter CPU_CLOCK_FREQ = 50_000_000,
     parameter RESET_PC = 32'h4000_0000,
@@ -53,7 +50,6 @@ module cpu #(
     wire [31:0] wb_pc4;
     wire [31:0] wb_dmem_dout;
     wire [31:0] wb_io_dout;
-    wire wb_regwen;
     wire [31:0] wb_wdata;
     wire [31:0] mem_alu;
 
@@ -65,7 +61,6 @@ module cpu #(
     wire [13:0] mem_addr;
 
     wire [31:0] wb_bios_dout;
-    wire [31:0] wb_wdata;
 
     // MARK: Instruction Fetch
 
@@ -83,11 +78,6 @@ module cpu #(
         .id_pc(id_pc),
         .if_addr(if_addr)
     );
-
-    // (keep wires; if IF doesn’t drive these yet, default them)
-    // FIX: safe defaults so id_stage compiles if not produced yet
-    assign if_pc_target = 32'b0;      // FIX
-    assign if_target_taken = 1'b0;    // FIX
 
     // MARK: Instruction Decode
 
@@ -203,7 +193,7 @@ module cpu #(
     // Synchronous read: read takes one cycle
     // Synchronous write: write takes one cycle
     wire [11:0] mem_bios_addr, if_bios_addr;
-    wire [31:0] wb_bios_dout, if_bios_dout;
+    wire [31:0] if_bios_dout;
     wire mem_bios_en, if_bios_en;
 
     // decode IF address: BIOS vs IMEM (keep minimal/generic)

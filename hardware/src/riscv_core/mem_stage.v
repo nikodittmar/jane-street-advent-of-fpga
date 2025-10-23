@@ -145,4 +145,5 @@ module mem_stage (
 
         .out(wb_inst)
     );
+    
 endmodule

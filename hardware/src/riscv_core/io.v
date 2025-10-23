@@ -1,5 +1,4 @@
 `include "control_sel.vh"
-`include "../io_circuits/uart.v"
 
 module io (
     input clk,
