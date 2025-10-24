@@ -41,10 +41,10 @@ wire [4:0] wb_rd;
 wire wb_has_rd;
 
 assign rs1 = inst[19:15];
-assign has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] != `OPC_JAL && (inst[6:0] != `OPC_CSR || inst[14:12] == `FNC_CSRRW);
+assign has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] != `OPC_JAL && (inst[6:0] != `OPC_CSR || inst[14:12] == `FNC_CSRRW) && rs1 != 5'b0;
 
 assign rs2 = inst[24:20];
-assign has_rs2 = inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH;
+assign has_rs2 = inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH && rs2 != 5'b0;
 
 assign mem_rd = mem_inst[11:7];
 assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;

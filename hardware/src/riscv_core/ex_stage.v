@@ -208,7 +208,7 @@ module ex_stage (
         .clk(clk),
         .rst(ex_reg_rst),
         .we(ex_reg_we),
-        .in(ex_rd2),
+        .in(fwdb_out),
 
         .out(mem_rd2)
     );
