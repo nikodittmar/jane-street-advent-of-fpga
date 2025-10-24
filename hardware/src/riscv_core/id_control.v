@@ -55,7 +55,7 @@ assign ex_rd = ex_inst[11:7];
 assign ex_has_rd = ex_inst[6:0] != `OPC_STORE && ex_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
 
 assign mem_rd = mem_inst[11:7];
-assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
+assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && mem_inst[6:0] != `OPC_CSR;
 
 assign wb_rd = wb_inst[11:7];
 assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
