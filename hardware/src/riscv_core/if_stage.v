@@ -66,7 +66,9 @@ module if_stage #(
 
     // MARK: Pipeline Registers
 
-    pipeline_reg pc_reg (
+    pipeline_reg #(
+        .RESET_VAL(RESET_PC)
+    ) pc_reg (
         .clk(clk),
         .rst(rst),
         .we(pc_we),
