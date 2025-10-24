@@ -43,37 +43,6 @@ module ex_stage (
         .res(ex_alu)
     );
 
-    // MARK: CSR Register
-
-    wire [31:0] csr_in;
-    wire [31:0] tohost_csr;
-    wire csr_we;
-
-    pipeline_reg csr_reg (
-        .clk(clk),
-        .rst(rst),
-        .we(csr_we),
-        .in(csr_in),
-        .out(tohost_csr)
-    );
-
-    // MARK: CSR Mux
-
-    wire [$clog2(`CSR_MUX_NUM_INPUTS)-1:0] csr_mux_sel;
-    wire [`CSR_MUX_NUM_INPUTS*32-1:0] csr_mux_in;
-
-    assign csr_mux_in[`CSR_IMM * 32 +: 32] = { 27'b0, ex_inst[19:15]};
-    assign csr_mux_in[`CSR_RD1 * 32 +: 32] = ex_rd1;
-    
-    mux #(
-        .NUM_INPUTS(`CSR_MUX_NUM_INPUTS)
-    ) csrw_mux (
-        .in(csr_mux_in),
-        .sel(csr_mux_sel),
-
-        .out(csr_in)
-    );
-
     // MARK: Forward A
 
     wire [$clog2(`EX_FWD_NUM_INPUTS)-1:0] fwda_sel;
@@ -110,6 +79,37 @@ module ex_stage (
         .sel(fwdb_sel),
 
         .out(fwdb_out)
+    );
+
+    // MARK: CSR Register
+
+    wire [31:0] csr_in;
+    wire [31:0] tohost_csr;
+    wire csr_we;
+
+    pipeline_reg csr_reg (
+        .clk(clk),
+        .rst(rst),
+        .we(csr_we),
+        .in(csr_in),
+        .out(tohost_csr)
+    );
+
+    // MARK: CSR Mux
+
+    wire [$clog2(`CSR_MUX_NUM_INPUTS)-1:0] csr_mux_sel;
+    wire [`CSR_MUX_NUM_INPUTS*32-1:0] csr_mux_in;
+
+    assign csr_mux_in[`CSR_IMM * 32 +: 32] = { 27'b0, ex_inst[19:15]};
+    assign csr_mux_in[`CSR_RD1 * 32 +: 32] = fwda_out;
+    
+    mux #(
+        .NUM_INPUTS(`CSR_MUX_NUM_INPUTS)
+    ) csrw_mux (
+        .in(csr_mux_in),
+        .sel(csr_mux_sel),
+
+        .out(csr_in)
     );
 
     // MARK: Branch Comp 

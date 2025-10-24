@@ -145,7 +145,7 @@ always @(*) begin
             // SLTU
             asel = `A_REG;
             bsel = `B_REG;
-            alusel = `ALU_SLT;
+            alusel = `ALU_SLTU;
         end
         endcase
 
@@ -168,14 +168,12 @@ always @(*) begin
             asel = `A_REG;
             bsel = `B_IMM;
             alusel = `ALU_SLT;
-            brun = 1'b0;
         end
         `FNC_SLTU: begin
             // SLTIU
             asel = `A_REG;
             bsel = `B_IMM;
-            alusel = `ALU_SLT;
-            brun = 1'b1;
+            alusel = `ALU_SLTU;
         end
         `FNC_XOR: begin
             // XORI

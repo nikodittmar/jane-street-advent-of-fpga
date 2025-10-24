@@ -11,6 +11,7 @@ module alu (
         `ALU_ADD:   res = a + b;
         `ALU_SLL:   res = a << b[4:0];
         `ALU_SLT:   res = ($signed(a) < $signed(b)) ? 32'b1 : 32'b0;
+        `ALU_SLTU:  res = (a < b) ? 32'b1 : 32'b0;
         `ALU_XOR:   res = a ^ b;
         `ALU_SRL:   res = a >> b[4:0];
         `ALU_OR:    res = a | b;
