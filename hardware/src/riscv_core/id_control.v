@@ -52,13 +52,13 @@ assign has_rs2 = inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[
 assign is_store = inst[6:0] == `OPC_STORE;
 
 assign ex_rd = ex_inst[11:7];
-assign ex_has_rd = ex_inst[6:0] != `OPC_STORE && ex_inst[6:0] != `OPC_BRANCH;
+assign ex_has_rd = ex_inst[6:0] != `OPC_STORE && ex_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
 
 assign mem_rd = mem_inst[11:7];
-assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH;
+assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
 
 assign wb_rd = wb_inst[11:7];
-assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH;
+assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
 
 assign id_jump_inst = inst[6:2] == `OPC_JAL_5 | inst[6:2] == `OPC_JALR_5;
 assign ex_load_inst = ex_inst[6:2] == `OPC_LOAD_5;

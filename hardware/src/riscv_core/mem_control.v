@@ -32,7 +32,7 @@ wire wb_has_rd;
 assign rs2 = inst[24:20];
 
 assign wb_rd = wb_inst[11:7];
-assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH;
+assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
 
 always @ (*) begin
     din_sel = `DIN_DONT_CARE;

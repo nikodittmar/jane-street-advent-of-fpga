@@ -47,10 +47,10 @@ assign rs2 = inst[24:20];
 assign has_rs2 = inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH;
 
 assign mem_rd = mem_inst[11:7];
-assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH;
+assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
 
 assign wb_rd = wb_inst[11:7];
-assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH;
+assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
 
 always @(*) begin
     brun = `BRUN_DONT_CARE;

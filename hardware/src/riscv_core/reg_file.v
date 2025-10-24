@@ -12,8 +12,8 @@ module reg_file (
     reg [31:0] mem [1:31];
 
     // Asynchronous read
-    assign rd1 = (ra1 == 5'b0) ? 32'b0 : mem[ra1];
-    assign rd2 = (ra2 == 5'b0) ? 32'b0 : mem[ra2];
+    assign rd1 = (ra1 == 5'b0) ? 32'b0 : (wa == ra1) ? wd : mem[ra1]; 
+    assign rd2 = (ra2 == 5'b0) ? 32'b0 : (wa == ra2) ? wd : mem[ra2]; 
 
     // Synchronous write
     always @(posedge clk) begin
