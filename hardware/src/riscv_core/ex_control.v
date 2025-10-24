@@ -274,78 +274,78 @@ always @(*) begin
             // BEQ
             asel = `A_PC;
             bsel = `B_IMM;
-            alusel = `ALU_ADD;
             brun = 1'b0;
             if (breq == br_taken) begin
                 br_suc = 1'b1;
             end else begin 
                 br_mispred = 1'b1;
                 flush = 1'b1;
+                alusel = breq ? `ALU_ADD : `ALU_A_PLUS_4;
             end
         end
         `FNC_BNE: begin
             // BNE
             asel = `A_PC;
             bsel = `B_IMM;
-            alusel = `ALU_ADD;
             brun = 1'b0;
-            if (!breq == br_taken) begin
+            if (breq != br_taken) begin
                 br_suc = 1'b1;
             end else begin 
                 br_mispred = 1'b1;
                 flush = 1'b1;
+                alusel = !breq ? `ALU_ADD : `ALU_A_PLUS_4;
             end
         end
         `FNC_BLT: begin
             // BLT
             asel = `A_PC;
             bsel = `B_IMM;
-            alusel = `ALU_ADD;
             brun = 1'b0;
             if (brlt == br_taken) begin
                 br_suc = 1'b1;
             end else begin 
                 br_mispred = 1'b1;
                 flush = 1'b1;
+                alusel = brlt ? `ALU_ADD : `ALU_A_PLUS_4;
             end
         end
         `FNC_BGE: begin
             // BGE
             asel = `A_PC;
             bsel = `B_IMM;
-            alusel = `ALU_ADD;
             brun = 1'b0;
-            if (!brlt == br_taken) begin
+            if (brlt != br_taken) begin
                 br_suc = 1'b1;
             end else begin 
                 br_mispred = 1'b1;
                 flush = 1'b1;
+                alusel = !brlt ? `ALU_ADD : `ALU_A_PLUS_4;
             end
         end
         `FNC_BLTU: begin
             // BLTU
             asel = `A_PC;
             bsel = `B_IMM;
-            alusel = `ALU_ADD;
             brun = 1'b1;
             if (brlt == br_taken) begin
                 br_suc = 1'b1;
             end else begin 
                 br_mispred = 1'b1;
                 flush = 1'b1;
+                alusel = brlt ? `ALU_ADD : `ALU_A_PLUS_4;
             end
         end
         `FNC_BGEU: begin
             // BGEU
             asel = `A_PC;
             bsel = `B_IMM;
-            alusel = `ALU_ADD;
             brun = 1'b1;
-            if (!brlt == br_taken) begin
+            if (brlt != br_taken) begin
                 br_suc = 1'b1;
             end else begin 
                 br_mispred = 1'b1;
                 flush = 1'b1;
+                alusel = !brlt ? `ALU_ADD : `ALU_A_PLUS_4;
             end
         end
         endcase
