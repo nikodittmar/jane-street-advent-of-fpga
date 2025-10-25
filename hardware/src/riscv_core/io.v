@@ -80,17 +80,25 @@ reg [31:0] next_br_inst_cnt;
 reg [31:0] next_br_suc_cnt;
 
 always @ (posedge clk) begin
-    cycle_cnt <= next_cycle_cnt;
-    inst_cnt <= next_inst_cnt;
+    if (rst) begin 
+        cycle_cnt <= 32'b0;
+        inst_cnt <= 32'b0;
 
-    br_inst_cnt <= next_br_inst_cnt;
-    br_suc_cnt <= next_br_suc_cnt;
-    
-    dout <= next_dout;
+        br_inst_cnt <= 32'b0;
+        br_suc_cnt <= 32'b0;
+    end else begin 
+        cycle_cnt <= next_cycle_cnt;
+        inst_cnt <= next_inst_cnt;
 
-    uart_tx_data_in <= next_uart_tx_data_in;
-    uart_tx_data_in_valid <= next_uart_tx_data_in_valid;
-    uart_rx_data_out_ready <= next_uart_rx_data_out_ready;
+        br_inst_cnt <= next_br_inst_cnt;
+        br_suc_cnt <= next_br_suc_cnt;
+        
+        dout <= next_dout;
+
+        uart_tx_data_in <= next_uart_tx_data_in;
+        uart_tx_data_in_valid <= next_uart_tx_data_in_valid;
+        uart_rx_data_out_ready <= next_uart_rx_data_out_ready;
+    end
 end
 
 always @(*) begin

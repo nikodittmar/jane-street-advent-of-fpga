@@ -31,7 +31,6 @@
 `define IMM_DONT_CARE           3'bxxx
 
 // Target generator forwarding mux
-
 `define TGT_GEN_FWD_NUM_INPUTS  4
 `define TGT_GEN_FWD_NONE        2'b00
 `define TGT_GEN_FWD_EX          2'b01

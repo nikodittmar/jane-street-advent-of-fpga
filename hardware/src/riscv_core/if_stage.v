@@ -24,17 +24,15 @@ module if_stage #(
 
     // MARK: Program Counter
 
-    wire pc_we = ~id_stall;
-
-    pipeline_reg #(
-        .RESET_VAL(RESET_PC)
+    program_counter #(
+        .RESET_PC(RESET_PC)
     ) program_counter (
         .clk(clk),
         .rst(rst),
-        .we(pc_we),
-        .in(pc4),
+        .stall(id_stall),
+        .pc_in(pc4),
 
-        .out(next_pc)
+        .pc_out(next_pc)
     );
 
     // MARK: PC Mux
@@ -65,6 +63,8 @@ module if_stage #(
     );
 
     // MARK: Pipeline Registers
+
+    wire pc_we = ~id_stall;
 
     pipeline_reg #(
         .RESET_VAL(RESET_PC)
