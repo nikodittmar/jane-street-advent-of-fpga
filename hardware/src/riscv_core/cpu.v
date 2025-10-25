@@ -143,7 +143,10 @@ module cpu #(
     wire [31:0] if_imem_dout;
     wire        if_imem_en;
 
-    mem_stage mem_stage (
+    mem_stage #(
+        .CLOCK_FREQ(CPU_CLOCK_FREQ),
+        .BAUD_RATE(BAUD_RATE)
+    ) mem_stage (
         .clk(clk),
         .rst(rst),
         .mem_pc(mem_pc),

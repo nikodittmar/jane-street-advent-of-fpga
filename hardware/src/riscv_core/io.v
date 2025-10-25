@@ -1,6 +1,9 @@
 `include "control_sel.vh"
 
-module io (
+module io #(
+    parameter CLOCK_FREQ = 125_000_000,
+    parameter BAUD_RATE = 115_200
+) (
     input clk,
     input rst,
     input [31:0] addr, 
@@ -24,7 +27,10 @@ wire uart_rx_data_out_valid;
 reg uart_rx_data_out_ready;
 reg next_uart_rx_data_out_ready;
 
-uart uart (
+uart #(
+    .CLOCK_FREQ(CLOCK_FREQ),
+    .BAUD_RATE(BAUD_RATE)
+) uart (
     .clk(clk),
     .reset(rst),
 
@@ -39,7 +45,26 @@ uart uart (
     .serial_in(serial_in),
     .serial_out(serial_out)
 );
+/*
+module uart #(
+    parameter CLOCK_FREQ = 125_000_000,
+    parameter BAUD_RATE = 115_200
+) (
+    input clk,
+    input reset,
 
+    input [7:0] data_in,
+    input data_in_valid,
+    output data_in_ready,
+
+    output [7:0] data_out,
+    output data_out_valid,
+    input data_out_ready,
+
+    input serial_in,
+    output serial_out
+);
+*/
 reg [31:0] cycle_cnt;
 reg [31:0] inst_cnt;
 
@@ -79,7 +104,7 @@ always @(*) begin
     next_uart_tx_data_in = uart_tx_data_in;
     next_uart_tx_data_in_valid = uart_tx_data_in_valid;
 
-    next_uart_rx_data_out_ready = 1'b0;
+    next_uart_rx_data_out_ready = 1'b1;
 
     if (uart_tx_data_in_valid && uart_tx_data_in_ready) begin
         next_uart_tx_data_in_valid = 1'b0;
@@ -92,7 +117,6 @@ always @(*) begin
         end
         `MEM_IO_UART_RDATA: begin
             next_dout = { 24'b0, uart_rx_data_out };
-            next_uart_rx_data_out_ready = 1'b1;
         end
         `MEM_IO_UART_TDATA: begin
             next_uart_tx_data_in = din[7:0];

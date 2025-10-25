@@ -120,14 +120,14 @@
 `define MEM_SIZE_UNDEFINED      2'bxx
 
 // Memory mapped I/O
-`define MEM_IO_UART_CTRL        32'h800_0000
-`define MEM_IO_UART_RDATA       32'h800_0004
-`define MEM_IO_UART_TDATA       32'h800_0008
-`define MEM_IO_CYCLE_CNT        32'h800_0010
-`define MEM_IO_INST_CNT         32'h800_0014
-`define MEM_IO_RST_CNT          32'h800_0018
-`define MEM_IO_BR_INST_CNT      32'h800_001c
-`define MEM_IO_BR_SUC_CNT       32'h800_0020
+`define MEM_IO_UART_CTRL        32'h8000_0000
+`define MEM_IO_UART_RDATA       32'h8000_0004
+`define MEM_IO_UART_TDATA       32'h8000_0008
+`define MEM_IO_CYCLE_CNT        32'h8000_0010
+`define MEM_IO_INST_CNT         32'h8000_0014
+`define MEM_IO_RST_CNT          32'h8000_0018
+`define MEM_IO_BR_INST_CNT      32'h8000_001c
+`define MEM_IO_BR_SUC_CNT       32'h8000_0020
 
 // ***** WB STAGE *****
 

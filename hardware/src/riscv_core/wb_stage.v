@@ -1,4 +1,5 @@
 `include "control_sel.vh"
+`include "opcode.vh"
 
 module wb_stage (
     input clk,
@@ -75,4 +76,21 @@ module wb_stage (
         .regwen(wb_regwen)
     );
 
+    /*
+    // System Verilog Assertions
+
+    load_byte_wb_wdata_upper_bits_are_zero:
+        assert property ( @(posedge clk)
+            (wb_inst == 32'h00000000)
+            || !(wb_inst[6:2] == `OPC_LOAD_5 && wb_inst[14:12] == `FNC_LB)
+            || (wb_wdata[31:8] == {24{wb_wdata[7]}})
+        ) else $error("LB sign extension wrong! wb_wdata=%h inst=%h", wb_wdata, wb_inst);
+
+    load_half_word_wb_wdata_upper_bits_are_zero:
+        assert property ( @(posedge clk)
+            (wb_inst == 32'h00000000)
+            || !(wb_inst[6:2] == `OPC_LOAD_5 && wb_inst[14:12] == `FNC_LH)
+            || (wb_wdata[31:16] == {16{wb_wdata[15]}})
+        ) else $error("LH sign extension wrong! wb_wdata=%h inst=%h", wb_wdata, wb_inst);
+    */
 endmodule

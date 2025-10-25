@@ -189,5 +189,13 @@ module id_stage (
 
         .out(ex_inst)
     );
-    
+
+    /*
+    // System Verilog Assertions
+
+    x_zero_is_always_zero:
+        assert property ( @(posedge clk)
+            (ra1 == 5'b0) |-> (rd1 == 32'b0) && (ra2 == 5'b0) |-> (rd2 == 32'b0)
+        ) else $error("reading from x0 must always be zero!");
+    */
 endmodule

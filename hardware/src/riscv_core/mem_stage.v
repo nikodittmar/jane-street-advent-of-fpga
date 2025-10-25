@@ -1,6 +1,10 @@
 `include "control_sel.vh"
+`include "opcode.vh"
 
-module mem_stage (
+module mem_stage #(
+    parameter CLOCK_FREQ = 125_000_000,
+    parameter BAUD_RATE = 115_200
+) (
     input clk,
     input rst,
     input [31:0] mem_pc,
@@ -85,7 +89,10 @@ module mem_stage (
     wire io_en;
     wire br_inst;
 
-    io io (
+    io #(
+        .CLOCK_FREQ(CLOCK_FREQ),
+        .BAUD_RATE(BAUD_RATE)
+    ) io (
         .clk(clk),
         .rst(rst),
         .addr(mem_alu),
@@ -145,5 +152,26 @@ module mem_stage (
 
         .out(wb_inst)
     );
-    
+
+    /*
+    // System Verilog Assertions
+
+    we_mask_has_a_single_one_for_store_byte:
+        assert property ( @(posedge clk)
+            !(mem_inst[6:2] == `OPC_STORE_5 && mem_inst[14:12] == `FNC_SB)
+            || (we[3:0] == 4'b0001 || we[3:0] == 4'b0010 || we[3:0] == 4'b0100 || we[3:0] == 4'b1000)
+        ) else $error("store byte mask has more or less than a single one!");
+
+    we_mask_has_a_two_ones_for_store_half_word:
+        assert property ( @(posedge clk)
+            !(mem_inst[6:2] == `OPC_STORE_5 && mem_inst[14:12] == `FNC_SH)
+            || (we[3:0] == 4'b1100 || we[3:0] == 4'b0011)
+        ) else $error("store half word mask has more or less than two ones!");
+
+    we_mask_is_all_ones_for_store_word:
+       assert property ( @(posedge clk)
+            !(mem_inst[6:2] == `OPC_STORE_5 && mem_inst[14:12] == `FNC_SW)
+            || (we[3:0] == 4'b1111)
+        ) else $error("store word mask has less than a four ones!");
+    */
 endmodule

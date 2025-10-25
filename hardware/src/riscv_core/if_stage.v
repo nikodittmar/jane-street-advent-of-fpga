@@ -77,4 +77,12 @@ module if_stage #(
         .out(id_pc)
     );
 
+    /*
+    // System Verilog Assertions 
+
+    program_counter_eq_pc_reset_on_reset:
+        assert property ( @(posedge clk)
+            (rst) |=> (if_pc == RESET_PC)
+        ) else $error("");
+    */
 endmodule
