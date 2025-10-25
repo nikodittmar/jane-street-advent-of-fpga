@@ -3,17 +3,28 @@
 module if_control (
     input br_mispred,
     input target_taken,
+    input stall,
     
-    output reg [1:0] pc_sel
+    output reg [1:0] next_pc_sel,
+    output reg [1:0] override_pc_sel
 );
 
     always @(*) begin
-        pc_sel = `PC_4;
+        next_pc_sel = `PC_4;
+        override_pc_sel = `PC_4;
 
-        if (br_mispred) begin
-            pc_sel = `PC_ALU;
-        end else if (target_taken) begin 
-            pc_sel = `PC_TGT;
+        if (stall) begin 
+            if (br_mispred) begin
+                next_pc_sel = `PC_ALU;
+            end else if (target_taken) begin 
+                next_pc_sel = `PC_TGT;
+            end
+        end else begin 
+            if (br_mispred) begin
+                override_pc_sel = `PC_ALU;
+            end else if (target_taken) begin 
+                override_pc_sel = `PC_TGT;
+            end
         end
     end
 

@@ -22,6 +22,9 @@ reg uart_tx_data_in_valid;
 reg next_uart_tx_data_in_valid;
 wire uart_tx_data_in_ready;
 
+reg can_read;
+reg next_can_read;
+
 wire [7:0] uart_rx_data_out;
 wire uart_rx_data_out_valid;
 reg uart_rx_data_out_ready;
@@ -45,26 +48,7 @@ uart #(
     .serial_in(serial_in),
     .serial_out(serial_out)
 );
-/*
-module uart #(
-    parameter CLOCK_FREQ = 125_000_000,
-    parameter BAUD_RATE = 115_200
-) (
-    input clk,
-    input reset,
 
-    input [7:0] data_in,
-    input data_in_valid,
-    output data_in_ready,
-
-    output [7:0] data_out,
-    output data_out_valid,
-    input data_out_ready,
-
-    input serial_in,
-    output serial_out
-);
-*/
 reg [31:0] cycle_cnt;
 reg [31:0] inst_cnt;
 
@@ -86,6 +70,7 @@ always @ (posedge clk) begin
 
         br_inst_cnt <= 32'b0;
         br_suc_cnt <= 32'b0;
+        can_read <= 1'b0;
     end else begin 
         cycle_cnt <= next_cycle_cnt;
         inst_cnt <= next_inst_cnt;
@@ -98,6 +83,8 @@ always @ (posedge clk) begin
         uart_tx_data_in <= next_uart_tx_data_in;
         uart_tx_data_in_valid <= next_uart_tx_data_in_valid;
         uart_rx_data_out_ready <= next_uart_rx_data_out_ready;
+
+        can_read <= next_can_read;
     end
 end
 
@@ -114,6 +101,12 @@ always @(*) begin
 
     next_uart_rx_data_out_ready = 1'b1;
 
+    if (uart_rx_data_out_valid) begin 
+        next_can_read = 1'b1;
+    end else begin 
+        next_can_read = can_read;
+    end
+
     if (uart_tx_data_in_valid && uart_tx_data_in_ready) begin
         next_uart_tx_data_in_valid = 1'b0;
     end
@@ -121,10 +114,11 @@ always @(*) begin
     if (io_en) begin
         case(addr)
         `MEM_IO_UART_CTRL: begin
-            next_dout = { 30'b0, uart_rx_data_out_valid, uart_tx_data_in_ready };
+            next_dout = { 30'b0, uart_rx_data_out_valid | can_read, uart_tx_data_in_ready };
         end
         `MEM_IO_UART_RDATA: begin
             next_dout = { 24'b0, uart_rx_data_out };
+            next_can_read = 1'b0;
         end
         `MEM_IO_UART_TDATA: begin
             next_uart_tx_data_in = din[7:0];

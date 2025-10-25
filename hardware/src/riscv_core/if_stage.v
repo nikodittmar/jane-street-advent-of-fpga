@@ -20,6 +20,7 @@ module if_stage #(
     wire [31:0] pc4;
     assign pc4 = if_pc + 32'd4;
 
+    wire [31:0] pc_out;
     wire [31:0] next_pc;
 
     // MARK: Program Counter
@@ -30,27 +31,45 @@ module if_stage #(
         .clk(clk),
         .rst(rst),
         .stall(id_stall),
-        .pc_in(pc4),
+        .pc_in(next_pc),
 
-        .pc_out(next_pc)
+        .pc_out(pc_out)
     );
 
-    // MARK: PC Mux
+    // MARK: PC Override Mux
 
-    wire [$clog2(`PC_MUX_NUM_INPUTS)-1:0] pc_sel;
-    wire [`PC_MUX_NUM_INPUTS*32-1:0] pc_mux_in;
+    wire [$clog2(`PC_MUX_NUM_INPUTS)-1:0] override_pc_sel;
+    wire [`PC_MUX_NUM_INPUTS*32-1:0] override_pc_mux_in;
 
-    assign pc_mux_in[`PC_4 * 32 +: 32] = id_stall ? id_pc : next_pc;
-    assign pc_mux_in[`PC_ALU * 32 +: 32] = ex_alu;
-    assign pc_mux_in[`PC_TGT * 32 +: 32] = id_target;
+    assign override_pc_mux_in[`PC_4 * 32 +: 32] = id_stall ? id_pc : pc_out; // only passes if I do this??
+    assign override_pc_mux_in[`PC_ALU * 32 +: 32] = ex_alu;
+    assign override_pc_mux_in[`PC_TGT * 32 +: 32] = id_target;
 
     mux #(
         .NUM_INPUTS(`PC_MUX_NUM_INPUTS)
     ) pc_mux (
-        .in(pc_mux_in),
-        .sel(pc_sel),
+        .in(override_pc_mux_in),
+        .sel(override_pc_sel),
 
         .out(if_pc)
+    );
+
+    // MARK: Next PC Mux
+
+    wire [$clog2(`PC_MUX_NUM_INPUTS)-1:0] next_pc_sel;
+    wire [`PC_MUX_NUM_INPUTS*32-1:0] nex_pc_mux_in;
+
+    assign nex_pc_mux_in[`PC_4 * 32 +: 32] = pc4;
+    assign nex_pc_mux_in[`PC_ALU * 32 +: 32] = ex_alu;
+    assign nex_pc_mux_in[`PC_TGT * 32 +: 32] = id_target;
+
+    mux #(
+        .NUM_INPUTS(`PC_MUX_NUM_INPUTS)
+    ) next_pc_mux (
+        .in(nex_pc_mux_in),
+        .sel(next_pc_sel),
+
+        .out(next_pc)
     );
 
     // MARK: Control Logic
@@ -58,8 +77,10 @@ module if_stage #(
     if_control control (
         .br_mispred(ex_br_mispred),
         .target_taken(id_target_taken),
+        .stall(id_stall),
 
-        .pc_sel(pc_sel)
+        .next_pc_sel(next_pc_sel),
+        .override_pc_sel(override_pc_sel)
     );
 
     // MARK: Pipeline Registers
