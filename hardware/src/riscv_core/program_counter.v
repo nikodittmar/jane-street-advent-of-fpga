@@ -8,23 +8,26 @@ module program_counter #(
     output reg [31:0] pc_out
 );
 
+    reg [31:0] prev_pc;
+    reg [31:0] pc;
+
     reg buffered_pc;
     reg [31:0] pc_buf;
 
     always @(posedge clk) begin 
-        if (rst) begin 
-            pc_out <= RESET_PC;
-        end else if (stall) begin
-            pc_buf <= pc_in;
-            pc_out <= pc_in;
-            buffered_pc <= 1'b1;
+        if (rst) begin
+            pc <= RESET_PC;
+        end else begin
+            prev_pc <= pc;
+            pc <= pc_in;
+        end
+    end
+
+    always @(*) begin
+        if (stall) begin 
+            pc_out = prev_pc;
         end else begin 
-            if (buffered_pc) begin 
-                buffered_pc <= 1'b0;
-                pc_out <= pc_buf;
-            end else begin 
-                pc_out <= pc_in;
-            end
+            pc_out = pc;
         end
     end
 

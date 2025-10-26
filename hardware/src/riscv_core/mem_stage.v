@@ -21,10 +21,11 @@ module mem_stage #(
     output [31:0] wb_dmem_dout, 
     output [31:0] wb_io_dout, 
     output [31:0] wb_inst,
-    output [13:0] mem_addr,
+    output [31:0] mem_addr,
     output [31:0] mem_imem_din,
     output [3:0] mem_imem_we,
-    output mem_imem_en
+    output mem_imem_en,
+    output mem_bios_en
 );
     wire mem_reg_rst;
     wire mem_reg_we;
@@ -38,7 +39,7 @@ module mem_stage #(
 
     assign mem_imem_we = we;
     assign mem_imem_din = din;
-    assign mem_addr = mem_alu[15:2];
+    assign mem_addr = mem_alu;
 
     // MARK: Data In Mux
 
@@ -78,7 +79,7 @@ module mem_stage #(
       .clk(clk),
       .en(dmem_en),
       .we(we),
-      .addr(mem_addr),
+      .addr(mem_addr[15:2]),
       .din(din),
 
       .dout(wb_dmem_dout)
@@ -119,6 +120,7 @@ module mem_stage #(
         .br_inst(br_inst),
         .imem_en(mem_imem_en),
         .dmem_en(dmem_en),
+        .bios_en(mem_bios_en),
         .io_en(io_en)
     );
 

@@ -12,7 +12,8 @@ module if_stage #(
     input [31:0] ex_alu,
     
     output [31:0] id_pc,
-    output [31:0] if_addr
+    output [31:0] if_addr,
+    output if_bios_en
 );  
     wire [31:0] if_pc;
     assign if_addr = if_pc;
@@ -41,13 +42,13 @@ module if_stage #(
     wire [$clog2(`PC_MUX_NUM_INPUTS)-1:0] override_pc_sel;
     wire [`PC_MUX_NUM_INPUTS*32-1:0] override_pc_mux_in;
 
-    assign override_pc_mux_in[`PC_4 * 32 +: 32] = id_stall ? id_pc : pc_out; // only passes if I do this??
+    assign override_pc_mux_in[`PC_4 * 32 +: 32] = pc_out;
     assign override_pc_mux_in[`PC_ALU * 32 +: 32] = ex_alu;
     assign override_pc_mux_in[`PC_TGT * 32 +: 32] = id_target;
 
     mux #(
         .NUM_INPUTS(`PC_MUX_NUM_INPUTS)
-    ) pc_mux (
+    ) override_pc_mux (
         .in(override_pc_mux_in),
         .sel(override_pc_sel),
 
@@ -75,12 +76,14 @@ module if_stage #(
     // MARK: Control Logic
 
     if_control control (
+        .pc(if_pc),
         .br_mispred(ex_br_mispred),
         .target_taken(id_target_taken),
         .stall(id_stall),
 
         .next_pc_sel(next_pc_sel),
-        .override_pc_sel(override_pc_sel)
+        .override_pc_sel(override_pc_sel),
+        .bios_en(if_bios_en)
     );
 
     // MARK: Pipeline Registers

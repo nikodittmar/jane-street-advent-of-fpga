@@ -9,32 +9,19 @@ module cpu #(
     input serial_in,
     output serial_out
 );
-    wire stall;
-    wire flush;
 
-    // Pipelined program counter
-    wire [31:0] if_pc;
+    // MARK: Wires
     wire [31:0] id_pc;
     wire [31:0] ex_pc;
     wire [31:0] mem_pc;
-    wire [31:0] wb_pc;
-
-    // Pipelined instructions
-    wire [31:0] if_addr; // IF does not own the memory so it outputs an address
-    wire [31:0] if_bios_inst;
-    wire [31:0] if_imem_inst;
-    wire [31:0] id_inst;
+    wire [31:0] if_addr;
     wire [31:0] ex_inst;
     wire [31:0] mem_inst;
     wire [31:0] wb_inst;
-
-    // Branch predictor/target generator signals
     wire id_target_taken;
     wire [31:0] id_target;
     wire ex_br_mispred;
     wire [31:0] ex_alu;
-
-    wire ex_stall;
     wire id_stall;
     wire ex_flush;
     wire [31:0] id_bios_inst;
@@ -52,15 +39,13 @@ module cpu #(
     wire [31:0] wb_io_dout;
     wire [31:0] wb_wdata;
     wire [31:0] mem_alu;
-
-    // remove accidental dups
-    // wire [31:0] wb_dmem_dout;
-    // wire [31:0] wb_io_dout;
-
-    // provide a generic MEM-side word address (used for IMEM writes)
-    wire [13:0] mem_addr;
-
+    wire [31:0] mem_addr;
     wire [31:0] wb_bios_dout;
+    wire [31:0] mem_imem_din;
+    wire [3:0] mem_imem_we;
+    wire mem_imem_en;
+    wire mem_bios_en;
+    wire if_bios_en;
 
     // MARK: Instruction Fetch
 
@@ -76,7 +61,8 @@ module cpu #(
         .ex_alu(ex_alu),
 
         .id_pc(id_pc),
-        .if_addr(if_addr)
+        .if_addr(if_addr),
+        .if_bios_en(if_bios_en)
     );
 
     // MARK: Instruction Decode
@@ -132,17 +118,6 @@ module cpu #(
 
     // MARK: Memory
 
-    // IMEM A-port controls (from MEM stage)
-    wire [31:0] mem_imem_din;
-    wire [13:0] mem_imem_addr;
-    wire [3:0]  mem_imem_we;
-    wire        mem_imem_en;
-
-    // IF B-port controls/returns
-    wire [13:0] if_imem_addr;
-    wire [31:0] if_imem_dout;
-    wire        if_imem_en;
-
     mem_stage #(
         .CLOCK_FREQ(CPU_CLOCK_FREQ),
         .BAUD_RATE(BAUD_RATE)
@@ -161,19 +136,15 @@ module cpu #(
         .wb_alu(wb_alu),
         .wb_pc4(wb_pc4),
         .wb_dmem_dout(wb_dmem_dout), 
-        .wb_io_dout(wb_io_dout),   // FIX: was wb_io_dout declared; pass-through
+        .wb_io_dout(wb_io_dout),
         .wb_inst(wb_inst),
         .mem_addr(mem_addr),
 
         .mem_imem_din(mem_imem_din),
         .mem_imem_we(mem_imem_we),
-        .mem_imem_en(mem_imem_en)
-        // if mem_stage actually has mem_imem_addr port, add it there;
-        // we tie mem_imem_addr below to mem_addr to keep structure minimal
+        .mem_imem_en(mem_imem_en),
+        .mem_bios_en(mem_bios_en)
     );
-
-    // tie address bus if mem_stage exposes only mem_addr (keep structure)
-    assign mem_imem_addr = mem_addr; // FIX
 
     // MARK: Writeback
 
@@ -183,61 +154,35 @@ module cpu #(
         .wb_pc4(wb_pc4),
         .wb_bios_dout(wb_bios_dout), 
         .wb_dmem_dout(wb_dmem_dout), 
-        .wb_io_dout(wb_io_dout),     // FIX: was mem_io_dout
-        .wb_inst(wb_inst),           // FIX: was mem_inst
+        .wb_io_dout(wb_io_dout),
+        .wb_inst(wb_inst),
 
         .wb_regwen(wb_regwen),
         .wb_wdata(wb_wdata)
     );
 
-    // MARK: Shared
-
-    // BIOS Memory
-    // Synchronous read: read takes one cycle
-    // Synchronous write: write takes one cycle
-    wire [11:0] mem_bios_addr, if_bios_addr;
-    wire [31:0] if_bios_dout;
-    wire mem_bios_en, if_bios_en;
-
-    // decode IF address: BIOS vs IMEM (keep minimal/generic)
-    assign if_bios_en   = (if_addr[31:28] == 4'h4);  // RESET_PC base nibble
-    assign if_bios_addr = if_addr[13:2];             // word index
-    // keep BIOS A-port inactive unless you later write it from MEM
-    assign mem_bios_en  = 1'b0;
-    assign mem_bios_addr= 12'b0;
+    // MARK: BIOS Memory
 
     bios_mem bios_mem (
       .clk(clk),
-      .ena(mem_bios_en),
-      .addra(mem_bios_addr),
-      .douta(wb_bios_dout),
-      .enb(if_bios_en),         // FIX: correct enables/addr/data mapping
-      .addrb(if_bios_addr),     // FIX
-      .doutb(if_bios_dout)      // FIX
+      .ena(if_bios_en),
+      .addra(if_addr[13:2]),
+      .douta(id_bios_inst),
+      .enb(mem_bios_en),
+      .addrb(mem_addr[13:2]),
+      .doutb(wb_bios_dout)
     );
 
-    // Instruction Memory
-    // Synchronous read: read takes one cycle
-    // Synchronous write: write takes one cycle
-    // Write-byte-enable: select which of the four bytes to write
-    wire [13:0] if_imem_addr_unused; // (keep naming minimal)
-    // non-BIOS fetches go to IMEM
-    assign if_imem_en   = ~if_bios_en;
-    assign if_imem_addr = if_addr[15:2]; // word index
-
+    // MARK: Instruction Memory
+    
     imem imem (
       .clk(clk),
       .ena(mem_imem_en),
       .wea(mem_imem_we),
-      .addra(mem_imem_addr),
+      .addra(mem_addr[15:2]),
       .dina(mem_imem_din),
-      .addrb(if_imem_addr),
-      .doutb(if_imem_dout)
+      .addrb(if_addr[15:2]),
+      .doutb(id_imem_inst)
     );
 
-    // Feed IF-side instruction words into ID inputs
-    assign id_bios_inst = if_bios_dout;  // FIX: connect to ID
-    assign id_imem_inst = if_imem_dout;  // FIX: connect to ID
-
-    reg [31:0] tohost_csr = 0;
 endmodule

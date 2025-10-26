@@ -121,10 +121,11 @@ always @ (*) begin
     
     `OPC_LOAD_5: begin
 
-        casez (addr[31:28])
+        case (addr[31:28])
         `ADDR_IO: io_en = 1'b1;
         `ADDR_BIOS: bios_en = 1'b1;
         `ADDR_DMEM: dmem_en = 1'b1;
+        `ADDR_MIRROR: dmem_en = 1'b1;
         endcase
 
         case (funct3)
@@ -147,13 +148,21 @@ always @ (*) begin
     end
     `OPC_STORE_5: begin
 
-        if (addr[31:28] == `ADDR_IO) begin
+        case (addr[31:28])
+        `ADDR_IO: begin 
             io_en = 1'b1;
-        end else if (pc[30]) begin
-            imem_en = 1'b1;
-        end else begin 
+        end
+        `ADDR_DMEM: begin 
             dmem_en = 1'b1;
         end
+        `ADDR_IMEM: begin 
+            if (pc[30]) imem_en = 1'b1;
+        end
+        `ADDR_MIRROR: begin 
+            if (pc[30]) imem_en = 1'b1;
+            dmem_en = 1'b1;
+        end
+        endcase
 
         if (has_rs2 && wb_has_rd && rs2 == wb_rd) begin
             din_sel = `DIN_WDATA;

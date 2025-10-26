@@ -17,18 +17,36 @@ module io #(
 );
 
 reg [7:0] uart_tx_data_in;
-reg [7:0] next_uart_tx_data_in;
 reg uart_tx_data_in_valid;
-reg next_uart_tx_data_in_valid;
 wire uart_tx_data_in_ready;
 
-reg can_read;
-reg next_can_read;
+reg [7:0] next_uart_tx_data_in;
+reg next_uart_tx_data_in_valid;
 
 wire [7:0] uart_rx_data_out;
 wire uart_rx_data_out_valid;
 reg uart_rx_data_out_ready;
 reg next_uart_rx_data_out_ready;
+
+reg [7:0] rx_buf;
+reg [7:0] next_rx_buf;
+
+reg can_read;
+reg next_can_read;
+
+reg [31:0] cycle_cnt;
+reg [31:0] inst_cnt;
+
+reg [31:0] br_inst_cnt;
+reg [31:0] br_suc_cnt;
+
+reg [31:0] next_dout;
+
+reg [31:0] next_cycle_cnt;
+reg [31:0] next_inst_cnt;
+
+reg [31:0] next_br_inst_cnt;
+reg [31:0] next_br_suc_cnt;
 
 uart #(
     .CLOCK_FREQ(CLOCK_FREQ),
@@ -49,28 +67,21 @@ uart #(
     .serial_out(serial_out)
 );
 
-reg [31:0] cycle_cnt;
-reg [31:0] inst_cnt;
-
-reg [31:0] br_inst_cnt;
-reg [31:0] br_suc_cnt;
-
-reg [31:0] next_dout;
-
-reg [31:0] next_cycle_cnt;
-reg [31:0] next_inst_cnt;
-
-reg [31:0] next_br_inst_cnt;
-reg [31:0] next_br_suc_cnt;
-
 always @ (posedge clk) begin
     if (rst) begin 
         cycle_cnt <= 32'b0;
         inst_cnt <= 32'b0;
-
         br_inst_cnt <= 32'b0;
         br_suc_cnt <= 32'b0;
+
+        dout <= 32'b0;
+
+        uart_tx_data_in <= 8'h00;
+        uart_tx_data_in_valid <= 1'b0;
+
+        rx_buf <= 8'h00;
         can_read <= 1'b0;
+        uart_rx_data_out_ready <= 1'b1;
     end else begin 
         cycle_cnt <= next_cycle_cnt;
         inst_cnt <= next_inst_cnt;
@@ -82,47 +93,52 @@ always @ (posedge clk) begin
 
         uart_tx_data_in <= next_uart_tx_data_in;
         uart_tx_data_in_valid <= next_uart_tx_data_in_valid;
-        uart_rx_data_out_ready <= next_uart_rx_data_out_ready;
 
+        rx_buf <= next_rx_buf;
         can_read <= next_can_read;
+        uart_rx_data_out_ready <= next_uart_rx_data_out_ready;
     end
 end
 
 always @(*) begin
-    next_cycle_cnt = cycle_cnt + 32'b1;
-    next_inst_cnt = inst_cnt + 32'b1; // TODO: ignore for now, not needed for initial tests
+    next_cycle_cnt = cycle_cnt + 32'd1;
+    next_inst_cnt = inst_cnt  + 32'd1;
 
-    next_br_inst_cnt = br_inst ? br_inst_cnt + 1 : br_inst_cnt;
-    next_br_suc_cnt = br_suc ? br_suc_cnt + 1 : br_suc_cnt;
+    next_br_inst_cnt = br_inst ? (br_inst_cnt + 32'd1) : br_inst_cnt;
+    next_br_suc_cnt = br_suc  ? (br_suc_cnt  + 32'd1) : br_suc_cnt;
+
     next_dout = 32'b0;
 
     next_uart_tx_data_in = uart_tx_data_in;
     next_uart_tx_data_in_valid = uart_tx_data_in_valid;
 
-    next_uart_rx_data_out_ready = 1'b1;
-
-    if (uart_rx_data_out_valid) begin 
-        next_can_read = 1'b1;
-    end else begin 
-        next_can_read = can_read;
-    end
+    next_rx_buf = rx_buf;
+    next_can_read = can_read;
+    next_uart_rx_data_out_ready = uart_rx_data_out_ready;
 
     if (uart_tx_data_in_valid && uart_tx_data_in_ready) begin
         next_uart_tx_data_in_valid = 1'b0;
     end
 
+    if (uart_rx_data_out_valid && !can_read) begin 
+        next_rx_buf = uart_rx_data_out;
+        next_can_read = 1'b1;
+        next_uart_rx_data_out_ready = 1'b0;
+    end
+
     if (io_en) begin
         case(addr)
         `MEM_IO_UART_CTRL: begin
-            next_dout = { 30'b0, uart_rx_data_out_valid | can_read, uart_tx_data_in_ready };
+            next_dout = { 30'b0, can_read, uart_tx_data_in_ready };
         end
         `MEM_IO_UART_RDATA: begin
-            next_dout = { 24'b0, uart_rx_data_out };
+            next_dout = { 24'b0, rx_buf };
             next_can_read = 1'b0;
+            next_uart_rx_data_out_ready = 1'b1;
         end
         `MEM_IO_UART_TDATA: begin
             next_uart_tx_data_in = din[7:0];
-            next_uart_tx_data_in_valid = 1'b1;
+            next_uart_tx_data_in_valid  = 1'b1;
         end
         `MEM_IO_CYCLE_CNT: begin
             next_dout = cycle_cnt;
@@ -133,7 +149,6 @@ always @(*) begin
         `MEM_IO_RST_CNT: begin 
             next_cycle_cnt = 32'b0;
             next_inst_cnt = 32'b0;
-
             next_br_inst_cnt = 32'b0;
             next_br_suc_cnt = 32'b0;
         end 
@@ -146,4 +161,5 @@ always @(*) begin
         endcase
     end
 end
+
 endmodule

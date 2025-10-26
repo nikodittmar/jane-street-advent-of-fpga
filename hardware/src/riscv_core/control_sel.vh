@@ -108,9 +108,9 @@
 // Memory nibble
 `define ADDR_BIOS               4'b0100
 `define ADDR_IO                 4'b1000
-`define ADDR_DMEM               4'b00?1
-`define ADDR_IMEM               4'b001?
-`define ADDR_IDMEM              4'b00??
+`define ADDR_DMEM               4'b0001
+`define ADDR_IMEM               4'b0010
+`define ADDR_MIRROR             4'b0011
 
 // Memory pack size
 `define MEM_SIZE_BYTE           2'b00

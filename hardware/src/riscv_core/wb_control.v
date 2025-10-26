@@ -138,19 +138,21 @@ always @ (*) begin
             end
             endcase
         endcase
-    `OPC_LOAD_5:
+    `OPC_LOAD_5: begin
+
+        wb_sel = `WB_MEM;
+        regwen = 1'b1;
+
+        case(addr[31:28])
+        `ADDR_IO: dout_sel = `DOUT_IO;
+        `ADDR_BIOS: dout_sel = `DOUT_BIOS;
+        `ADDR_DMEM: dout_sel = `DOUT_DMEM;
+        `ADDR_MIRROR: dout_sel = `DOUT_DMEM;
+        endcase
+
         case (funct3)
         `FNC_LB: begin
             // LB
-            wb_sel = `WB_MEM;
-            regwen = 1'b1;
-
-            casez(addr[31:28])
-            `ADDR_IO: dout_sel = `DOUT_IO;
-            `ADDR_DMEM: dout_sel = `DOUT_DMEM;
-            `ADDR_BIOS: dout_sel = `DOUT_BIOS;
-            endcase
-
             case(addr[1:0])
             2'b00: mask = 4'b0001;
             2'b01: mask = 4'b0010;
@@ -160,15 +162,6 @@ always @ (*) begin
         end
         `FNC_LH: begin
             // LH
-            wb_sel = `WB_MEM;
-            regwen = 1'b1;
-
-            casez(addr[31:28])
-            `ADDR_IO: dout_sel = `DOUT_IO;
-            `ADDR_DMEM: dout_sel = `DOUT_DMEM;
-            `ADDR_BIOS: dout_sel = `DOUT_BIOS;
-            endcase
-
             case(addr[1:0])
             2'b00: mask = 4'b0011;
             2'b10: mask = 4'b1100;
@@ -176,28 +169,10 @@ always @ (*) begin
         end
         `FNC_LW: begin
             // LW
-            wb_sel = `WB_MEM;
-            regwen = 1'b1;
-
-            casez(addr[31:28])
-            `ADDR_IO: dout_sel = `DOUT_IO;
-            `ADDR_DMEM: dout_sel = `DOUT_DMEM;
-            `ADDR_BIOS: dout_sel = `DOUT_BIOS;
-            endcase
-
             mask = 4'b1111;
         end
         `FNC_LBU: begin
             // LBU
-            wb_sel = `WB_MEM;
-            regwen = 1'b1;
-
-            casez(addr[31:28])
-            `ADDR_IO: dout_sel = `DOUT_IO;
-            `ADDR_DMEM: dout_sel = `DOUT_DMEM;
-            `ADDR_BIOS: dout_sel = `DOUT_BIOS;
-            endcase
-
             case(addr[1:0])
             2'b00: mask = 4'b0001;
             2'b01: mask = 4'b0010;
@@ -209,15 +184,6 @@ always @ (*) begin
         end
         `FNC_LHU: begin
             // LHU
-            wb_sel = `WB_MEM;
-            regwen = 1'b1;
-
-            casez(addr[31:28])
-            `ADDR_IO: dout_sel = `DOUT_IO;
-            `ADDR_DMEM: dout_sel = `DOUT_DMEM;
-            `ADDR_BIOS: dout_sel = `DOUT_BIOS;
-            endcase
-
             case(addr[1:0])
             2'b00: mask = 4'b0011;
             2'b10: mask = 4'b1100;
@@ -226,6 +192,7 @@ always @ (*) begin
             mask_un = 1'b1;
         end
         endcase
+    end
     `OPC_STORE_5:
         case (funct3)
         `FNC_SB: begin

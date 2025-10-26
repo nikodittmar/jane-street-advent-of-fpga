@@ -1,12 +1,14 @@
 `include "control_sel.vh"
 
 module if_control (
+    input [31:0] pc,
     input br_mispred,
     input target_taken,
     input stall,
     
     output reg [1:0] next_pc_sel,
-    output reg [1:0] override_pc_sel
+    output reg [1:0] override_pc_sel,
+    output reg bios_en
 );
 
     always @(*) begin
@@ -26,6 +28,8 @@ module if_control (
                 override_pc_sel = `PC_TGT;
             end
         end
+
+        bios_en = pc[30] == `INST_BIOS;
     end
 
 endmodule
