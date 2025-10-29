@@ -6,10 +6,12 @@ module bios_tb();
   reg clk, rst;
   parameter CPU_CLOCK_PERIOD = 20;
   parameter CPU_CLOCK_FREQ   = 1_000_000_000 / CPU_CLOCK_PERIOD;
-  localparam BAUD_RATE       = 10_000_000;
+  // localparam BAUD_RATE       = 10_000_000;
+  localparam BAUD_RATE = 115200;
   localparam BAUD_PERIOD     = 1_000_000_000 / BAUD_RATE; // 8680.55 ns
 
-  localparam TIMEOUT_CYCLE = 100_000;
+  // localparam TIMEOUT_CYCLE = 100_000;
+  localparam TIMEOUT_CYCLE = 10000000000;
 
   initial clk = 0;
   always #(CPU_CLOCK_PERIOD/2) clk = ~clk;

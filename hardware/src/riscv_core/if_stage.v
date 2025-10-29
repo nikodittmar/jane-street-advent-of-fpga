@@ -76,7 +76,8 @@ module if_stage #(
     // MARK: Control Logic
 
     if_control control (
-        .pc(if_pc),
+        .rst(rst),
+        .pc(pc_out),
         .br_mispred(ex_br_mispred),
         .target_taken(id_target_taken),
         .stall(id_stall),

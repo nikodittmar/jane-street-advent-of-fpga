@@ -89,6 +89,7 @@ module mem_stage #(
 
     wire io_en;
     wire br_inst;
+    wire bubble;
 
     io #(
         .CLOCK_FREQ(CLOCK_FREQ),
@@ -101,6 +102,7 @@ module mem_stage #(
         .io_en(io_en),
         .br_inst(br_inst),
         .br_suc(mem_br_suc),
+        .bubble(bubble),
         .serial_in(serial_in),
 
         .serial_out(serial_out),
@@ -121,7 +123,8 @@ module mem_stage #(
         .imem_en(mem_imem_en),
         .dmem_en(dmem_en),
         .bios_en(mem_bios_en),
-        .io_en(io_en)
+        .io_en(io_en),
+        .bubble(bubble)
     );
 
     // MARK: Pipeline Registers

@@ -28,7 +28,7 @@
 `define IMM_B                   3'b010 // B-type immediates
 `define IMM_U                   3'b011 // U-type immediates
 `define IMM_J                   3'b100 // J-type immediates
-`define IMM_DONT_CARE           3'bxxx
+`define IMM_DONT_CARE           3'b000
 
 // Target generator forwarding mux
 `define TGT_GEN_FWD_NUM_INPUTS  4
@@ -41,7 +41,7 @@
 `define TGT_GEN_JAL                 2'b00
 `define TGT_GEN_JALR                2'b01
 `define TGT_GEN_BR                  2'b10
-`define TGT_GEN_DONT_CARE           2'bxx
+`define TGT_GEN_DONT_CARE           2'b00
 
 // ***** EX STAGE *****
 
@@ -52,19 +52,19 @@
 `define EX_FWD_WB               2'b10
 
 // BrUn
-`define BRUN_DONT_CARE          1'bx
+`define BRUN_DONT_CARE          1'b0
 
 // ALU A input sel
 `define A_NUM_INPUTS            2
 `define A_REG                   1'b0
 `define A_PC                    1'b1
-`define A_DONT_CARE             1'bx
+`define A_DONT_CARE             1'b0
 
 // ALU B input sel
 `define B_NUM_INPUTS            2
 `define B_REG                   1'b0
 `define B_IMM                   1'b1
-`define B_DONT_CARE             1'bx
+`define B_DONT_CARE             1'b0
 
 // ALU sel
 `define ALU_ADD                 4'b0000
@@ -79,18 +79,18 @@
 `define ALU_SRA                 4'b1101
 `define ALU_A_PLUS_4            4'b1110
 `define ALU_BSEL                4'b1111
-`define ALU_DONT_CARE           4'bxxxx
+`define ALU_DONT_CARE           4'b0000
 
 // CSR mux sel
 `define CSR_MUX_NUM_INPUTS      2
 `define CSR_IMM                 1'b0
 `define CSR_RD1                 1'b1
-`define CSR_DONT_CARE           1'bx
+`define CSR_DONT_CARE           1'b0
 
 // PC redirect sel
 `define REDIR_ALU               1'b0
 `define REDIR_PC4               1'b1
-`define REDIR_DONT_CARE         1'bx
+`define REDIR_DONT_CARE         1'b0
 
 // ***** MEM STAGE *****
 
@@ -99,7 +99,7 @@
 `define DIN_WDATA             1'b0
 `define DIN_RD2               1'b1
 //`define DIN_FPU               2'b10
-`define DIN_DONT_CARE         1'bx
+`define DIN_DONT_CARE         1'b0
 
 // PC sel
 `define MEM_PC_4                1'b0
@@ -116,7 +116,7 @@
 `define MEM_SIZE_BYTE           2'b00
 `define MEM_SIZE_HALF           2'b01
 `define MEM_SIZE_WORD           2'b10
-`define MEM_SIZE_UNDEFINED      2'bxx
+`define MEM_SIZE_UNDEFINED      2'b11 // Doesn't work if it is 00?
 
 // Memory mapped I/O
 `define MEM_IO_UART_CTRL        32'h8000_0000
@@ -135,13 +135,21 @@
 `define DOUT_BIOS               2'b00
 `define DOUT_DMEM               2'b01
 `define DOUT_IO                 2'b10
-`define DOUT_DONT_CARE          2'bxx
+`define DOUT_DONT_CARE          2'b00
 
 // WB sel
 `define WB_NUM_INPUTS           3
 `define WB_PC4                  2'b00
 `define WB_ALU                  2'b01
 `define WB_MEM                  2'b10
-`define WB_DONT_CARE            2'bxx
+`define WB_DONT_CARE            2'b11
+
+// ***** FLOATING POINT *****
+
+// FPU sel
+`define FPU_ADD                 2'b00
+`define FPU_MADD                2'b01
+`define FPU_CVT                 2'b10
+`define FPU_DONT_CARE           3'b00
 
 `endif // CONTROL_SEL

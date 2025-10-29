@@ -13,7 +13,8 @@ module mem_control (
     output reg imem_en,
     output reg dmem_en,
     output reg bios_en,
-    output reg io_en
+    output reg io_en,
+    output reg bubble
 );
 
 wire [4:0] opcode5;
@@ -35,6 +36,8 @@ assign has_rs2 = inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[
 
 assign wb_rd = wb_inst[11:7];
 assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
+
+assign bubble = inst == `NOP;
 
 always @ (*) begin
     din_sel = `DIN_DONT_CARE;

@@ -11,6 +11,7 @@ module io #(
     input io_en,
     input br_inst, 
     input br_suc,
+    input bubble,
     input serial_in,
     output serial_out,
     output reg [31:0] dout
@@ -102,7 +103,7 @@ end
 
 always @(*) begin
     next_cycle_cnt = cycle_cnt + 32'd1;
-    next_inst_cnt = inst_cnt  + 32'd1;
+    next_inst_cnt = bubble ? inst_cnt : inst_cnt + 32'd1;
 
     next_br_inst_cnt = br_inst ? (br_inst_cnt + 32'd1) : br_inst_cnt;
     next_br_suc_cnt = br_suc  ? (br_suc_cnt  + 32'd1) : br_suc_cnt;

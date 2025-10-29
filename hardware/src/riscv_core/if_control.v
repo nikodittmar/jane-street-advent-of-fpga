@@ -1,6 +1,7 @@
 `include "control_sel.vh"
 
 module if_control (
+    input rst,
     input [31:0] pc,
     input br_mispred,
     input target_taken,
@@ -15,7 +16,10 @@ module if_control (
         next_pc_sel = `PC_4;
         override_pc_sel = `PC_4;
 
-        if (stall) begin 
+        if (rst) begin 
+            next_pc_sel = `PC_4;
+            override_pc_sel = `PC_4;
+        end else if (stall) begin 
             if (br_mispred) begin
                 next_pc_sel = `PC_ALU;
             end else if (target_taken) begin 
