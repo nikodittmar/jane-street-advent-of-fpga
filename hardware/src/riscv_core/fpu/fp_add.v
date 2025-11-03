@@ -30,7 +30,7 @@ module fp_add (
 
     wire [4:0] man_lzc;
 
-    lzc lzc (
+    lzc24 lzc (
         .in(man_sum[23:0]),
         .count(man_lzc)
     );
