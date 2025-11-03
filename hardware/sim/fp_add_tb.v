@@ -56,9 +56,9 @@ module fp_add_tb();
         a = 32'h400C_CCCD; b = 32'h400C_CCCD; #1;
         assert(res == 32'h408C_CCCD) else $display("ERROR: 2.2+2.2 expected 408CCCCD, got %h", res);
 
-        // 4.84 + (-0.84) ~= 4.0  (truncation -> 0x407FD70C)
-        a = 32'h409A_E148; b = 32'hBF57_AE14; #1; // 4.84 + (-0.84)
-        assert(res == 32'h407F_D70C) else $display("ERROR: 4.84+(-0.84) expected 407FD70C (trunc), got %h", res);
+        // 4.84 + (-0.84) = 4.0
+        a = 32'h409A_E148; b = 32'hBF57_0A3D; #1; // 4.84 + (-0.84)
+        assert(res == 32'h4080_0000) else $display("ERROR: 4.84+(-0.84) expected 40800000, got %h", res);
 
         // --- sign tests ---
         // (-1.5) + 2.0 = 0.5

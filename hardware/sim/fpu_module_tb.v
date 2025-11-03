@@ -4,14 +4,15 @@
 module fpu_module_tb();
 
     reg  [1:0]  sel;
-    reg  [31:0] op1, op2, op3;
+    reg  [31:0] fs1, fs2, fs3, rs1;
     wire [31:0] res;
 
     fpu dut (
         .sel(sel),
-        .op1(op1),
-        .op2(op2),
-        .op3(op3),
+        .fs1(fs1),
+        .fs2(fs2),
+        .fs3(fs3),
+        .rs1(rs1),
         .res(res)
     );
 
@@ -27,45 +28,73 @@ module fpu_module_tb();
         // -------------------------
         // FADD.S
         // -------------------------
-        sel = `FPU_ADD;
+        sel = `FPU_ADD; fs3 = 32'h0; rs1 = 32'h0;
 
-        op1 = 32'h3F80_0000; op2 = 32'h3F80_0000; op3 = 32'h0000_0000; #1;
+        fs1 = 32'h3F80_0000; fs2 = 32'h3F80_0000; #1;
         assert(res == 32'h4000_0000) else $display("ERROR: FADD 1.0+1.0 expected 40000000, got %h", res);
 
-        op1 = 32'hC00C_CCCD; op2 = 32'h400C_CCCD; op3 = 32'h0000_0000; #1;
+        fs1 = 32'hC00C_CCCD; fs2 = 32'h400C_CCCD; #1;
         assert(res == 32'h0000_0000) else $display("ERROR: FADD -x + x expected 00000000, got %h", res);
 
-        op1 = 32'h400C_CCCD; op2 = 32'h400C_CCCD; op3 = 32'h0000_0000; #1;
+        fs1 = 32'h400C_CCCD; fs2 = 32'h400C_CCCD; #1;
         assert(res == 32'h408C_CCCD) else $display("ERROR: FADD 2.2+2.2 expected 408CCCCD, got %h", res);
 
-        op1 = 32'h0000_0000; op2 = 32'h0000_0000; op3 = 32'h0000_0000; #1;
+        fs1 = 32'h0000_0000; fs2 = 32'h0000_0000; #1;
         assert(res == 32'h0000_0000) else $display("ERROR: FADD 0+0 expected 00000000, got %h", res);
 
-        op1 = 32'h0000_0000; op2 = 32'h400C_CCCD; op3 = 32'h0000_0000; #1;
+        fs1 = 32'h0000_0000; fs2 = 32'h400C_CCCD; #1;
         assert(res == 32'h400C_CCCD) else $display("ERROR: FADD 0+2.2 expected 400CCCCD, got %h", res);
 
-        op1 = 32'h400C_CCCD; op2 = 32'h0000_0000; op3 = 32'h0000_0000; #1;
+        fs1 = 32'h400C_CCCD; fs2 = 32'h0000_0000; #1;
         assert(res == 32'h400C_CCCD) else $display("ERROR: FADD 2.2+0 expected 400CCCCD, got %h", res);
 
-        op1 = 32'h409A_E148; op2 = 32'hBF57_0A3D; op3 = 32'h0000_0000; #1;
+        fs1 = 32'h409A_E148; fs2 = 32'hBF57_0A3D; #1;
         assert(res == 32'h4080_0000) else $display("ERROR: FADD 4.84+(-0.84) expected 40800000, got %h", res);
 
         // -------------------------
         // FMADD.S
         // -------------------------
-        sel = `FPU_MADD;
+        sel = `FPU_MADD; rs1 = 32'h0;
 
-        op1 = 32'h400C_CCCD; op2 = 32'h400C_CCCD; op3 = 32'h0000_0000; #1;
+        fs1 = 32'h400C_CCCD; fs2 = 32'h400C_CCCD; fs3 = 32'h0000_0000; #1;
         assert(res == 32'h409A_E148) else $display("ERROR: FMADD 2.2*2.2+0 expected 409AE148, got %h", res);
 
-        op1 = 32'h400C_CCCD; op2 = 32'h400C_CCCD; op3 = 32'hBF57_0A3D; #1;
+        fs1 = 32'h400C_CCCD; fs2 = 32'h400C_CCCD; fs3 = 32'hBF57_0A3D; #1;
         assert(res == 32'h4080_0000) else $display("ERROR: FMADD 2.2*2.2+(-0.84) expected 40800000, got %h", res);
 
-        op1 = 32'h0000_0000; op2 = 32'h400C_CCCD; op3 = 32'h400C_CCCD; #1;
+        fs1 = 32'h0000_0000; fs2 = 32'h400C_CCCD; fs3 = 32'h400C_CCCD; #1;
         assert(res == 32'h400C_CCCD) else $display("ERROR: FMADD 0*2.2+2.2 expected 400CCCCD, got %h", res);
 
-        op1 = 32'h400C_CCCD; op2 = 32'h0000_0000; op3 = 32'h400C_CCCD; #1;
+        fs1 = 32'h400C_CCCD; fs2 = 32'h0000_0000; fs3 = 32'h400C_CCCD; #1;
         assert(res == 32'h400C_CCCD) else $display("ERROR: FMADD 2.2*0+2.2 expected 400CCCCD, got %h", res);
+
+        // -------------------------
+        // FSGNJ.S
+        // -------------------------
+        sel = `FPU_SGNJ; fs3 = 32'h0; rs1 = 32'h0;
+
+        fs1 = 32'h408E_147B; fs2 = 32'hBECC_CCCD; #1;
+        assert(res == 32'hC08E_147B) else $display("ERROR: FSGNJ expected C08E147B, got %h", res);
+
+        fs1 = 32'hBECC_CCCD; fs2 = 32'h408E_147B; #1;
+        assert(res == 32'h3ECC_CCCD) else $display("ERROR: FSGNJ expected 3ECCCCCD, got %h", res);
+
+        // -------------------------
+        // FCVT.S.W
+        // -------------------------
+        sel = `FPU_CVT; fs1 = 32'h0; fs2 = 32'h0; fs3 = 32'h0;
+
+        rs1 = 32'h0000_000F; #1;
+        assert(res == 32'h4170_0000) else $display("ERROR: FCVT.S.W 0x0000000F expected 41700000, got %h", res);
+
+        rs1 = 32'hFFFF_FFF1; #1;
+        assert(res == 32'hC170_0000) else $display("ERROR: FCVT.S.W 0xFFFFFFF1 expected C1700000, got %h", res);
+
+        rs1 = 32'h0000_05DC; #1;
+        assert(res == 32'h44BB_8000) else $display("ERROR: FCVT.S.W 0x000005DC expected 44BB8000, got %h", res);
+
+        rs1 = 32'hFFFF_FC13; #1;
+        assert(res == 32'hC47B_4000) else $display("ERROR: FCVT.S.W 0xFFFFFC13 expected C47B4000, got %h", res);
 
         $display("FINISHED: FPU testbench complete");
         $finish;

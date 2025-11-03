@@ -20,9 +20,12 @@ module fp_add (
     wire [7:0] exp_diff = lg_exp - sm_exp;
 
     wire [23:0] lg_man = a_larger ? a_man : b_man;
-    wire [23:0] sm_man = (a_larger ? b_man : a_man) >> exp_diff;
+    wire [23:0] sm_raw = a_larger ? b_man : a_man;
 
-    wire [24:0] man_sum = a_sgn == b_sgn ? lg_man + sm_man : lg_man - sm_man;
+    wire sticky = (exp_diff == 8'd0) ? 1'b0 : (exp_diff >= 8'd24) ? (|sm_raw) : (|(sm_raw & (24'hFFFFFF >> (24 - exp_diff))));
+
+    wire [23:0] sm_man = (exp_diff >= 8'd24) ? 24'b0 : ((sm_raw >> exp_diff) + (((a_sgn != b_sgn) && sticky) ? 24'd1 : 24'd0));
+    wire [24:0] man_sum = (a_sgn == b_sgn) ? ({1'b0,lg_man} + {1'b0,sm_man}) : ({1'b0,lg_man} - {1'b0,sm_man});
     
     wire zero_sum = man_sum == 25'b0;
         

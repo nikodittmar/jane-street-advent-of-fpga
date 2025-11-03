@@ -150,6 +150,7 @@
 `define FPU_ADD                 2'b00
 `define FPU_MADD                2'b01
 `define FPU_CVT                 2'b10
+`define FPU_SGNJ                2'b11
 `define FPU_DONT_CARE           3'b00
 
 `endif // CONTROL_SEL
