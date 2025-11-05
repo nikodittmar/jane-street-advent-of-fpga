@@ -24,21 +24,28 @@ module cpu #(
     wire [31:0] ex_alu;
     wire id_stall;
     wire ex_flush;
+    wire ex_stall;
     wire [31:0] id_bios_inst;
     wire [31:0] id_imem_inst;
+    wire wb_fpregwen;
     wire wb_regwen;
     wire ex_br_taken;
     wire [31:0] ex_rd1;
     wire [31:0] ex_rd2;
+    wire [31:0] ex_fd1;
+    wire [31:0] ex_fd2;
+    wire [31:0] ex_fd3;
     wire [31:0] ex_imm;
     wire mem_br_suc;
     wire [31:0] mem_rd2;
     wire [31:0] wb_alu;
+    wire [31:0] wb_fpu;
     wire [31:0] wb_pc4;
     wire [31:0] wb_dmem_dout;
     wire [31:0] wb_io_dout;
     wire [31:0] wb_wdata;
     wire [31:0] mem_alu;
+    wire [31:0] mem_fpu;
     wire [31:0] mem_addr;
     wire [31:0] wb_bios_dout;
     wire [31:0] mem_imem_din;
@@ -74,6 +81,7 @@ module cpu #(
         .id_pc(id_pc),
         .id_bios_inst(id_bios_inst),
         .id_imem_inst(id_imem_inst),
+        .wb_fpregwen(wb_fpregwen),
         .wb_regwen(wb_regwen),
         .ex_alu(ex_alu),
         .mem_alu(mem_alu),
@@ -87,6 +95,9 @@ module cpu #(
         .ex_pc(ex_pc),
         .ex_rd1(ex_rd1),
         .ex_rd2(ex_rd2),
+        .ex_fd1(ex_fd1),
+        .ex_fd2(ex_fd2),
+        .ex_fd3(ex_fd3),
         .ex_imm(ex_imm),
         .ex_inst(ex_inst),
         .id_stall(id_stall)
@@ -100,6 +111,9 @@ module cpu #(
         .ex_pc(ex_pc),
         .ex_rd1(ex_rd1),
         .ex_rd2(ex_rd2),
+        .ex_fd1(ex_fd1),
+        .ex_fd2(ex_fd2),
+        .ex_fd3(ex_fd3),
         .ex_imm(ex_imm),
         .ex_br_taken(ex_br_taken),
         .ex_inst(ex_inst),
@@ -109,9 +123,11 @@ module cpu #(
         .ex_alu(ex_alu),
         .ex_br_mispred(ex_br_mispred),
         .ex_flush(ex_flush),
+        .ex_stall(ex_stall),
         .mem_br_suc(mem_br_suc),
         .mem_pc(mem_pc),
         .mem_alu(mem_alu),
+        .mem_fpu(mem_fpu),
         .mem_rd2(mem_rd2),
         .mem_inst(mem_inst)
     );
@@ -126,6 +142,7 @@ module cpu #(
         .rst(rst),
         .mem_pc(mem_pc),
         .mem_alu(mem_alu), 
+        .mem_fpu(mem_fpu), 
         .mem_rd2(mem_rd2),
         .mem_br_suc(mem_br_suc),
         .mem_inst(mem_inst),
@@ -134,6 +151,7 @@ module cpu #(
 
         .serial_out(serial_out),
         .wb_alu(wb_alu),
+        .wb_fpu(wb_fpu),
         .wb_pc4(wb_pc4),
         .wb_dmem_dout(wb_dmem_dout), 
         .wb_io_dout(wb_io_dout),
@@ -151,6 +169,7 @@ module cpu #(
     wb_stage wb_stage (
         .clk(clk),
         .wb_alu(wb_alu),
+        .wb_fpu(wb_fpu),
         .wb_pc4(wb_pc4),
         .wb_bios_dout(wb_bios_dout), 
         .wb_dmem_dout(wb_dmem_dout), 
@@ -158,6 +177,7 @@ module cpu #(
         .wb_inst(wb_inst),
 
         .wb_regwen(wb_regwen),
+        .wb_fpregwen(wb_fpregwen),
         .wb_wdata(wb_wdata)
     );
 

@@ -24,6 +24,10 @@ module fp_mult_tb();
         a = 32'h3F80_0000; b = 32'h3F80_0000; #1;
         assert(res == 32'h3F80_0000) else $display("ERROR: 1.0*1.0 expected 3F800000, got %h", res);
 
+        // --- zero times zero (0.0 * 0.0 = 0.0) ---
+        a = 32'h0000_0000; b = 32'h0000_0000; #1;
+        assert(res == 32'h0000_0000) else $display("ERROR: 0.0*0.0 expected 00000000, got %h", res);
+
         // --- msb=1 normalize path (1.5 * 1.5 = 2.25) ---
         a = 32'h3FC0_0000; b = 32'h3FC0_0000; #1;
         assert(res == 32'h4010_0000) else $display("ERROR: 1.5*1.5 expected 40100000, got %h", res);

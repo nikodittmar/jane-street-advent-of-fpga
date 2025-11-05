@@ -11,22 +11,27 @@ module ex_control (
 
     output reg brun, 
     output reg [1:0] fwda, fwdb,
+    output reg [1:0] fwd_fpa, fwd_fpb, fwd_fpc,
     output reg asel, bsel,
+    output reg fpa_sel,
     output reg csr_mux_sel,
     output reg csr_en,
     output reg br_mispred,
     output reg br_suc,
     output reg [3:0] alusel,
+    output reg [2:0] fpusel,
     output reg flush
 );
 
 wire [4:0] opcode5;
 wire [2:0] funct3;
 wire [6:0] funct7;
+wire [3:0] funct4;
 
 assign opcode5 = inst[6:2];
 assign funct3 = inst[14:12];
 assign funct7 = inst[31:25];
+assign funct4 = inst[31:28];
 
 wire [4:0] rs1;
 wire has_rs1;
@@ -34,28 +39,62 @@ wire has_rs1;
 wire [4:0] rs2;
 wire has_rs2;
 
+wire [4:0] fs1;
+wire has_fs1;
+
+wire [4:0] fs2;
+wire has_fs2;
+
+wire [4:0] fs3;
+wire has_fs3;
+
 wire [4:0] mem_rd;
 wire mem_has_rd;
+
+wire [4:0] mem_fd;
+wire mem_has_fd;
 
 wire [4:0] wb_rd;
 wire wb_has_rd;
 
+wire [4:0] wb_fd;
+wire wb_has_fd;
+
 assign rs1 = inst[19:15];
-assign has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] != `OPC_JAL && (inst[6:0] != `OPC_CSR || inst[14:12] == `FNC_CSRRW) && rs1 != 5'b0;
+assign has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] != `OPC_JAL && (inst[6:0] != `OPC_CSR || inst[14:12] == `FNC_CSRRW) && rs1 != 5'b0 && inst[6:0] != `OPC_FP_MADD && (inst[6:0] != `OPC_FP || inst[31:25] == `FNC7_FP_MV_W_X || inst[31:25] == `FNC7_FP_CVT_S_W);
 
 assign rs2 = inst[24:20];
-assign has_rs2 = inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH && rs2 != 5'b0;
+assign has_rs2 = (inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH) && rs2 != 5'b0;
+
+assign fs1 = inst[19:15];
+assign has_fs1 = inst[6:0] == `OPC_FP_MADD || (inst[6:0] == `OPC_FP && (inst[31:25] == `FNC7_FP_MV_X_W || inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
+
+assign fs2 = inst[24:20];
+assign has_fs2 = inst[6:0] == `OPC_FP_STORE || inst[6:0] == `OPC_FP_MADD || (inst[6:0] == `OPC_FP && (inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
+
+assign fs3 = inst[31:27];
+assign has_fs3 = inst[6:0] == `OPC_FP_MADD;
 
 assign mem_rd = mem_inst[11:7];
-assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && mem_inst[6:0] != `OPC_CSR;
+assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && mem_inst[6:0] != `OPC_CSR && mem_inst[6:0] != `OPC_FP_LOAD && mem_inst[6:0] != `OPC_FP_STORE && mem_inst[6:0] != `OPC_FP_MADD && (mem_inst[6:0] != `OPC_FP || mem_inst[31:25] == `FNC7_FP_MV_X_W);
+
+assign mem_fd = mem_inst[11:7];
+assign mem_has_fd = mem_inst[6:0] == `OPC_FP_LOAD || mem_inst[6:0] == `OPC_FP_MADD || (mem_inst[6:0] == `OPC_FP && mem_inst[31:25] != `FNC7_FP_MV_X_W);
 
 assign wb_rd = wb_inst[11:7];
-assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
+assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR && wb_inst[6:0] != `OPC_FP_LOAD && wb_inst[6:0] != `OPC_FP_STORE && wb_inst[6:0] != `OPC_FP_MADD && (wb_inst[6:0] != `OPC_FP || wb_inst[31:25] == `FNC7_FP_MV_X_W);
+
+assign wb_fd = wb_inst[11:7];
+assign wb_has_fd = wb_inst[6:0] == `OPC_FP_LOAD || wb_inst[6:0] == `OPC_FP_MADD || (wb_inst[6:0] == `OPC_FP && wb_inst[31:25] != `FNC7_FP_MV_X_W);
 
 always @(*) begin
     brun = `BRUN_DONT_CARE;
     fwda = `EX_FWD_NONE;
     fwdb = `EX_FWD_NONE;
+    fwd_fpa = `EX_FWD_NONE;
+    fwd_fpb = `EX_FWD_NONE;
+    fwd_fpc = `EX_FWD_NONE;
+    fpa_sel = `FP_A_DONT_CARE;
     asel = `A_DONT_CARE;
     bsel = `B_DONT_CARE;
     csr_mux_sel = `CSR_DONT_CARE;
@@ -63,6 +102,7 @@ always @(*) begin
     br_mispred = 1'b0;
     br_suc = 1'b0;
     alusel = `ALU_DONT_CARE;
+    fpusel = `FPU_DONT_CARE;
     flush = 1'b0;
 
 
@@ -76,6 +116,24 @@ always @(*) begin
         fwdb = `EX_FWD_MEM;
     end else if (has_rs2 && wb_has_rd && rs2 == wb_rd) begin
         fwdb = `EX_FWD_WB;
+    end
+
+    if (has_fs1 && mem_has_fd && fs1 == mem_fd) begin 
+        fwd_fpa = `EX_FWD_MEM;
+    end else if (has_fs1 && wb_has_fd && fs1 == wb_fd) begin
+        fwd_fpa = `EX_FWD_WB;
+    end
+
+    if (has_fs2 && mem_has_fd && fs2 == mem_fd) begin 
+        fwd_fpb = `EX_FWD_MEM;
+    end else if (has_fs2 && wb_has_fd && fs2 == wb_fd) begin
+        fwd_fpb = `EX_FWD_WB;
+    end
+
+    if (has_fs3 && mem_has_fd && fs3 == mem_fd) begin 
+        fwd_fpc = `EX_FWD_MEM;
+    end else if (has_fs3 && wb_has_fd && fs3 == wb_fd) begin
+        fwd_fpc = `EX_FWD_WB;
     end
 
     case (opcode5)
@@ -386,6 +444,53 @@ always @(*) begin
             csr_en = 1'b1;
         end
         endcase
+    end
+    `OPC_FP_STORE_5: begin 
+        // FSW
+        fpusel = `FPU_BSEL;
+        asel = `A_REG;
+        bsel = `B_IMM;
+        alusel = `ALU_ADD;
+    end
+    `OPC_FP_LOAD_5: begin 
+        // FLW
+        asel = `A_REG;
+        bsel = `B_IMM;
+        alusel = `ALU_ADD;
+    end
+    `OPC_FP_5: begin 
+        case (funct4)
+        `FNC4_FP_ADD: begin 
+            // FADD
+            fpa_sel = `FP_A_FP_REG;
+            fpusel = `FPU_ADD;
+        end
+        `FNC4_FP_FSGNJ_S: begin 
+            // FSGNJ.S
+            fpa_sel = `FP_A_FP_REG;
+            fpusel = `FPU_SGNJ;
+        end
+        `FNC4_FP_MV_X_W: begin 
+            // FMV.X.W
+            fpa_sel = `FP_A_FP_REG;
+            fpusel = `FPU_ASEL;
+        end
+        `FNC4_FP_MV_W_X: begin 
+            // FMV.W.X
+            fpa_sel = `FP_A_REG;
+            fpusel = `FPU_ASEL;
+        end
+        `FNC4_FP_CVT_S_W: begin 
+            // FCVT.S.W
+            fpa_sel = `FP_A_REG;
+            fpusel = `FPU_CVT;
+        end
+        endcase
+    end
+    `OPC_FP_MADD_5: begin 
+        // FMADD
+        fpa_sel = `FP_A_FP_REG;
+        fpusel = `FPU_MADD;
     end
     endcase
 end

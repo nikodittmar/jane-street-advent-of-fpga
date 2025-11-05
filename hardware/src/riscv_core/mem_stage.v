@@ -9,6 +9,7 @@ module mem_stage #(
     input rst,
     input [31:0] mem_pc,
     input [31:0] mem_alu, 
+    input [31:0] mem_fpu,
     input [31:0] mem_rd2,
     input mem_br_suc, // Branch prediction success flag
     input [31:0] mem_inst,
@@ -17,6 +18,7 @@ module mem_stage #(
 
     output serial_out,
     output [31:0] wb_alu,
+    output [31:0] wb_fpu,
     output [31:0] wb_pc4,
     output [31:0] wb_dmem_dout, 
     output [31:0] wb_io_dout, 
@@ -49,6 +51,7 @@ module mem_stage #(
 
     assign din_mux_in[`DIN_WDATA * 32 +: 32] = wb_wdata;
     assign din_mux_in[`DIN_RD2 * 32 +: 32] = mem_rd2;
+    assign din_mux_in[`DIN_FPU * 32 +: 32] = mem_fpu;
 
     mux #(
         .NUM_INPUTS(`DIN_NUM_INPUTS)
@@ -137,7 +140,7 @@ module mem_stage #(
 
         .out(wb_pc4)
     );
-    
+
     pipeline_reg alu_reg (
         .clk(clk),
         .rst(mem_reg_rst),
@@ -145,6 +148,15 @@ module mem_stage #(
         .in(mem_alu),
 
         .out(wb_alu)
+    );
+    
+    pipeline_reg fpu_reg (
+        .clk(clk),
+        .rst(mem_reg_rst),
+        .we(mem_reg_we),
+        .in(mem_fpu),
+
+        .out(wb_fpu)
     );
 
     pipeline_reg #(

@@ -7,7 +7,7 @@ module mem_control (
     input [31:0] inst, 
     input [31:0] wb_inst, // next instruction for hazard detection
 
-    output reg din_sel, // Forwarding MUX selector
+    output reg [1:0] din_sel, // Forwarding MUX selector
     output reg [1:0] size, // Store size
     output reg br_inst, // Branch instruction flag
     output reg imem_en,
@@ -20,22 +20,36 @@ module mem_control (
 wire [4:0] opcode5;
 wire [2:0] funct3;
 wire [6:0] funct7;
+wire [3:0] funct4;
 
 assign opcode5 = inst[6:2];
 assign funct3 = inst[14:12];
 assign funct7 = inst[31:25];
+assign funct4 = inst[31:28];
 
 wire [4:0] rs2;
 wire has_rs2;
 
+wire [4:0] fs2;
+wire has_fs2;
+
 wire [4:0] wb_rd;
 wire wb_has_rd;
 
+wire [4:0] wb_fd;
+wire wb_has_fd;
+
 assign rs2 = inst[24:20];
-assign has_rs2 = inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH && rs2 != 5'b0;
+assign has_rs2 = (inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH) && rs2 != 5'b0;
+
+assign fs2 = inst[24:20];
+assign has_fs2 = inst[6:0] == `OPC_FP_STORE || inst[6:0] == `OPC_FP_MADD || (inst[6:0] == `OPC_FP && (inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
 
 assign wb_rd = wb_inst[11:7];
-assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR;
+assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR && wb_inst[6:0] != `OPC_FP_LOAD && wb_inst[6:0] != `OPC_FP_STORE && wb_inst[6:0] != `OPC_FP_MADD && (wb_inst[6:0] != `OPC_FP || wb_inst[31:25] == `FNC7_FP_MV_X_W);
+
+assign wb_fd = wb_inst[11:7];
+assign wb_has_fd = wb_inst[6:0] == `OPC_FP_LOAD || wb_inst[6:0] == `OPC_FP_MADD || (wb_inst[6:0] == `OPC_FP && wb_inst[31:25] != `FNC7_FP_MV_X_W);
 
 assign bubble = inst == `NOP;
 
@@ -228,6 +242,63 @@ always @ (*) begin
     end
     `OPC_AUIPC_5: begin
         // AUIPC
+    end
+    `OPC_FP_STORE_5: begin 
+        // FSW
+        case (addr[31:28])
+        `ADDR_IO: begin 
+            io_en = 1'b1;
+        end
+        `ADDR_DMEM: begin 
+            dmem_en = 1'b1;
+        end
+        `ADDR_IMEM: begin 
+            if (pc[30]) imem_en = 1'b1;
+        end
+        `ADDR_MIRROR: begin 
+            if (pc[30]) imem_en = 1'b1;
+            dmem_en = 1'b1;
+        end
+        endcase
+
+        if (has_fs2 && wb_has_fd && fs2 == wb_fd) begin
+            din_sel = `DIN_WDATA;
+        end else begin 
+            din_sel = `DIN_FPU;
+        end
+
+        size = `MEM_SIZE_WORD;
+    end
+    `OPC_FP_LOAD_5: begin 
+        // FLW
+        case (addr[31:28])
+        `ADDR_IO: io_en = 1'b1;
+        `ADDR_BIOS: bios_en = 1'b1;
+        `ADDR_DMEM: dmem_en = 1'b1;
+        `ADDR_MIRROR: dmem_en = 1'b1;
+        endcase
+    end
+    `OPC_FP_5: begin 
+        case (funct4)
+        `FNC4_FP_ADD: begin 
+            // FADD
+        end
+        `FNC4_FP_FSGNJ_S: begin 
+            // FSGNJ.S
+        end
+        `FNC4_FP_MV_X_W: begin 
+            // FMV.X.W
+        end
+        `FNC4_FP_MV_W_X: begin 
+            // FMV.W.X
+        end
+        `FNC4_FP_CVT_S_W: begin 
+            // FCVT.S.W
+        end
+        endcase
+    end
+    `OPC_FP_MADD_5: begin 
+        // FMADD
     end
     endcase
 end

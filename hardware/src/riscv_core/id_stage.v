@@ -8,6 +8,7 @@ module id_stage (
     input [31:0] id_bios_inst,
     input [31:0] id_imem_inst,
     input wb_regwen,
+    input wb_fpregwen,
     input [31:0] ex_alu, // Forwarded result for jalr target resolution
     input [31:0] mem_alu, // Forwarded result for jalr target resolution
     input [31:0] mem_inst, // MEM instruction for hazard detection
@@ -20,6 +21,9 @@ module id_stage (
     output [31:0] ex_pc,
     output [31:0] ex_rd1,
     output [31:0] ex_rd2,
+    output [31:0] ex_fd1,
+    output [31:0] ex_fd2,
+    output [31:0] ex_fd3,
     output [31:0] ex_imm,
     output [31:0] ex_inst,
     output id_stall
@@ -64,6 +68,22 @@ module id_stage (
         .wd(wb_wdata),
 
         .rd1(rd1), .rd2(rd2)
+    );
+
+    // MARK: Floating Point RegFile
+
+    wire [4:0] ra3 = id_inst[31:27];
+    wire [31:0] fd1;
+    wire [31:0] fd2;
+    wire [31:0] fd3;
+
+    fp_reg_file fp_reg_file (
+        .clk(clk),
+        .we(wb_fpregwen),
+        .ra1(ra1), .ra2(ra2), .ra3(ra3), .wa(wa),
+        .wd(wb_wdata),
+
+        .rd1(fd1), .rd2(fd2), .rd3(fd3)
     );
 
     // MARK: ImmGen
@@ -157,6 +177,33 @@ module id_stage (
         .in(rd2),
 
         .out(ex_rd2)
+    );
+
+    pipeline_reg fd1_reg (
+        .clk(clk),
+        .rst(id_reg_rst),
+        .we(id_reg_we),
+        .in(fd1),
+
+        .out(ex_fd1)
+    );
+
+    pipeline_reg fd2_reg (
+        .clk(clk),
+        .rst(id_reg_rst),
+        .we(id_reg_we),
+        .in(fd2),
+
+        .out(ex_fd2)
+    );
+
+    pipeline_reg fd3_reg (
+        .clk(clk),
+        .rst(id_reg_rst),
+        .we(id_reg_we),
+        .in(fd3),
+
+        .out(ex_fd3)
     );
 
     pipeline_reg imm_reg (

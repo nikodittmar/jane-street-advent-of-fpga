@@ -54,6 +54,12 @@
 // BrUn
 `define BRUN_DONT_CARE          1'b0
 
+// FPU A input sel
+`define FP_A_NUM_INPUTS         2
+`define FP_A_FP_REG             1'b0
+`define FP_A_REG                1'b1
+`define FP_A_DONT_CARE          1'b0
+
 // ALU A input sel
 `define A_NUM_INPUTS            2
 `define A_REG                   1'b0
@@ -95,11 +101,11 @@
 // ***** MEM STAGE *****
 
 // Data in sel
-`define DIN_NUM_INPUTS        2
-`define DIN_WDATA             1'b0
-`define DIN_RD2               1'b1
-//`define DIN_FPU               2'b10
-`define DIN_DONT_CARE         1'b0
+`define DIN_NUM_INPUTS        3
+`define DIN_WDATA             2'b00
+`define DIN_RD2               2'b01
+`define DIN_FPU               2'b10
+`define DIN_DONT_CARE         2'b00
 
 // PC sel
 `define MEM_PC_4                1'b0
@@ -138,19 +144,22 @@
 `define DOUT_DONT_CARE          2'b00
 
 // WB sel
-`define WB_NUM_INPUTS           3
+`define WB_NUM_INPUTS           4
 `define WB_PC4                  2'b00
 `define WB_ALU                  2'b01
 `define WB_MEM                  2'b10
-`define WB_DONT_CARE            2'b11
+`define WB_FPU                  2'b11
+`define WB_DONT_CARE            2'b00
 
 // ***** FLOATING POINT *****
 
 // FPU sel
-`define FPU_ADD                 2'b00
-`define FPU_MADD                2'b01
-`define FPU_CVT                 2'b10
-`define FPU_SGNJ                2'b11
-`define FPU_DONT_CARE           3'b00
+`define FPU_ADD                 3'b000
+`define FPU_MADD                3'b001
+`define FPU_CVT                 3'b010
+`define FPU_SGNJ                3'b011
+`define FPU_ASEL                3'b100
+`define FPU_BSEL                3'b101
+`define FPU_DONT_CARE           3'b000
 
 `endif // CONTROL_SEL

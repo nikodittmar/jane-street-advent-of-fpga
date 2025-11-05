@@ -9,16 +9,19 @@ module wb_control (
     output reg [1:0] dout_sel,
     output reg [3:0] mask,
     output reg mask_un,
-    output reg regwen
+    output reg regwen,
+    output reg fpregwen
 );
 
 wire [4:0] opcode5;
 wire [2:0] funct3;
 wire [6:0] funct7;
+wire [3:0] funct4;
 
 assign opcode5 = inst[6:2];
 assign funct3 = inst[14:12];
 assign funct7 = inst[31:25];
+assign funct4 = inst[31:28];
 
 always @ (*) begin
     wb_sel = `WB_DONT_CARE;
@@ -26,6 +29,7 @@ always @ (*) begin
     mask = 4'b0000;
     mask_un = 1'b0;
     regwen = 1'b0;
+    fpregwen = 1'b0;
 
     case (opcode5)
     `OPC_ARI_RTYPE_5:
@@ -247,6 +251,56 @@ always @ (*) begin
         // AUIPC
         wb_sel = `WB_ALU;
         regwen = 1'b1;
+    end
+    `OPC_FP_STORE_5: begin 
+        // FSW
+    end
+    `OPC_FP_LOAD_5: begin 
+        // FLW
+        wb_sel = `WB_MEM;
+        fpregwen = 1'b1;
+        mask = 4'b1111;
+        
+        case(addr[31:28])
+        `ADDR_IO: dout_sel = `DOUT_IO;
+        `ADDR_BIOS: dout_sel = `DOUT_BIOS;
+        `ADDR_DMEM: dout_sel = `DOUT_DMEM;
+        `ADDR_MIRROR: dout_sel = `DOUT_DMEM;
+        endcase
+    end
+    `OPC_FP_5: begin 
+        case (funct4)
+        `FNC4_FP_ADD: begin 
+            // FADD
+            wb_sel = `WB_FPU;
+            fpregwen = 1'b1;
+        end
+        `FNC4_FP_FSGNJ_S: begin 
+            // FSGNJ.S
+            wb_sel = `WB_FPU;
+            fpregwen = 1'b1;
+        end
+        `FNC4_FP_MV_X_W: begin 
+            // FMV.X.W
+            wb_sel = `WB_FPU;
+            regwen = 1'b1;
+        end
+        `FNC4_FP_MV_W_X: begin 
+            // FMV.W.X
+            wb_sel = `WB_FPU;
+            fpregwen = 1'b1;
+        end
+        `FNC4_FP_CVT_S_W: begin 
+            // FCVT.S.W
+            wb_sel = `WB_FPU;
+            fpregwen = 1'b1;
+        end
+        endcase
+    end
+    `OPC_FP_MADD_5: begin 
+        // FMADD
+        wb_sel = `WB_FPU;
+        fpregwen = 1'b1;
     end
     endcase
 end

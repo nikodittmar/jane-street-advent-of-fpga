@@ -20,6 +20,9 @@ module fp_mult (
     wire [22:0] res_man = msb ? man_product[46:24] : man_product[45:23];
     wire [7:0] res_exp = msb ? exp_sum - 8'd126 : exp_sum - 8'd127;
 
-    assign res = { res_sgn, res_exp, res_man };
+    wire a_zero = a[30:0] == 31'b0;
+    wire b_zero = b[30:0] == 31'b0;
+
+    assign res = a_zero || b_zero ? 32'b0 : { res_sgn, res_exp, res_man };
 
 endmodule

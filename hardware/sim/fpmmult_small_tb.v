@@ -68,7 +68,6 @@ module fpmmult_small_tb();
   reg [255:0] MIF_FILE;
   string output_string;
   initial begin
-
     $readmemh("../../software/bios/bios.hex", `BIOS_PATH.mem, 0, 4095);
     $readmemh("../../software/small/fpmmult/fpmmult.hex", `IMEM_PATH.mem, 0, 16384-1);
     $readmemh("../../software/small/fpmmult/fpmmult.hex", `DMEM_PATH.mem, 0, 16384-1);
@@ -78,7 +77,7 @@ module fpmmult_small_tb();
     `endif
     `ifdef IVERILOG
       $dumpfile("fpmmult_small.fst");
-      $dumpvars(0, c_tests_tb);
+      $dumpvars(0, fpmmult_small_tb);
     `endif
 
     rst = 1;

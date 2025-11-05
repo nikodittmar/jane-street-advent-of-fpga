@@ -6,6 +6,9 @@ module ex_stage (
     input [31:0] ex_pc,
     input [31:0] ex_rd1,
     input [31:0] ex_rd2,
+    input [31:0] ex_fd1,
+    input [31:0] ex_fd2,
+    input [31:0] ex_fd3,
     input [31:0] ex_imm,
     input ex_br_taken, // Branch predictor taken flag
     input [31:0] ex_inst,
@@ -15,9 +18,11 @@ module ex_stage (
     output [31:0] ex_alu,
     output ex_br_mispred, // Branch mispredict flag
     output ex_flush, // Flush flag in the event of control hazards
+    output ex_stall, // Flush flag when FPU is busy
     output mem_br_suc, // Branch prediction success flag
     output [31:0] mem_pc,
     output [31:0] mem_alu,
+    output [31:0] mem_fpu,
     output [31:0] mem_rd2,
     output [31:0] mem_inst
 );
@@ -28,19 +33,22 @@ module ex_stage (
     assign ex_reg_we = ~rst;
     assign ex_reg_rst = rst;
 
-    // MARK: ALU
+    // MARK: FPU
 
-    wire [31:0] a;
-    wire [31:0] b;
+    wire [31:0] fp_a;
+    wire [31:0] fp_b;
+    wire [31:0] fp_c;
 
-    wire [3:0] alu_sel;
+    wire [2:0] fpu_sel;
+    wire [31:0] ex_fpu;
 
-    alu alu (
-        .a(a),
-        .b(b),
-        .sel(alu_sel),
-
-        .res(ex_alu)
+    fpu fpu (
+        .a(fp_a),
+        .b(fp_b),
+        .c(fp_c),
+        .sel(fpu_sel),
+        .res(ex_fpu),
+        .busy(ex_stall)
     );
 
     // MARK: Forward A
@@ -79,6 +87,95 @@ module ex_stage (
         .sel(fwdb_sel),
 
         .out(fwdb_out)
+    );
+
+
+    // MARK: Forward FP A
+
+    wire [$clog2(`EX_FWD_NUM_INPUTS)-1:0] fwd_fpa_sel;
+    wire [`EX_FWD_NUM_INPUTS*32-1:0] fwd_fpa_in;
+    wire [31:0] fwd_fpa_out;
+
+    assign fwd_fpa_in[`EX_FWD_NONE * 32 +: 32] = ex_fd1;
+    assign fwd_fpa_in[`EX_FWD_MEM * 32 +: 32] = mem_fpu;
+    assign fwd_fpa_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
+
+    mux #(
+        .NUM_INPUTS(`EX_FWD_NUM_INPUTS)
+    ) fwd_fpa_mux (
+        .in(fwd_fpa_in),
+        .sel(fwd_fpa_sel),
+
+        .out(fwd_fpa_out)
+    );
+
+    // MARK: Forward FP B
+
+    wire [$clog2(`EX_FWD_NUM_INPUTS)-1:0] fwd_fpb_sel;
+    wire [`EX_FWD_NUM_INPUTS*32-1:0] fwd_fpb_in;
+
+    assign fwd_fpb_in[`EX_FWD_NONE * 32 +: 32] = ex_fd2;
+    assign fwd_fpb_in[`EX_FWD_MEM * 32 +: 32] = mem_fpu;
+    assign fwd_fpb_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
+
+    mux #(
+        .NUM_INPUTS(`EX_FWD_NUM_INPUTS)
+    ) fwd_fpb_mux (
+        .in(fwd_fpb_in),
+        .sel(fwd_fpb_sel),
+
+        .out(fp_b)
+    );
+
+    // MARK: Forward FP C
+
+    wire [$clog2(`EX_FWD_NUM_INPUTS)-1:0] fwd_fpc_sel;
+    wire [`EX_FWD_NUM_INPUTS*32-1:0] fwd_fpc_in;
+
+    assign fwd_fpc_in[`EX_FWD_NONE * 32 +: 32] = ex_fd3;
+    assign fwd_fpc_in[`EX_FWD_MEM * 32 +: 32] = mem_fpu;
+    assign fwd_fpc_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
+
+    mux #(
+        .NUM_INPUTS(`EX_FWD_NUM_INPUTS)
+    ) fwd_fpc_mux (
+        .in(fwd_fpc_in),
+        .sel(fwd_fpc_sel),
+
+        .out(fp_c)
+    );
+
+    // MARK: FP A Sel
+
+    wire [$clog2(`A_NUM_INPUTS)-1:0] fpa_sel;
+    wire [`A_NUM_INPUTS*32-1:0] fp_a_in;
+
+    assign fp_a_in[`FP_A_FP_REG * 32 +: 32] = fwd_fpa_out;
+    assign fp_a_in[`FP_A_REG * 32 +: 32] = fwda_out;
+    
+    mux #(
+        .NUM_INPUTS(`A_NUM_INPUTS)
+    ) fp_a_mux (
+        .in(fp_a_in),
+        .sel(fpa_sel),
+
+        .out(fp_a)
+    );
+
+
+    // MARK: ALU
+
+    wire [31:0] a;
+    wire [31:0] b;
+
+    wire [3:0] alu_sel;
+
+    alu alu (
+        .a(a),
+        .b(b),
+        .sel(alu_sel),
+
+        .res(ex_alu)
     );
 
     // MARK: CSR Register
@@ -176,15 +273,22 @@ module ex_stage (
         .brun(brun),
         .fwda(fwda_sel),
         .fwdb(fwdb_sel),
+        .fwd_fpa(fwd_fpa_sel),
+        .fwd_fpb(fwd_fpb_sel),
+        .fwd_fpc(fwd_fpc_sel),
         .asel(a_sel),
         .bsel(b_sel),
+        .fpa_sel(fpa_sel),
         .csr_mux_sel(csr_mux_sel),
         .csr_en(csr_we),
         .br_mispred(ex_br_mispred),
         .br_suc(br_suc),
         .alusel(alu_sel),
+        .fpusel(fpu_sel),
         .flush(ex_flush)
     );
+
+    // MARK: Pipeline Registers
 
     pipeline_reg pc_reg (
         .clk(clk),
@@ -202,6 +306,15 @@ module ex_stage (
         .in(ex_alu),
 
         .out(mem_alu)
+    );
+
+    pipeline_reg fpu_reg (
+        .clk(clk),
+        .rst(ex_reg_rst),
+        .we(ex_reg_we),
+        .in(ex_fpu),
+
+        .out(mem_fpu)
     );
 
     pipeline_reg rd2_reg (
