@@ -14,6 +14,7 @@ module id_stage (
     input [31:0] mem_inst, // MEM instruction for hazard detection
     input [31:0] wb_wdata, // Forwarded result for jalr target resolution
     input [31:0] wb_inst, // WB instruction for hazard detection
+    input ex_stall,
     
     output [31:0] id_target, // Branch predictor/target generator output
     output id_target_taken, // Use output of branch predictor/target generator flag
@@ -31,7 +32,7 @@ module id_stage (
     wire id_reg_rst;
     wire id_reg_we;
 
-    assign id_reg_we = ~id_stall;
+    assign id_reg_we = ~id_stall & ~ex_stall;
     assign id_reg_rst = id_stall | ex_flush | rst;
 
     // MARK: InstSel

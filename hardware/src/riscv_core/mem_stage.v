@@ -15,6 +15,7 @@ module mem_stage #(
     input [31:0] mem_inst,
     input [31:0] wb_wdata, // Forwarded result from WB stage
     input serial_in,
+    input ex_stall,
 
     output serial_out,
     output [31:0] wb_alu,

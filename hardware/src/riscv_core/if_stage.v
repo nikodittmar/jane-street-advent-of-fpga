@@ -6,6 +6,7 @@ module if_stage #(
     input clk,
     input rst,
     input id_stall,
+    input ex_stall,
     input id_target_taken,
     input ex_br_mispred,
     input [31:0] id_target,
@@ -21,6 +22,8 @@ module if_stage #(
     wire [31:0] pc4;
     assign pc4 = if_pc + 32'd4;
 
+    wire stall = id_stall | ex_stall;
+
     wire [31:0] pc_out;
     wire [31:0] next_pc;
 
@@ -31,7 +34,7 @@ module if_stage #(
     ) program_counter (
         .clk(clk),
         .rst(rst),
-        .stall(id_stall),
+        .stall(stall),
         .pc_in(next_pc),
 
         .pc_out(pc_out)
@@ -80,7 +83,8 @@ module if_stage #(
         .pc(pc_out),
         .br_mispred(ex_br_mispred),
         .target_taken(id_target_taken),
-        .stall(id_stall),
+        .id_stall(id_stall),
+        .ex_stall(ex_stall),
 
         .next_pc_sel(next_pc_sel),
         .override_pc_sel(override_pc_sel),
@@ -89,11 +93,9 @@ module if_stage #(
 
     // MARK: Pipeline Registers
 
-    wire pc_we = ~id_stall;
+    wire pc_we = ~id_stall & ~ex_stall;
 
-    pipeline_reg #(
-        .RESET_VAL(RESET_PC)
-    ) pc_reg (
+    pipeline_reg pc_reg (
         .clk(clk),
         .rst(rst),
         .we(pc_we),

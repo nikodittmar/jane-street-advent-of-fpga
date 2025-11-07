@@ -2,6 +2,7 @@
 `include "opcode.vh"
 
 module ex_control (
+    input clk,
     input [31:0] inst,
     input [31:0] mem_inst,
     input [31:0] wb_inst,
@@ -20,7 +21,8 @@ module ex_control (
     output reg br_suc,
     output reg [3:0] alusel,
     output reg [2:0] fpusel,
-    output reg flush
+    output reg flush,
+    output reg fpu_valid
 );
 
 wire [4:0] opcode5;
@@ -87,7 +89,16 @@ assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && 
 assign wb_fd = wb_inst[11:7];
 assign wb_has_fd = wb_inst[6:0] == `OPC_FP_LOAD || wb_inst[6:0] == `OPC_FP_MADD || (wb_inst[6:0] == `OPC_FP && wb_inst[31:25] != `FNC7_FP_MV_X_W);
 
+reg [31:0] last_inst;
+reg inst_changed;
+
+always @(posedge clk) begin 
+    last_inst <= inst;
+end
+
 always @(*) begin
+    inst_changed = last_inst != inst;
+
     brun = `BRUN_DONT_CARE;
     fwda = `EX_FWD_NONE;
     fwdb = `EX_FWD_NONE;
@@ -104,6 +115,7 @@ always @(*) begin
     alusel = `ALU_DONT_CARE;
     fpusel = `FPU_DONT_CARE;
     flush = 1'b0;
+    fpu_valid = 1'b0;
 
 
     if (has_rs1 && mem_has_rd && rs1 == mem_rd) begin 
@@ -451,14 +463,17 @@ always @(*) begin
         asel = `A_REG;
         bsel = `B_IMM;
         alusel = `ALU_ADD;
+        fpu_valid = inst_changed;
     end
     `OPC_FP_LOAD_5: begin 
         // FLW
         asel = `A_REG;
         bsel = `B_IMM;
         alusel = `ALU_ADD;
+        fpu_valid = inst_changed;
     end
     `OPC_FP_5: begin 
+        fpu_valid = inst_changed;
         case (funct4)
         `FNC4_FP_ADD: begin 
             // FADD
@@ -491,6 +506,7 @@ always @(*) begin
         // FMADD
         fpa_sel = `FP_A_FP_REG;
         fpusel = `FPU_MADD;
+        fpu_valid = inst_changed;
     end
     endcase
 end

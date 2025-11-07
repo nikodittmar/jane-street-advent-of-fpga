@@ -1,5 +1,6 @@
 module imem (
   input clk,
+  input rst,
   input ena,
   input [3:0] wea,
   input [13:0] addra,
@@ -25,6 +26,10 @@ module imem (
   end
 
   always @(posedge clk) begin
-      doutb <= mem[addrb];
+      if (rst) begin 
+        doutb <= 32'b0;
+      end else begin 
+        doutb <= mem[addrb];
+      end
   end
 endmodule

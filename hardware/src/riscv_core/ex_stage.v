@@ -30,8 +30,8 @@ module ex_stage (
     wire ex_reg_rst;
     wire ex_reg_we;
 
-    assign ex_reg_we = ~rst;
-    assign ex_reg_rst = rst;
+    assign ex_reg_we = ~rst | ~ex_stall;
+    assign ex_reg_rst = rst | ex_stall;
 
     // MARK: FPU
 
@@ -41,12 +41,16 @@ module ex_stage (
 
     wire [2:0] fpu_sel;
     wire [31:0] ex_fpu;
+    wire fpu_valid;
 
     fpu fpu (
+        .clk(clk),
+        .rst(rst),
         .a(fp_a),
         .b(fp_b),
         .c(fp_c),
         .sel(fpu_sel),
+        .input_valid(fpu_valid),
         .res(ex_fpu),
         .busy(ex_stall)
     );
@@ -263,6 +267,7 @@ module ex_stage (
     wire br_suc;
 
     ex_control control (
+        .clk(clk),
         .inst(ex_inst),
         .mem_inst(mem_inst),
         .wb_inst(wb_inst),
@@ -285,7 +290,8 @@ module ex_stage (
         .br_suc(br_suc),
         .alusel(alu_sel),
         .fpusel(fpu_sel),
-        .flush(ex_flush)
+        .flush(ex_flush),
+        .fpu_valid(fpu_valid)
     );
 
     // MARK: Pipeline Registers

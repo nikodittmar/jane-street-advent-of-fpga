@@ -11,13 +11,10 @@ module program_counter #(
     reg [31:0] prev_pc;
     reg [31:0] pc;
 
-    reg buffered_pc;
-    reg [31:0] pc_buf;
-
     always @(posedge clk) begin 
         if (rst) begin
             pc <= RESET_PC;
-        end else begin
+        end else if (~stall) begin
             prev_pc <= pc;
             pc <= pc_in;
         end

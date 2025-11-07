@@ -2,14 +2,19 @@
 
 module fp_add_tb();
 
+    reg clk;
     reg  [31:0] a, b;
     wire [31:0] res;
 
     fp_add dut (
+        .clk(clk),
         .a(a),
         .b(b),
         .res(res)
     );
+
+    initial clk = 1;
+    always #1 clk = ~clk;
 
     initial begin
         `ifdef IVERILOG
@@ -20,54 +25,82 @@ module fp_add_tb();
             $vcdpluson;
         `endif
 
+        a = 32'h0;
+        b = 32'h0;
+        #6
+
         // --- zeros ---
-        a = 32'h0000_0000; b = 32'h0000_0000; #1;
+        a = 32'h0000_0000; b = 32'h0000_0000; #8;
         assert(res == 32'h0000_0000) else $display("ERROR: 0+0 expected 00000000, got %h", res);
 
+        #2;
+
         // --- identity with zero ---
-        a = 32'h0000_0000; b = 32'h400C_CCCD; #1; // 0 + 2.2 = 2.2
+        a = 32'h0000_0000; b = 32'h400C_CCCD; #8; // 0 + 2.2 = 2.2
         assert(res == 32'h400C_CCCD) else $display("ERROR: 0+2.2 expected 400CCCCD, got %h", res);
 
-        a = 32'h400C_CCCD; b = 32'h0000_0000; #1; // 2.2 + 0 = 2.2
+        #2;
+
+        a = 32'h400C_CCCD; b = 32'h0000_0000; #8; // 2.2 + 0 = 2.2
         assert(res == 32'h400C_CCCD) else $display("ERROR: 2.2+0 expected 400CCCCD, got %h", res);
 
+        #2;
+
         // --- basic sanity (1.0 + 1.0 = 2.0) ---
-        a = 32'h3F80_0000; b = 32'h3F80_0000; #1;
+        a = 32'h3F80_0000; b = 32'h3F80_0000; #8;
         assert(res == 32'h4000_0000) else $display("ERROR: 1.0+1.0 expected 40000000, got %h", res);
 
+        #2;
+
         // --- normalize right (carry out) (1.5 + 1.5 = 3.0) ---
-        a = 32'h3FC0_0000; b = 32'h3FC0_0000; #1;
+        a = 32'h3FC0_0000; b = 32'h3FC0_0000; #8;
         assert(res == 32'h4040_0000) else $display("ERROR: 1.5+1.5 expected 40400000, got %h", res);
 
+        #2;
+
         // --- aligned simple (0.5 + 0.5 = 1.0) ---
-        a = 32'h3F00_0000; b = 32'h3F00_0000; #1;
+        a = 32'h3F00_0000; b = 32'h3F00_0000; #8;
         assert(res == 32'h3F80_0000) else $display("ERROR: 0.5+0.5 expected 3F800000, got %h", res);
 
+        #2;
+
         // --- mixed scale (3.0 + (-1.5) = 1.5) ---
-        a = 32'h4040_0000; b = 32'hBFC0_0000; #1;
+        a = 32'h4040_0000; b = 32'hBFC0_0000; #8;
         assert(res == 32'h3FC0_0000) else $display("ERROR: 3.0+(-1.5) expected 3FC00000, got %h", res);
 
+        #2;
+
         // --- exact cancellation (1.0 + (-1.0) = 0.0) ---
-        a = 32'h3F80_0000; b = 32'hBF80_0000; #1;
+        a = 32'h3F80_0000; b = 32'hBF80_0000; #8;
         assert(res == 32'h0000_0000) else $display("ERROR: 1.0+(-1.0) expected 00000000, got %h", res);
+
+        #2;
 
         // --- typical decimal cases ---
         // 2.2 + 2.2 = 4.4
-        a = 32'h400C_CCCD; b = 32'h400C_CCCD; #1;
+        a = 32'h400C_CCCD; b = 32'h400C_CCCD; #8;
         assert(res == 32'h408C_CCCD) else $display("ERROR: 2.2+2.2 expected 408CCCCD, got %h", res);
 
+        #2;
+
         // 4.84 + (-0.84) = 4.0
-        a = 32'h409A_E148; b = 32'hBF57_0A3D; #1; // 4.84 + (-0.84)
+        a = 32'h409A_E148; b = 32'hBF57_0A3D; #8; // 4.84 + (-0.84)
         assert(res == 32'h4080_0000) else $display("ERROR: 4.84+(-0.84) expected 40800000, got %h", res);
+
+        #2;
 
         // --- sign tests ---
         // (-1.5) + 2.0 = 0.5
-        a = 32'hBFC0_0000; b = 32'h4000_0000; #1;
+        a = 32'hBFC0_0000; b = 32'h4000_0000; #8;
         assert(res == 32'h3F00_0000) else $display("ERROR: -1.5+2.0 expected 3F000000, got %h", res);
 
+        #2;
+
         // (-2.0) + (-2.5) = -4.5
-        a = 32'hC000_0000; b = 32'hC020_0000; #1;
+        a = 32'hC000_0000; b = 32'hC020_0000; #8;
         assert(res == 32'hC090_0000) else $display("ERROR: -2.0+(-2.5) expected C0900000, got %h", res);
+
+        #2;
 
         $display("FINISHED: fp_add testbench complete");
         $finish;

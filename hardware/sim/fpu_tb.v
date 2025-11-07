@@ -103,7 +103,7 @@ module fpu_tb();
       @(posedge clk);
       if (cycle === timeout_cycle) begin
         $display("[Failed] Timeout at [%d] test %s, expected_result = %h, got = %h",
-                current_test_id, current_test_type, current_result, current_output);
+                $time, current_test_type, current_result, current_output);
         $finish();
       end
     end
@@ -209,8 +209,8 @@ module fpu_tb();
         $vcdpluson;
     `endif
     `ifdef IVERILOG
-        $dumpfile("cpu_tb.fst");
-        $dumpvars(0, cpu_tb);
+        $dumpfile("fpu_tb.fst");
+        $dumpvars(0, fpu_tb);
     `endif
 
     #0;

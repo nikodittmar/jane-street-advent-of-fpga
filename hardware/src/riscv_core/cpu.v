@@ -62,6 +62,7 @@ module cpu #(
         .clk(clk),
         .rst(rst),
         .id_stall(id_stall),
+        .ex_stall(ex_stall),
         .id_target_taken(id_target_taken),
         .ex_br_mispred(ex_br_mispred),
         .id_target(id_target),
@@ -88,6 +89,7 @@ module cpu #(
         .mem_inst(mem_inst),
         .wb_wdata(wb_wdata),
         .wb_inst(wb_inst),
+        .ex_stall(ex_stall),
 
         .id_target(id_target),
         .id_target_taken(id_target_taken),
@@ -157,6 +159,7 @@ module cpu #(
         .wb_io_dout(wb_io_dout),
         .wb_inst(wb_inst),
         .mem_addr(mem_addr),
+        .ex_stall(ex_stall),
 
         .mem_imem_din(mem_imem_din),
         .mem_imem_we(mem_imem_we),
@@ -197,6 +200,7 @@ module cpu #(
     
     imem imem (
       .clk(clk),
+      .rst(rst),
       .ena(mem_imem_en),
       .wea(mem_imem_we),
       .addra(mem_addr[15:2]),

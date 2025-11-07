@@ -154,12 +154,12 @@
 // ***** FLOATING POINT *****
 
 // FPU sel
-`define FPU_ADD                 3'b000
-`define FPU_MADD                3'b001
-`define FPU_CVT                 3'b010
-`define FPU_SGNJ                3'b011
-`define FPU_ASEL                3'b100
-`define FPU_BSEL                3'b101
+`define FPU_ADD                 3'b001
+`define FPU_MADD                3'b010
+`define FPU_CVT                 3'b011
+`define FPU_SGNJ                3'b100
+`define FPU_ASEL                3'b101
+`define FPU_BSEL                3'b110
 `define FPU_DONT_CARE           3'b000
 
 `endif // CONTROL_SEL

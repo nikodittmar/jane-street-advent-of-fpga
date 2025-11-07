@@ -1,7 +1,8 @@
 module fp_mult (
+    input clk,
     input [31:0] a,
     input [31:0] b,
-    output [31:0] res
+    output reg [31:0] res
 );  
 
     wire [7:0] a_exp = a[30:23];
@@ -23,6 +24,12 @@ module fp_mult (
     wire a_zero = a[30:0] == 31'b0;
     wire b_zero = b[30:0] == 31'b0;
 
-    assign res = a_zero || b_zero ? 32'b0 : { res_sgn, res_exp, res_man };
+    wire [31:0] mult_result;
+
+    assign mult_result = a_zero || b_zero ? 32'b0 : { res_sgn, res_exp, res_man };
+
+    always @(posedge clk) begin
+        res <= mult_result;
+    end
 
 endmodule
