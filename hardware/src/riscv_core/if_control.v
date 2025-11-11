@@ -3,7 +3,7 @@
 module if_control (
     input rst,
     input [31:0] pc,
-    input br_mispred,
+    input redirect_pc,
     input target_taken,
     input id_stall,
     input ex_stall,
@@ -21,13 +21,13 @@ module if_control (
             next_pc_sel = `PC_4;
             override_pc_sel = `PC_4;
         end else if (id_stall | ex_stall) begin 
-            if (br_mispred) begin
+            if (redirect_pc) begin
                 next_pc_sel = `PC_ALU;
             end else if (target_taken) begin 
                 next_pc_sel = `PC_TGT;
             end
         end else begin 
-            if (br_mispred) begin
+            if (redirect_pc) begin
                 override_pc_sel = `PC_ALU;
             end else if (target_taken) begin 
                 override_pc_sel = `PC_TGT;

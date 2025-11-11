@@ -9,11 +9,8 @@ module id_stage (
     input [31:0] id_imem_inst,
     input wb_regwen,
     input wb_fpregwen,
-    input [31:0] ex_alu, // Forwarded result for jalr target resolution
-    input [31:0] mem_alu, // Forwarded result for jalr target resolution
-    input [31:0] mem_inst, // MEM instruction for hazard detection
-    input [31:0] wb_wdata, // Forwarded result for jalr target resolution
-    input [31:0] wb_inst, // WB instruction for hazard detection
+    input [31:0] wb_wdata,
+    input [31:0] wb_inst,
     input ex_stall,
     
     output [31:0] id_target, // Branch predictor/target generator output
@@ -99,28 +96,9 @@ module id_stage (
         .imm(imm)
     );
 
-    // MARK: TargetGen forwarding
-
-    wire [$clog2(`TGT_GEN_FWD_NUM_INPUTS)-1:0] target_gen_fwd_sel;
-    wire [`TGT_GEN_FWD_NUM_INPUTS*32-1:0] target_gen_fwd_in;
-    wire [31:0] target_gen_rd1;
-
-    assign target_gen_fwd_in[`TGT_GEN_FWD_NONE * 32 +: 32] = rd1;
-    assign target_gen_fwd_in[`TGT_GEN_FWD_EX * 32 +: 32] = ex_alu;
-    assign target_gen_fwd_in[`TGT_GEN_FWD_MEM * 32 +: 32] = mem_alu;
-    assign target_gen_fwd_in[`TGT_GEN_FWD_WB * 32 +: 32] = wb_wdata;
-
-    mux #(
-        .NUM_INPUTS(`TGT_GEN_FWD_NUM_INPUTS)
-    ) target_gen_fwd_mux (
-        .in(target_gen_fwd_in),
-        .sel(target_gen_fwd_sel),
-
-        .out(target_gen_rd1)
-    );
-
     // MARK: TargetGen
-    wire [1:0] target_gen_sel;
+    
+    wire target_gen_sel;
     wire target_gen_en;
     wire br_taken;
     
@@ -128,7 +106,6 @@ module id_stage (
         .pc(id_pc),
         .sel(target_gen_sel),
         .en(target_gen_en),
-        .rd1(target_gen_rd1),
         .imm(imm),
 
         .target(id_target),
@@ -141,12 +118,9 @@ module id_stage (
     id_control control (
         .inst(id_inst),
         .ex_inst(ex_inst),
-        .mem_inst(mem_inst),
-        .wb_inst(wb_inst),
-
+    
         .imm_sel(imm_sel),
         .target_gen_sel(target_gen_sel),
-        .target_gen_fwd_sel(target_gen_fwd_sel),
         .target_gen_en(target_gen_en),
         .stall(id_stall)
     );

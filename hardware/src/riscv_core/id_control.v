@@ -4,12 +4,9 @@
 module id_control (
     input [31:0] inst,
     input [31:0] ex_inst,
-    input [31:0] mem_inst,
-    input [31:0] wb_inst,
 
     output reg [2:0] imm_sel,
-    output reg [1:0] target_gen_sel,
-    output reg [$clog2(`TGT_GEN_FWD_NUM_INPUTS)-1:0] target_gen_fwd_sel,
+    output reg target_gen_sel,
     output reg target_gen_en,
     output reg stall
 );
@@ -45,18 +42,6 @@ wire ex_has_rd;
 wire [4:0] ex_fd;
 wire ex_has_fd;
 
-wire [4:0] mem_rd;
-wire mem_has_rd;
-
-wire [4:0] mem_fd;
-wire mem_has_fd;
-
-wire [4:0] wb_rd;
-wire wb_has_rd;
-
-wire [4:0] wb_fd;
-wire wb_has_fd;
-
 assign rs1 = inst[19:15];
 assign has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] != `OPC_JAL && (inst[6:0] != `OPC_CSR || inst[14:12] == `FNC_CSRRW) && rs1 != 5'b0 && inst[6:0] != `OPC_FP_MADD && (inst[6:0] != `OPC_FP || inst[31:25] == `FNC7_FP_MV_W_X || inst[31:25] == `FNC7_FP_CVT_S_W);
 
@@ -78,43 +63,17 @@ assign ex_has_rd = ex_inst[6:0] != `OPC_STORE && ex_inst[6:0] != `OPC_BRANCH && 
 assign ex_fd = ex_inst[11:7];
 assign ex_has_fd = ex_inst[6:0] == `OPC_FP_LOAD || ex_inst[6:0] == `OPC_FP_MADD || (ex_inst[6:0] == `OPC_FP && ex_inst[31:25] != `FNC7_FP_MV_X_W);
 
-assign mem_rd = mem_inst[11:7];
-assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && mem_inst[6:0] != `OPC_CSR && mem_inst[6:0] != `OPC_FP_LOAD && mem_inst[6:0] != `OPC_FP_STORE && mem_inst[6:0] != `OPC_FP_MADD && (mem_inst[6:0] != `OPC_FP || mem_inst[31:25] == `FNC7_FP_MV_X_W);
-
-assign mem_fd = mem_inst[11:7];
-assign mem_has_fd = mem_inst[6:0] == `OPC_FP_LOAD || mem_inst[6:0] == `OPC_FP_MADD || (mem_inst[6:0] == `OPC_FP && mem_inst[31:25] != `FNC7_FP_MV_X_W);
-
-assign wb_rd = wb_inst[11:7];
-assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR && wb_inst[6:0] != `OPC_FP_LOAD && wb_inst[6:0] != `OPC_FP_STORE && wb_inst[6:0] != `OPC_FP_MADD && (wb_inst[6:0] != `OPC_FP || wb_inst[31:25] == `FNC7_FP_MV_X_W);
-
-assign wb_fd = wb_inst[11:7];
-assign wb_has_fd = wb_inst[6:0] == `OPC_FP_LOAD || wb_inst[6:0] == `OPC_FP_MADD || (wb_inst[6:0] == `OPC_FP && wb_inst[31:25] != `FNC7_FP_MV_X_W);
-
 wire is_store;
-wire id_jump_inst;
 wire ex_load_inst;
-wire mem_load_inst;
 
 assign is_store = inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_FP_STORE;
-
-assign id_jump_inst = inst[6:2] == `OPC_JAL_5 || inst[6:2] == `OPC_JALR_5;
 assign ex_load_inst = ex_inst[6:2] == `OPC_LOAD_5 || ex_inst[6:2] == `OPC_FP_LOAD_5;
-assign mem_load_inst = mem_inst[6:2] == `OPC_LOAD_5 || mem_inst[6:2] == `OPC_FP_LOAD_5;
 
 always @(*) begin
     imm_sel = `IMM_DONT_CARE;
     target_gen_sel = `TGT_GEN_DONT_CARE;
-    target_gen_fwd_sel = `TGT_GEN_FWD_NONE;
     target_gen_en = 1'b0;
     stall = 1'b0;
-
-    if (ex_has_rd && rs1 == ex_rd) begin 
-        target_gen_fwd_sel = `TGT_GEN_FWD_EX;
-    end else if (mem_has_rd && rs1 == mem_rd) begin
-        target_gen_fwd_sel = `TGT_GEN_FWD_MEM;
-    end else if (wb_has_rd && rs1 == wb_rd) begin 
-        target_gen_fwd_sel = `TGT_GEN_FWD_WB;
-    end
 
     if (ex_load_inst && // Only need to stall for load use data hazards
         (
@@ -301,10 +260,6 @@ always @(*) begin
     end
     `OPC_JALR_5: begin
         // JALR
-        if (!ex_load_inst || rs1 != ex_rd) begin
-            target_gen_en = 1'b1;
-        end
-        target_gen_sel = `TGT_GEN_JALR;
         imm_sel = `IMM_I;
     end
     `OPC_LUI_5: begin
