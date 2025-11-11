@@ -353,6 +353,7 @@ module ex_stage (
         .out(mem_inst)
     );
 
+<<<<<<< HEAD
     pipeline_reg #(
         .WIDTH(1)
     ) flush_reg (
@@ -364,6 +365,8 @@ module ex_stage (
         .out(mem_flush)
     );
 
+=======
+>>>>>>> 9715371 (feat: add branch stats to fom scripts and hazard analysis counters)
     /*
     // MARK: Hazard Analysis
     reg [31:0] one_cycle_data_hazard;
