@@ -103,8 +103,8 @@ module mmult_tb();
   endtask
 
   initial begin
-    $readmemh("../../software/mmult/mmult.hex", `IMEM_PATH.mem, 0, 16384-1);
-    $readmemh("../../software/mmult/mmult.hex", `DMEM_PATH.mem, 0, 16384-1);
+    $readmemh("../../software/benchmark/mmult/mmult.hex", `IMEM_PATH.mem, 0, 16384-1);
+    $readmemh("../../software/benchmark/mmult/mmult.hex", `DMEM_PATH.mem, 0, 16384-1);
 
     `ifndef IVERILOG
         $vcdpluson;

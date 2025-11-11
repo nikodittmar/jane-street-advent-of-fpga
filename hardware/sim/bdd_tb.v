@@ -1,7 +1,7 @@
 `timescale 1ns/1ns
 `include "mem_path.vh"
 
-module fpmmult_tb();
+module bdd_tb();
   reg clk, rst;
   parameter CPU_CLOCK_PERIOD = 20;
   parameter CPU_CLOCK_FREQ   = 1_000_000_000 / CPU_CLOCK_PERIOD;
@@ -11,8 +11,8 @@ module fpmmult_tb();
   localparam CHAR0     = 8'h61; // ~ 'a'
   localparam NUM_CHARS = 200;
 
-  // localparam TIMEOUT_CYCLE = 10_000 * NUM_CHARS;
-  localparam TIMEOUT_CYCLE = 10000000000;
+//   localparam TIMEOUT_CYCLE = 10_000 * NUM_CHARS;
+    localparam TIMEOUT_CYCLE = 10000000000;
 
   initial clk = 0;
   always #(CPU_CLOCK_PERIOD/2) clk = ~clk;
@@ -73,8 +73,8 @@ module fpmmult_tb();
         serial_in = 1;
         #(BAUD_PERIOD);
 
-        //$display("[time %t, sim. cycle %d] [Host (tb) --> FPGA_SERIAL_RX] Sent char 8'h%h",
-                 //$time, cycle, chars_from_host[c1]);
+        $display("[time %t, sim. cycle %d] [Host (tb) --> FPGA_SERIAL_RX] Sent char 8'h%h",
+                 $time, cycle, chars_from_host[c1]);
         repeat (100) @(posedge clk); // Give time for the  program to process each character
       end
     end
@@ -103,15 +103,15 @@ module fpmmult_tb();
   endtask
 
   initial begin
-    $readmemh("../../software/fpmmult/fpmmult.hex", `IMEM_PATH.mem, 0, 16384-1);
-    $readmemh("../../software/fpmmult/fpmmult.hex", `DMEM_PATH.mem, 0, 16384-1);
+    $readmemh("../../software/benchmark/bdd/bdd.hex", `IMEM_PATH.mem, 0, 16384-1);
+    $readmemh("../../software/benchmark/bdd/bdd.hex", `DMEM_PATH.mem, 0, 16384-1);
 
     `ifndef IVERILOG
         $vcdpluson;
     `endif
     `ifdef IVERILOG
-        $dumpfile("fpmmult_tb.fst");
-        $dumpvars(0, fpmmult_tb);
+        $dumpfile("bdd_tb.fst");
+        $dumpvars(0, bdd_tb);
     `endif
     rst = 1;
     serial_in = 1;

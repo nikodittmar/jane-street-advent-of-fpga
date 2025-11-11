@@ -353,4 +353,62 @@ module ex_stage (
 
         .out(mem_inst)
     );
+
+    /*
+    // MARK: Hazard Analysis
+    reg [31:0] one_cycle_data_hazard;
+    reg [31:0] two_cycle_data_hazard;
+
+    reg [31:0] fp_one_cycle_data_hazard;
+    reg [31:0] fp_two_cycle_data_hazard;
+
+    reg [31:0] load_use_hazard_cnt;
+    reg [31:0] fp_load_use_hazard_cnt;
+
+
+    reg [31:0] fp_busy_cycle_cnt;
+
+    always @(posedge clk) begin 
+        if (rst) begin 
+            one_cycle_data_hazard <= 32'b0;
+            two_cycle_data_hazard <= 32'b0;
+            fp_one_cycle_data_hazard <= 32'b0;
+            fp_two_cycle_data_hazard <= 32'b0;
+            fp_busy_cycle_cnt <= 32'b0;
+            load_use_hazard_cnt <= 32'b0;
+            fp_load_use_hazard_cnt <= 32'b0;
+        end else begin 
+            if (ex_inst != `NOP && !ex_stall) begin  // Avoid double counting for FPU stalls
+                if (fwda_sel == `EX_FWD_MEM || fwdb_sel == `EX_FWD_MEM) begin 
+                    one_cycle_data_hazard <= one_cycle_data_hazard + 32'b1;
+                end
+
+                if (fwda_sel == `EX_FWD_WB || fwdb_sel == `EX_FWD_WB) begin 
+                    two_cycle_data_hazard <= two_cycle_data_hazard + 32'b1;
+                end
+                
+                if (fwd_fpa_sel == `EX_FWD_MEM || fwd_fpb_sel == `EX_FWD_MEM || fwd_fpc_sel == `EX_FWD_MEM) begin
+                    fp_one_cycle_data_hazard <= fp_one_cycle_data_hazard + 32'b1;
+                end
+
+                if (fwd_fpa_sel == `EX_FWD_WB || fwd_fpb_sel == `EX_FWD_WB || fwd_fpc_sel == `EX_FWD_WB) begin
+                    fp_two_cycle_data_hazard <= fp_two_cycle_data_hazard + 32'b1;
+                end
+
+                if (fwda_sel == `EX_FWD_WB || fwdb_sel == `EX_FWD_WB || fwda_sel == `EX_FWD_MEM || fwdb_sel == `EX_FWD_MEM) begin 
+                    load_use_hazard_cnt <= load_use_hazard_cnt + 32'b1;
+                end
+                
+                if (fwd_fpa_sel == `EX_FWD_MEM || fwd_fpb_sel == `EX_FWD_MEM || fwd_fpc_sel == `EX_FWD_MEM || fwd_fpa_sel == `EX_FWD_WB || fwd_fpb_sel == `EX_FWD_WB || fwd_fpc_sel == `EX_FWD_WB) begin
+                    fp_load_use_hazard_cnt <= fp_load_use_hazard_cnt + 32'b1;
+                end
+            end
+
+            if (ex_stall) begin 
+                fp_busy_cycle_cnt <= fp_busy_cycle_cnt + 32'b1;
+            end
+        end
+    end
+
+    */
 endmodule

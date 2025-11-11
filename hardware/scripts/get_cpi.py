@@ -44,25 +44,40 @@ def get_cpi(port, com):
   benchmarks = ["bdd", "mmult"]
   cyc_cnts = []
   inst_cnts = []
+  branch_cnts = []
+  correct_cnts = []
   for benchmark in benchmarks:
-    cycle_count, inst_count = run_fpga(os.path.join(benchmark_path, benchmark, benchmark + '.hex'), port, com)
+    cycle_count, inst_count, branch_count, correct_count = run_fpga(os.path.join(benchmark_path, benchmark, benchmark + '.hex'), port, com)
     cyc_cnts.append(cycle_count)
     inst_cnts.append(inst_count)
+    branch_cnts.append(branch_count)
+    correct_cnts.append(correct_count)
   print('...FPGA run complete')
   print('Cycle Counts: {}'.format(cyc_cnts))
   print('Instruction Counts: {}'.format(inst_cnts))
+  print('Branch Counts: {}'.format(branch_cnts))
+  print('Correct Branch Prediction Counts: {}'.format(correct_cnts))
   cyc_cnts = np.array(cyc_cnts)
   inst_cnts = np.array(inst_cnts)
+  branch_cnts = np.array(branch_cnts)
+  correct_cnts = np.array(correct_cnts)
   cpis = cyc_cnts / inst_cnts
+  prediction_accuracies = correct_cnts / branch_cnts
   np.set_printoptions(precision=2)
   print('CPIs: ' + np.array2string(cpis, separator=', '))
   integer_cpi = cpis.prod()**(1.0/len(cpis))
   print('Integer CPI (geomean): {:.2f}'.format(integer_cpi))
 
-  cycle_count, inst_count = run_fpga("../software/fpmmult/fpmmult.hex", port, com)
+  print('Branch Predictor Accuracies: ' + np.array2string(prediction_accuracies, separator=', '))
+
+  cycle_count, inst_count, branch_count, correct_count = run_fpga("../software/fpmmult/fpmmult.hex", port, com)
 
   fp_cpi = cycle_count / inst_count
+  fp_prediction_accuracy = correct_count / branch_count
   print('FP CPI (geomean): {:.2f}'.format(fp_cpi))
+  print('FP Branch Count: {}'.format(branch_count))
+  print('FP Correct Branch Prediction Count: {}'.format(correct_count))
+  print('FP Branch Predictor Accuracy: {:.2f}'.format(fp_prediction_accuracy))
 
   return (integer_cpi, fp_cpi)
 

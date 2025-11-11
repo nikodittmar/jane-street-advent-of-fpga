@@ -29,19 +29,27 @@ def run_fpga(hex_file, port, com):
 
     cycle_count = -1
     inst_count = -1
-    while cycle_count == -1 or inst_count == -1:
+    correct_count = -1
+    branch_count = -1
+    while cycle_count == -1 or inst_count == -1 or branch_count == -1 or correct_count == -1:
         line = ser.readline().decode('utf-8').strip()
         print(line)
         if 'Cycle Count' in line:
-            line = line.split(': ')
-            cycle_count = int(line[1], 16)
-        if 'Instruction Count' in line:
-            line = line.split(': ')
-            inst_count = int(line[1], 16)
+            parts = line.split(': ')
+            cycle_count = int(parts[1], 16)
+        elif 'Branch Instruction Count' in line:
+            parts = line.split(': ')
+            branch_count = int(parts[1], 16)
+        elif 'Instruction Count' in line:
+            parts = line.split(': ')
+            inst_count = int(parts[1], 16)
+        elif 'Correct Branch Prediction Count' in line:
+            parts = line.split(': ')
+            correct_count = int(parts[1], 16)
 
     print("Done")
 
-    return cycle_count, inst_count
+    return cycle_count, inst_count, branch_count, correct_count
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Load and execute hex file on FPGA')

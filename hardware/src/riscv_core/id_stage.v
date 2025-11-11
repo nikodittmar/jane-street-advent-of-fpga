@@ -246,4 +246,19 @@ module id_stage (
             (ra1 == 5'b0) |-> (rd1 == 32'b0) && (ra2 == 5'b0) |-> (rd2 == 32'b0)
         ) else $error("reading from x0 must always be zero!");
     */
+    /*
+    // MARK: Hazard Analysis
+
+    reg [31:0] stall_cnt;
+    
+    always @(posedge clk) begin 
+        if (rst) begin 
+                stall_cnt <= 32'b0;
+        end else begin 
+            if (id_stall) begin 
+                stall_cnt <= stall_cnt + 32'd1;
+            end
+        end
+    end
+    */
 endmodule
