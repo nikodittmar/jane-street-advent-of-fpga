@@ -1,9 +1,9 @@
 `include "control_sel.vh"
+
 module target_gen (
     input [31:0] pc,
-    input [1:0] sel,
+    input sel,
     input en,
-    input [31:0] rd1,
     input [31:0] imm,
 
     output reg [31:0] target,
@@ -20,10 +20,6 @@ always @ (*) begin
         case(sel)
         `TGT_GEN_JAL: begin
             target = pc + $signed(imm);
-            target_taken = 1'b1;
-        end
-        `TGT_GEN_JALR: begin
-            target = $signed(rd1) + $signed(imm);
             target_taken = 1'b1;
         end
         `TGT_GEN_BR: begin

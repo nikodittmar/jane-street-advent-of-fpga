@@ -8,7 +8,7 @@ module if_stage #(
     input id_stall,
     input ex_stall,
     input id_target_taken,
-    input ex_br_mispred,
+    input ex_redirect_pc,
     input [31:0] id_target,
     input [31:0] ex_alu,
     
@@ -81,7 +81,7 @@ module if_stage #(
     if_control control (
         .rst(rst),
         .pc(pc_out),
-        .br_mispred(ex_br_mispred),
+        .redirect_pc(ex_redirect_pc),
         .target_taken(id_target_taken),
         .id_stall(id_stall),
         .ex_stall(ex_stall),

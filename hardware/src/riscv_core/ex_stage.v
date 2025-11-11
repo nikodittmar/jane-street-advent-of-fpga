@@ -16,7 +16,7 @@ module ex_stage (
     input [31:0] wb_inst, // WB instruction for hazard detection
     
     output [31:0] ex_alu,
-    output ex_br_mispred, // Branch mispredict flag
+    output ex_redirect_pc, // EX redirect PC flag
     output ex_flush, // Flush flag in the event of control hazards
     output ex_stall, // Flush flag when FPU is busy
     output mem_br_suc, // Branch prediction success flag
@@ -286,7 +286,7 @@ module ex_stage (
         .fpa_sel(fpa_sel),
         .csr_mux_sel(csr_mux_sel),
         .csr_en(csr_we),
-        .br_mispred(ex_br_mispred),
+        .redirect_pc(ex_redirect_pc),
         .br_suc(br_suc),
         .alusel(alu_sel),
         .fpusel(fpu_sel),

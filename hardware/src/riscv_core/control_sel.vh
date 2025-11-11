@@ -30,18 +30,10 @@
 `define IMM_J                   3'b100 // J-type immediates
 `define IMM_DONT_CARE           3'b000
 
-// Target generator forwarding mux
-`define TGT_GEN_FWD_NUM_INPUTS  4
-`define TGT_GEN_FWD_NONE        2'b00
-`define TGT_GEN_FWD_EX          2'b01
-`define TGT_GEN_FWD_MEM         2'b10
-`define TGT_GEN_FWD_WB          2'b11
-
 // Target generator sel
-`define TGT_GEN_JAL                 2'b00
-`define TGT_GEN_JALR                2'b01
-`define TGT_GEN_BR                  2'b10
-`define TGT_GEN_DONT_CARE           2'b00
+`define TGT_GEN_JAL                 1'b0
+`define TGT_GEN_BR                  1'b1
+`define TGT_GEN_DONT_CARE           1'b0
 
 // ***** EX STAGE *****
 

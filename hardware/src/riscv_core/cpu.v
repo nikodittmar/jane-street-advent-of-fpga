@@ -20,7 +20,7 @@ module cpu #(
     wire [31:0] wb_inst;
     wire id_target_taken;
     wire [31:0] id_target;
-    wire ex_br_mispred;
+    wire ex_redirect_pc;
     wire [31:0] ex_alu;
     wire id_stall;
     wire ex_flush;
@@ -64,7 +64,7 @@ module cpu #(
         .id_stall(id_stall),
         .ex_stall(ex_stall),
         .id_target_taken(id_target_taken),
-        .ex_br_mispred(ex_br_mispred),
+        .ex_redirect_pc(ex_redirect_pc),
         .id_target(id_target),
         .ex_alu(ex_alu),
 
@@ -84,9 +84,6 @@ module cpu #(
         .id_imem_inst(id_imem_inst),
         .wb_fpregwen(wb_fpregwen),
         .wb_regwen(wb_regwen),
-        .ex_alu(ex_alu),
-        .mem_alu(mem_alu),
-        .mem_inst(mem_inst),
         .wb_wdata(wb_wdata),
         .wb_inst(wb_inst),
         .ex_stall(ex_stall),
@@ -123,7 +120,7 @@ module cpu #(
         .wb_inst(wb_inst),
 
         .ex_alu(ex_alu),
-        .ex_br_mispred(ex_br_mispred),
+        .ex_redirect_pc(ex_redirect_pc),
         .ex_flush(ex_flush),
         .ex_stall(ex_stall),
         .mem_br_suc(mem_br_suc),
