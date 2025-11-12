@@ -70,11 +70,11 @@ module fpu (
         end
         `FPU_ADD: begin 
             res = add_res;
-            op_lat = 4'd3;
+            op_lat = 4'd4;
         end
         `FPU_MADD: begin 
             res = add_res;
-            op_lat = 4'd4;
+            op_lat = 4'd5;
         end
         `FPU_CVT: begin 
             res = cvt_res;

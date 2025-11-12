@@ -3,18 +3,21 @@ module fp_add (
     input [31:0] a,
     input [31:0] b,
     output [31:0] res
-);  
+);      
+
+    reg [31:0] a_in;
+    reg [31:0] b_in;
 
     // MARK: Decompose
 
-    wire dcmp_a_sgn = a[31];
-    wire dcmp_b_sgn = b[31];
+    wire dcmp_a_sgn = a_in[31];
+    wire dcmp_b_sgn = b_in[31];
     
-    wire [7:0] dcmp_a_exp = a[30:23];
-    wire [7:0] dcmp_b_exp = b[30:23];
+    wire [7:0] dcmp_a_exp = a_in[30:23];
+    wire [7:0] dcmp_b_exp = b_in[30:23];
 
-    wire [23:0] dcmp_a_man = (a[22:0] == 23'b0 && dcmp_a_exp == 8'b0) ? 24'b0 : {1'b1, a[22:0]};
-    wire [23:0] dcmp_b_man = (b[22:0] == 23'b0 && dcmp_b_exp == 8'b0) ? 24'b0 : {1'b1, b[22:0]};
+    wire [23:0] dcmp_a_man = (a_in[22:0] == 23'b0 && dcmp_a_exp == 8'b0) ? 24'b0 : {1'b1, a_in[22:0]};
+    wire [23:0] dcmp_b_man = (b_in[22:0] == 23'b0 && dcmp_b_exp == 8'b0) ? 24'b0 : {1'b1, b_in[22:0]};
 
     wire dcmp_a_larger = (dcmp_a_exp == dcmp_b_exp && dcmp_a_man > dcmp_b_man) || dcmp_a_exp > dcmp_b_exp;
 
@@ -84,6 +87,9 @@ module fp_add (
     assign res = { res_sgn, res_exp, res_man };
 
     always @(posedge clk) begin 
+        a_in <= a;
+        b_in <= b;
+
         msh_exp_diff <= dcmp_exp_diff;
         msh_lg_sgn <= dcmp_lg_sgn;
         msh_sm_sgn <= dcmp_sm_sgn;

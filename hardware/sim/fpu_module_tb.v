@@ -44,25 +44,25 @@ module fpu_module_tb();
         // -------------------------
         sel = `FPU_ADD; c = 32'h0; a = 32'h0;
 
-        a = 32'h3F80_0000; b = 32'h3F80_0000; #8;
+        a = 32'h3F80_0000; b = 32'h3F80_0000; #12;
         assert(res == 32'h4000_0000) else $display("ERROR: FADD 1.0+1.0 expected 40000000, got %h", res);
 
-        a = 32'hC00C_CCCD; b = 32'h400C_CCCD; #8;
+        a = 32'hC00C_CCCD; b = 32'h400C_CCCD; #12;
         assert(res == 32'h0000_0000) else $display("ERROR: FADD -x + x expected 00000000, got %h", res);
 
-        a = 32'h400C_CCCD; b = 32'h400C_CCCD; #8;
+        a = 32'h400C_CCCD; b = 32'h400C_CCCD; #12;
         assert(res == 32'h408C_CCCD) else $display("ERROR: FADD 2.2+2.2 expected 408CCCCD, got %h", res);
 
-        a = 32'h0000_0000; b = 32'h0000_0000; #8;
+        a = 32'h0000_0000; b = 32'h0000_0000; #12;
         assert(res == 32'h0000_0000) else $display("ERROR: FADD 0+0 expected 00000000, got %h", res);
 
-        a = 32'h0000_0000; b = 32'h400C_CCCD; #8;
+        a = 32'h0000_0000; b = 32'h400C_CCCD; #12;
         assert(res == 32'h400C_CCCD) else $display("ERROR: FADD 0+2.2 expected 400CCCCD, got %h", res);
 
-        a = 32'h400C_CCCD; b = 32'h0000_0000; #8;
+        a = 32'h400C_CCCD; b = 32'h0000_0000; #12;
         assert(res == 32'h400C_CCCD) else $display("ERROR: FADD 2.2+0 expected 400CCCCD, got %h", res);
 
-        a = 32'h409A_E148; b = 32'hBF57_0A3D; #8;
+        a = 32'h409A_E148; b = 32'hBF57_0A3D; #12;
         assert(res == 32'h4080_0000) else $display("ERROR: FADD 4.84+(-0.84) expected 40800000, got %h", res);
 
         // -------------------------
@@ -70,19 +70,19 @@ module fpu_module_tb();
         // -------------------------
         sel = `FPU_MADD; a = 32'h0;
 
-        a = 32'h400C_CCCD; b = 32'h400C_CCCD; c = 32'h0000_0000; #12;
+        a = 32'h400C_CCCD; b = 32'h400C_CCCD; c = 32'h0000_0000; #16;
         assert(res == 32'h409A_E148) else $display("ERROR: FMADD 2.2*2.2+0 expected 409AE148, got %h", res);
 
-        a = 32'h400C_CCCD; b = 32'h400C_CCCD; c = 32'hBF57_0A3D; #12;
+        a = 32'h400C_CCCD; b = 32'h400C_CCCD; c = 32'hBF57_0A3D; #16;
         assert(res == 32'h4080_0000) else $display("ERROR: FMADD 2.2*2.2+(-0.84) expected 40800000, got %h", res);
 
-        a = 32'h0000_0000; b = 32'h400C_CCCD; c = 32'h400C_CCCD; #12;
+        a = 32'h0000_0000; b = 32'h400C_CCCD; c = 32'h400C_CCCD; #16;
         assert(res == 32'h400C_CCCD) else $display("ERROR: FMADD 0*2.2+2.2 expected 400CCCCD, got %h", res);
 
-        a = 32'h400C_CCCD; b = 32'h0000_0000; c = 32'h400C_CCCD; #12;
+        a = 32'h400C_CCCD; b = 32'h0000_0000; c = 32'h400C_CCCD; #16;
         assert(res == 32'h400C_CCCD) else $display("ERROR: FMADD 2.2*0+2.2 expected 400CCCCD, got %h", res);
 
-        a = 32'h0000_0000; b = 32'h0000_0000; c = 32'h0000_0000; #12;
+        a = 32'h0000_0000; b = 32'h0000_0000; c = 32'h0000_0000; #16;
         assert(res == 32'h0000_0000) else $display("ERROR: FMADD 0*0+0 expected 00000000, got %h", res);
 
 
