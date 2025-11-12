@@ -35,6 +35,7 @@ module fpu (
     wire [31:0] cvt_res;
 
     fp_cvt converter (
+        .clk(clk),
         .in(a),
         .res(cvt_res)
     );
@@ -77,7 +78,7 @@ module fpu (
         end
         `FPU_CVT: begin 
             res = cvt_res;
-            op_lat = 4'd0;
+            op_lat = 4'd1;
         end
         `FPU_SGNJ: begin 
             res = sgnj_res;
