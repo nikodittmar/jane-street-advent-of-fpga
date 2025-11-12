@@ -1,5 +1,6 @@
 build
 *.fst
+*.fst.hier
 *.tbi
 csrc
 ucli.key

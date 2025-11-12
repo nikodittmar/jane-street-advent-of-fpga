@@ -4,6 +4,7 @@ module program_counter #(
     input clk,
     input rst,
     input stall,
+    input flush,
     input [31:0] pc_in,
     output reg [31:0] pc_out
 );
@@ -14,14 +15,14 @@ module program_counter #(
     always @(posedge clk) begin 
         if (rst) begin
             pc <= RESET_PC;
-        end else if (~stall) begin
+        end else if (flush || !stall) begin
             prev_pc <= pc;
             pc <= pc_in;
         end
     end
 
     always @(*) begin
-        if (stall) begin 
+        if (stall && !flush) begin 
             pc_out = prev_pc;
         end else begin 
             pc_out = pc;

@@ -16,9 +16,9 @@ module ex_stage (
     input [31:0] wb_inst, // WB instruction for hazard detection
     
     output [31:0] ex_alu,
-    output ex_redirect_pc, // EX redirect PC flag
-    output ex_flush, // Flush flag in the event of control hazards
-    output ex_stall, // Flush flag when FPU is busy
+    output mem_redirect_pc, // EX redirect PC flag
+    output mem_flush, // Flush flag in the event of control hazards
+    output ex_stall,
     output mem_br_suc, // Branch prediction success flag
     output [31:0] mem_pc,
     output [31:0] mem_alu,
@@ -30,8 +30,8 @@ module ex_stage (
     wire ex_reg_rst;
     wire ex_reg_we;
 
-    assign ex_reg_we = ~rst | ~ex_stall;
-    assign ex_reg_rst = rst | ex_stall;
+    assign ex_reg_we = ~rst & ~ex_stall;
+    assign ex_reg_rst = rst | ex_stall | mem_flush;
 
     // MARK: FPU
 
@@ -265,6 +265,8 @@ module ex_stage (
     // MARK: Control Logic
 
     wire br_suc;
+    wire redirect_pc;
+    wire flush;
 
     ex_control control (
         .clk(clk),
@@ -286,11 +288,11 @@ module ex_stage (
         .fpa_sel(fpa_sel),
         .csr_mux_sel(csr_mux_sel),
         .csr_en(csr_we),
-        .redirect_pc(ex_redirect_pc),
+        .redirect_pc(redirect_pc),
         .br_suc(br_suc),
         .alusel(alu_sel),
         .fpusel(fpu_sel),
-        .flush(ex_flush),
+        .flush(flush),
         .fpu_valid(fpu_valid)
     );
 
@@ -352,6 +354,28 @@ module ex_stage (
         .in(ex_inst),
 
         .out(mem_inst)
+    );
+
+    pipeline_reg #(
+        .WIDTH(1)
+    ) pc_redirect_reg (
+        .clk(clk),
+        .rst(ex_reg_rst),
+        .we(ex_reg_we),
+        .in(redirect_pc),
+
+        .out(mem_redirect_pc)
+    );
+
+    pipeline_reg #(
+        .WIDTH(1)
+    ) flush_reg (
+        .clk(clk),
+        .rst(ex_reg_rst),
+        .we(ex_reg_we),
+        .in(flush),
+
+        .out(mem_flush)
     );
 
     /*

@@ -20,10 +20,10 @@ module cpu #(
     wire [31:0] wb_inst;
     wire id_target_taken;
     wire [31:0] id_target;
-    wire ex_redirect_pc;
+    wire mem_redirect_pc;
     wire [31:0] ex_alu;
     wire id_stall;
-    wire ex_flush;
+    wire mem_flush;
     wire ex_stall;
     wire [31:0] id_bios_inst;
     wire [31:0] id_imem_inst;
@@ -63,10 +63,11 @@ module cpu #(
         .rst(rst),
         .id_stall(id_stall),
         .ex_stall(ex_stall),
+        .mem_flush(mem_flush),
         .id_target_taken(id_target_taken),
-        .ex_redirect_pc(ex_redirect_pc),
+        .mem_redirect_pc(mem_redirect_pc),
         .id_target(id_target),
-        .ex_alu(ex_alu),
+        .mem_alu(mem_alu),
 
         .id_pc(id_pc),
         .if_addr(if_addr),
@@ -78,7 +79,7 @@ module cpu #(
     id_stage id_stage (
         .clk(clk),
         .rst(rst),
-        .ex_flush(ex_flush),
+        .mem_flush(mem_flush),
         .id_pc(id_pc),
         .id_bios_inst(id_bios_inst),
         .id_imem_inst(id_imem_inst),
@@ -120,8 +121,8 @@ module cpu #(
         .wb_inst(wb_inst),
 
         .ex_alu(ex_alu),
-        .ex_redirect_pc(ex_redirect_pc),
-        .ex_flush(ex_flush),
+        .mem_redirect_pc(mem_redirect_pc),
+        .mem_flush(mem_flush),
         .ex_stall(ex_stall),
         .mem_br_suc(mem_br_suc),
         .mem_pc(mem_pc),
