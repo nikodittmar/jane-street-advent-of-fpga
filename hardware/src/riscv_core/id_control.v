@@ -2,14 +2,19 @@
 `include "opcode.vh"
 
 module id_control (
+    //input clk,
+    //input rst,
     input [31:0] inst,
     input [31:0] ex_inst,
+    input [31:0] mem_inst,
 
     output reg [2:0] imm_sel,
     output reg target_gen_sel,
     output reg target_gen_en,
     output reg stall
 );
+
+//reg [31:0] mem_inst;
 
 wire [4:0] opcode5;
 wire [2:0] funct3;
@@ -42,6 +47,12 @@ wire ex_has_rd;
 wire [4:0] ex_fd;
 wire ex_has_fd;
 
+wire [4:0] mem_rd;
+wire mem_has_rd;
+
+wire [4:0] mem_fd;
+wire mem_has_fd;
+
 assign rs1 = inst[19:15];
 assign has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] != `OPC_JAL && (inst[6:0] != `OPC_CSR || inst[14:12] == `FNC_CSRRW) && rs1 != 5'b0 && inst[6:0] != `OPC_FP_MADD && (inst[6:0] != `OPC_FP || inst[31:25] == `FNC7_FP_MV_W_X || inst[31:25] == `FNC7_FP_CVT_S_W);
 
@@ -63,11 +74,19 @@ assign ex_has_rd = ex_inst[6:0] != `OPC_STORE && ex_inst[6:0] != `OPC_BRANCH && 
 assign ex_fd = ex_inst[11:7];
 assign ex_has_fd = ex_inst[6:0] == `OPC_FP_LOAD || ex_inst[6:0] == `OPC_FP_MADD || (ex_inst[6:0] == `OPC_FP && ex_inst[31:25] != `FNC7_FP_MV_X_W);
 
+assign mem_rd = mem_inst[11:7];
+assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && mem_inst[6:0] != `OPC_CSR && mem_inst[6:0] != `OPC_FP_LOAD && mem_inst[6:0] != `OPC_FP_STORE && mem_inst[6:0] != `OPC_FP_MADD && (mem_inst[6:0] != `OPC_FP || mem_inst[31:25] == `FNC7_FP_MV_X_W);
+
+assign mem_fd = mem_inst[11:7];
+assign mem_has_fd = mem_inst[6:0] == `OPC_FP_LOAD || mem_inst[6:0] == `OPC_FP_MADD || (mem_inst[6:0] == `OPC_FP && mem_inst[31:25] != `FNC7_FP_MV_X_W);
+
 wire is_store;
 wire ex_load_inst;
+wire mem_load_inst;
 
 assign is_store = inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_FP_STORE;
 assign ex_load_inst = ex_inst[6:2] == `OPC_LOAD_5 || ex_inst[6:2] == `OPC_FP_LOAD_5;
+assign mem_load_inst = mem_inst[6:2] == `OPC_LOAD_5 || mem_inst[6:2] == `OPC_FP_LOAD_5;
 
 always @(*) begin
     imm_sel = `IMM_DONT_CARE;
@@ -75,20 +94,46 @@ always @(*) begin
     target_gen_en = 1'b0;
     stall = 1'b0;
 
-    if (ex_load_inst && // Only need to stall for load use data hazards
-        (
-            (is_store && rs1 == ex_rd) || // We only need to stall for store instructions with a data hazard surrounding the address
-            (
-                !is_store && // Store instructions do not need stalling for their store data
-                (
-                    (ex_has_rd && 
-                        ((has_rs1 && rs1 == ex_rd) || (has_rs2 && rs2 == ex_rd))  // Only stall if we use a register that was written to
-                    ) ||
-                    (ex_has_fd && 
-                        ((has_fs1 && fs1 == ex_fd) || (has_fs2 && fs2 == ex_fd) || (has_fs3 && fs3 == ex_fd))
-                    )
-            )))) // Only stall if we use a register that was written to
-    begin
+    // Note, we do not have WB -> ALU forwarding so we need to stall for 1 cycle apart ALU -> ALU hazards
+    // and we must also stall for MEM -> ALU hazards (for up to two cycles)
+
+    // Non-store MEM -> ALU hazards
+    if (!is_store && ex_load_inst && ex_has_rd && ((has_rs1 && rs1 == ex_rd) || (has_rs2 && rs2 == ex_rd))) begin
+        stall = 1'b1;
+    end
+
+    // MEM -> FPU hazards
+    if (ex_load_inst && ex_has_fd && ((has_fs1 && fs1 == ex_fd) || (has_fs2 && fs2 == ex_fd) || (has_fs3 && fs3 == ex_fd))) begin
+        stall = 1'b1;
+    end
+
+    // MEM -> ALU store hazards
+    if (is_store && ex_load_inst && rs1 == ex_rd) begin
+        stall = 1'b1;
+    end
+
+    // One cycle apart ALU -> ALU hazards
+    if (mem_has_rd && ((has_rs1 && rs1 == mem_rd) || (has_rs2 && rs2 == mem_rd))) begin
+        stall = 1'b1;
+    end
+
+    // One cycle apart FPU -> FPU hazards
+    if (mem_has_fd && ((has_fs1 && fs1 == mem_fd) || (has_fs2 && fs2 == mem_fd) || (has_fs3 && fs3 == mem_fd))) begin
+        stall = 1'b1;
+    end
+
+    // One cycle apart non-store MEM -> ALU hazards
+    if (!is_store && mem_load_inst && mem_has_rd && ((has_rs1 && rs1 == mem_rd) || (has_rs2 && rs2 == mem_rd))) begin
+        stall = 1'b1;
+    end
+
+    // One cycle apart MEM -> FPU hazards
+    if (mem_load_inst && mem_has_fd && ((has_fs1 && fs1 == mem_fd) || (has_fs2 && fs2 == mem_fd) || (has_fs3 && fs3 == mem_fd))) begin
+        stall = 1'b1;
+    end
+
+    // One cycle apart MEM -> ALU store hazards
+    if (is_store && mem_load_inst && rs1 == mem_rd) begin
         stall = 1'b1;
     end
 
@@ -302,5 +347,13 @@ always @(*) begin
     end
     endcase
 end
-
+/*
+always @(posedge clk) begin 
+    if (rst) begin
+        mem_inst <= 32'b0;
+    end else begin
+        mem_inst <= ex_inst;
+    end
+end
+*/
 endmodule

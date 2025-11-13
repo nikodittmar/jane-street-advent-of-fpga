@@ -12,8 +12,6 @@ module ex_stage (
     input [31:0] ex_imm,
     input ex_br_taken, // Branch predictor taken flag
     input [31:0] ex_inst,
-    input [31:0] wb_wdata, // Forwarded result from WB stage
-    input [31:0] wb_inst, // WB instruction for hazard detection
     
     output [31:0] ex_alu,
     output mem_flush, // Flush flag in the event of control hazards
@@ -62,7 +60,6 @@ module ex_stage (
 
     assign fwda_in[`EX_FWD_NONE * 32 +: 32] = ex_rd1;
     assign fwda_in[`EX_FWD_MEM * 32 +: 32] = mem_alu;
-    assign fwda_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
 
     mux #(
         .NUM_INPUTS(`EX_FWD_NUM_INPUTS)
@@ -81,7 +78,6 @@ module ex_stage (
 
     assign fwdb_in[`EX_FWD_NONE * 32 +: 32] = ex_rd2;
     assign fwdb_in[`EX_FWD_MEM * 32 +: 32] = mem_alu;
-    assign fwdb_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
 
     mux #(
         .NUM_INPUTS(`EX_FWD_NUM_INPUTS)
@@ -101,7 +97,6 @@ module ex_stage (
 
     assign fwd_fpa_in[`EX_FWD_NONE * 32 +: 32] = ex_fd1;
     assign fwd_fpa_in[`EX_FWD_MEM * 32 +: 32] = mem_fpu;
-    assign fwd_fpa_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
 
     mux #(
         .NUM_INPUTS(`EX_FWD_NUM_INPUTS)
@@ -119,7 +114,6 @@ module ex_stage (
 
     assign fwd_fpb_in[`EX_FWD_NONE * 32 +: 32] = ex_fd2;
     assign fwd_fpb_in[`EX_FWD_MEM * 32 +: 32] = mem_fpu;
-    assign fwd_fpb_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
 
     mux #(
         .NUM_INPUTS(`EX_FWD_NUM_INPUTS)
@@ -137,7 +131,6 @@ module ex_stage (
 
     assign fwd_fpc_in[`EX_FWD_NONE * 32 +: 32] = ex_fd3;
     assign fwd_fpc_in[`EX_FWD_MEM * 32 +: 32] = mem_fpu;
-    assign fwd_fpc_in[`EX_FWD_WB * 32 +: 32] = wb_wdata;
 
     mux #(
         .NUM_INPUTS(`EX_FWD_NUM_INPUTS)
@@ -270,7 +263,6 @@ module ex_stage (
         .clk(clk),
         .inst(ex_inst),
         .mem_inst(mem_inst),
-        .wb_inst(wb_inst),
         .breq(breq),
         .brlt(brlt),
         .br_taken(ex_br_taken),

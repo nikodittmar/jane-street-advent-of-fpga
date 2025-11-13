@@ -7,6 +7,7 @@ module id_stage (
     input [31:0] id_pc,
     input [31:0] id_bios_inst,
     input [31:0] id_imem_inst,
+    input [31:0] mem_inst,
     input wb_regwen,
     input wb_fpregwen,
     input [31:0] wb_wdata,
@@ -116,8 +117,11 @@ module id_stage (
     // MARK: Control
 
     id_control control (
+        //.clk(clk),
+        //.rst(rst),
         .inst(id_inst),
         .ex_inst(ex_inst),
+        .mem_inst(mem_inst),
     
         .imm_sel(imm_sel),
         .target_gen_sel(target_gen_sel),

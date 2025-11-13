@@ -51,7 +51,7 @@ module cpu_tb();
     .serial_out()
   );
 
-  wire [31:0] timeout_cycle = 10;
+  wire [31:0] timeout_cycle = 20;
 
   // Reset IMem, DMem, and RegFile before running new test
   task reset;

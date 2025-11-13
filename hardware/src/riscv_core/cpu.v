@@ -81,6 +81,7 @@ module cpu #(
         .id_pc(id_pc),
         .id_bios_inst(id_bios_inst),
         .id_imem_inst(id_imem_inst),
+        .mem_inst(mem_inst),
         .wb_fpregwen(wb_fpregwen),
         .wb_regwen(wb_regwen),
         .wb_wdata(wb_wdata),
@@ -115,8 +116,6 @@ module cpu #(
         .ex_imm(ex_imm),
         .ex_br_taken(ex_br_taken),
         .ex_inst(ex_inst),
-        .wb_wdata(wb_wdata),
-        .wb_inst(wb_inst),
 
         .ex_alu(ex_alu),
         .mem_flush(mem_flush),

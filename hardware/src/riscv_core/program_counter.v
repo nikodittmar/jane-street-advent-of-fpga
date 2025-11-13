@@ -39,6 +39,8 @@ always @(posedge clk) begin
         if (!prev_pc_valid) begin
             prev_pc_valid <= 1'b1;
         end
+        prev_redirect <= redirect;
+        prev_redirect_pc <= redirect_pc;
     end
 end
 

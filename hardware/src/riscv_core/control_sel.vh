@@ -38,10 +38,9 @@
 // ***** EX STAGE *****
 
 // Forwarding muxes
-`define EX_FWD_NUM_INPUTS       3
-`define EX_FWD_NONE             2'b00
-`define EX_FWD_MEM              2'b01
-`define EX_FWD_WB               2'b10
+`define EX_FWD_NUM_INPUTS       2
+`define EX_FWD_NONE             1'b0
+`define EX_FWD_MEM              1'b1
 
 // BrUn
 `define BRUN_DONT_CARE          1'b0
