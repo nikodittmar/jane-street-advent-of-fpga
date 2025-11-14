@@ -9,7 +9,7 @@ module if_stage #(
     input ex_stall,
     input mem_flush,
     input id_target_taken,
-    input mem_redirect_pc,
+    input mem_redirect_taken,
     input [31:0] id_target,
     input [31:0] mem_alu,
     
@@ -17,16 +17,14 @@ module if_stage #(
     output [31:0] if_addr,
     output if_bios_en
 );  
-    wire [31:0] if_pc;
-    assign if_addr = if_pc;
 
-    wire [31:0] pc4;
-    assign pc4 = if_pc + 32'd4;
+    wire [31:0] if_pc;
+
+    assign if_addr = if_pc;
 
     wire stall = id_stall | ex_stall;
 
-    wire [31:0] pc_out;
-    wire [31:0] next_pc;
+    assign if_bios_en = if_pc[30] == `INST_BIOS;
 
     // MARK: Program Counter
 
@@ -36,62 +34,11 @@ module if_stage #(
         .clk(clk),
         .rst(rst),
         .stall(stall),
-        .flush(mem_flush),
-        .pc_in(next_pc),
-
-        .pc_out(pc_out)
-    );
-
-    // MARK: PC Override Mux
-
-    wire [$clog2(`PC_MUX_NUM_INPUTS)-1:0] override_pc_sel;
-    wire [`PC_MUX_NUM_INPUTS*32-1:0] override_pc_mux_in;
-
-    assign override_pc_mux_in[`PC_4 * 32 +: 32] = pc_out;
-    assign override_pc_mux_in[`PC_ALU * 32 +: 32] = mem_alu;
-    assign override_pc_mux_in[`PC_TGT * 32 +: 32] = id_target;
-
-    mux #(
-        .NUM_INPUTS(`PC_MUX_NUM_INPUTS)
-    ) override_pc_mux (
-        .in(override_pc_mux_in),
-        .sel(override_pc_sel),
-
-        .out(if_pc)
-    );
-
-    // MARK: Next PC Mux
-
-    wire [$clog2(`PC_MUX_NUM_INPUTS)-1:0] next_pc_sel;
-    wire [`PC_MUX_NUM_INPUTS*32-1:0] next_pc_mux_in;
-
-    assign next_pc_mux_in[`PC_4 * 32 +: 32] = pc4;
-    assign next_pc_mux_in[`PC_ALU * 32 +: 32] = mem_alu;
-    assign next_pc_mux_in[`PC_TGT * 32 +: 32] = id_target;
-
-    mux #(
-        .NUM_INPUTS(`PC_MUX_NUM_INPUTS)
-    ) next_pc_mux (
-        .in(next_pc_mux_in),
-        .sel(next_pc_sel),
-
-        .out(next_pc)
-    );
-
-    // MARK: Control Logic
-
-    if_control control (
-        .rst(rst),
-        .pc(pc_out),
-        .redirect_pc(mem_redirect_pc),
         .target_taken(id_target_taken),
-        .id_stall(id_stall),
-        .ex_stall(ex_stall),
-        .flush(mem_flush),
-
-        .next_pc_sel(next_pc_sel),
-        .override_pc_sel(override_pc_sel),
-        .bios_en(if_bios_en)
+        .target(id_target),
+        .redirect_taken(mem_redirect_taken),
+        .redirect(mem_alu),
+        .pc_out(if_pc)
     );
 
     // MARK: Pipeline Registers

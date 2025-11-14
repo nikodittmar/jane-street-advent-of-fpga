@@ -16,7 +16,7 @@ module ex_stage (
     input [31:0] wb_inst, // WB instruction for hazard detection
     
     output [31:0] ex_alu,
-    output mem_redirect_pc, // EX redirect PC flag
+    output mem_redirect_taken, // EX redirect PC flag
     output mem_flush, // Flush flag in the event of control hazards
     output ex_stall,
     output mem_br_suc, // Branch prediction success flag
@@ -364,7 +364,7 @@ module ex_stage (
         .we(ex_reg_we),
         .in(redirect_pc),
 
-        .out(mem_redirect_pc)
+        .out(mem_redirect_taken)
     );
 
     pipeline_reg #(
