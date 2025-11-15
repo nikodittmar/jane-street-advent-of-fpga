@@ -17,7 +17,6 @@ module ex_control (
     output reg fpa_sel,
     output reg csr_mux_sel,
     output reg csr_en,
-    output reg redirect_pc,
     output reg br_suc,
     output reg [3:0] alusel,
     output reg [2:0] fpusel,
@@ -110,7 +109,6 @@ always @(*) begin
     bsel = `B_DONT_CARE;
     csr_mux_sel = `CSR_DONT_CARE;
     csr_en = 1'b0;
-    redirect_pc = 1'b0;
     br_suc = 1'b0;
     alusel = `ALU_DONT_CARE;
     fpusel = `FPU_DONT_CARE;
@@ -346,7 +344,6 @@ always @(*) begin
             if (breq == br_taken) begin
                 br_suc = 1'b1;
             end else begin 
-                redirect_pc = 1'b1;
                 flush = 1'b1;
                 alusel = breq ? `ALU_ADD : `ALU_A_PLUS_4;
             end
@@ -359,7 +356,6 @@ always @(*) begin
             if (breq != br_taken) begin
                 br_suc = 1'b1;
             end else begin 
-                redirect_pc = 1'b1;
                 flush = 1'b1;
                 alusel = !breq ? `ALU_ADD : `ALU_A_PLUS_4;
             end
@@ -372,7 +368,6 @@ always @(*) begin
             if (brlt == br_taken) begin
                 br_suc = 1'b1;
             end else begin 
-                redirect_pc = 1'b1;
                 flush = 1'b1;
                 alusel = brlt ? `ALU_ADD : `ALU_A_PLUS_4;
             end
@@ -385,7 +380,6 @@ always @(*) begin
             if (brlt != br_taken) begin
                 br_suc = 1'b1;
             end else begin 
-                redirect_pc = 1'b1;
                 flush = 1'b1;
                 alusel = !brlt ? `ALU_ADD : `ALU_A_PLUS_4;
             end
@@ -398,7 +392,6 @@ always @(*) begin
             if (brlt == br_taken) begin
                 br_suc = 1'b1;
             end else begin 
-                redirect_pc = 1'b1;
                 flush = 1'b1;
                 alusel = brlt ? `ALU_ADD : `ALU_A_PLUS_4;
             end
@@ -411,7 +404,6 @@ always @(*) begin
             if (brlt != br_taken) begin
                 br_suc = 1'b1;
             end else begin 
-                redirect_pc = 1'b1;
                 flush = 1'b1;
                 alusel = !brlt ? `ALU_ADD : `ALU_A_PLUS_4;
             end
@@ -429,7 +421,6 @@ always @(*) begin
         asel = `A_REG;
         bsel = `B_IMM;
         alusel = `ALU_ADD;
-        redirect_pc = 1'b1;
         flush = 1'b1;
     end
 

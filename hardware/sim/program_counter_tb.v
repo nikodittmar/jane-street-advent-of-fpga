@@ -7,13 +7,12 @@ module program_counter_tb();
     reg clk;
     reg rst;
     reg stall;
-    reg target_taken;
-    reg redirect_taken;
-    reg [31:0] target;
-    reg [31:0] redirect;
-    wire [31:0] pc;
+    reg flush;
+    reg in_valid;
+    reg [31:0] in;
 
-    reg [31:0] pc_hold;
+    wire [31:0] pc;
+    reg  [31:0] pc_hold;
 
     program_counter #(
         .RESET_PC(RESET_PC)
@@ -21,11 +20,10 @@ module program_counter_tb();
         .clk(clk),
         .rst(rst),
         .stall(stall),
-        .target_taken(target_taken),
-        .target(target),
-        .redirect_taken(redirect_taken),
-        .redirect(redirect),
-        .pc_out(pc)
+        .flush(flush),
+        .in_valid(in_valid),
+        .in(in),
+        .out(pc)
     );
 
     initial clk = 1;
@@ -39,200 +37,315 @@ module program_counter_tb();
         `ifndef IVERILOG
             $vcdpluson;
         `endif
-        
-        // init
-        rst            = 1'b1;
-        stall          = 1'b0;
-        target_taken   = 1'b0;
-        redirect_taken = 1'b0;
-        target         = 32'h0;
-        redirect       = 32'h0;
-        pc_hold        = 32'h0;
+
+        // ----------------------
+        // Init + reset
+        // ----------------------
+        rst      = 1'b1;
+        stall    = 1'b0;
+        flush    = 1'b0;
+        in_valid = 1'b0;
+        in       = 32'h0;
+        pc_hold  = 32'h0;
 
         #4;
-
-        // Deassert reset
         rst = 1'b0;
 
-        // --------------------------------------------------------------------
-        // 1. Normal incrementing
-        // --------------------------------------------------------------------
+        // ================================================================
+        // 0. After reset
+        // ================================================================
         @(posedge clk); #0;
-        assert(pc == RESET_PC);
+        assert(pc == RESET_PC)
+            else $display("ERROR: reset PC wrong, got %h", pc);
 
+        // ================================================================
+        // 1. Plain incrementing (no stall, no in_valid, no flush)
+        // ================================================================
         @(posedge clk); #0;
-        assert(pc == RESET_PC + 32'd4);
-
+        pc_hold = pc;
         @(posedge clk); #0;
-        assert(pc == RESET_PC + 32'd8);
-
-        // --------------------------------------------------------------------
-        // 2. target_taken changes PC on SAME cycle
-        // --------------------------------------------------------------------
-        target         = 32'h1234_5678;
-        target_taken   = 1'b1;
-        stall          = 1'b0;
-        redirect_taken = 1'b0;
-
-        @(posedge clk); #0;
-        assert(pc == 32'h1234_5678);
-
-        target_taken = 1'b0;
-
-        @(posedge clk); #0;
-        assert(pc == 32'h1234_5678 + 32'd4);
-
-        // --------------------------------------------------------------------
-        // 3. redirect_taken changes PC on SAME cycle
-        // --------------------------------------------------------------------
-        redirect       = 32'hDEAD_BEEF;
-        redirect_taken = 1'b1;
-        stall          = 1'b0;
-
-        @(posedge clk); #0;
-        assert(pc == 32'hDEAD_BEEF);
-
-        redirect_taken = 1'b0;
-
-        @(posedge clk); #0;
-        assert(pc == 32'hDEAD_BEEF + 32'd4);
-
-        // ====================================================================
-        // 4. redirect/target asserted WHILE stall=1 SHOULD NOT APPLY YET
-        //    They must apply ONLY AFTER stall drops.
-        // ====================================================================
-
-        // 4a) target_taken during stall -> PC must NOT change yet
-        stall        = 1'b1;
-        target       = 32'hCAFEBABE;
-        target_taken = 1'b1;
-
-        pc_hold = pc; // PC should remain unchanged during stall
-
-        @(posedge clk); #0;
-        assert(pc == pc_hold)
-            else $display("ERROR: target_taken during stall applied too early");
-
-        // Now release stall -> target redirect should finally apply
-        stall        = 1'b0;
-        target_taken = 1'b0;
-
-        @(posedge clk); #0;
-        assert(pc == 32'hCAFEBABE)
-            else $display("ERROR: target redirect did NOT occur after stall cleared");
-
-        // 4b) redirect_taken during stall -> same logic
-        stall          = 1'b1;
-        redirect       = 32'h0BAD_F00D;
-        redirect_taken = 1'b1;
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: increment 1 failed, expected %h got %h",
+                          pc_hold + 32'd4, pc);
 
         pc_hold = pc;
+        @(posedge clk); #0;
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: increment 2 failed, expected %h got %h",
+                          pc_hold + 32'd4, pc);
+
+        // ================================================================
+        // 2. in_valid (no stall, no flush)
+        //     If in_valid goes high, SAME cycle out must equal in
+        // ================================================================
+        in       = 32'h1111_2222;
+        in_valid = 1'b1;
 
         @(posedge clk); #0;
+        assert(pc == 32'h1111_2222)
+            else $display("ERROR: in_valid (no stall/flush) did not take effect, got %h", pc);
+
+        // Clear in_valid, then should increment from new PC
+        in_valid = 1'b0;
+        in       = 32'h0; // don't-care
+
+        pc_hold = pc;
+        @(posedge clk); #0;
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: increment after in_valid failed, expected %h got %h",
+                          pc_hold + 32'd4, pc);
+
+        // ================================================================
+        // 3. Single-cycle stall
+        //     - stall high on cycle N:
+        //         out must be the value of PC at cycle N-1
+        //     - after stall clears:
+        //         out = PC(N-1) + 4 on cycle N+1
+        // ================================================================
+        @(posedge clk); #0;
+        pc_hold = pc; // PC at cycle N-1
+
+        stall = 1'b1; // stall will be active at next posedge (cycle N)
+
+        @(posedge clk); #0; // cycle N
         assert(pc == pc_hold)
-            else $display("ERROR: redirect_taken during stall applied too early");
+            else $display("ERROR: single-cycle stall did not hold PC, expected %h got %h",
+                          pc_hold, pc);
 
-        stall          = 1'b0;
-        redirect_taken = 1'b0;
+        stall = 1'b0; // stall clears for next cycle (N+1)
 
-        @(posedge clk); #0;
-        assert(pc == 32'h0BAD_F00D)
-            else $display("ERROR: redirect did NOT occur after stall cleared");
+        @(posedge clk); #0; // cycle N+1
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: single-cycle stall did not resume from PC+4, expected %h got %h",
+                          pc_hold + 32'd4, pc);
 
-        // --------------------------------------------------------------------
-        // 5. Single-cycle stall
-        // --------------------------------------------------------------------
+        // ================================================================
+        // 4. Multi-cycle stall (no in_valid / flush)
+        //     - PC must hold constant for entire stall
+        //     - after stall, resume incrementing
+        // ================================================================
         @(posedge clk); #0;
         pc_hold = pc;
 
         stall = 1'b1;
-
-        @(posedge clk); #0;
-        assert(pc == pc_hold);
-
-        stall = 1'b0;
-
-        @(posedge clk); #0;
-        assert(pc == pc_hold + 32'd4);
-
-        // --------------------------------------------------------------------
-        // 6. Multi-cycle stall AFTER redirect
-        // --------------------------------------------------------------------
-        redirect       = 32'h1000_0000;
-        redirect_taken = 1'b1;
-        stall          = 1'b0;
-
-        @(posedge clk); #0;
-        assert(pc == 32'h1000_0000);
-
-        redirect_taken = 1'b0;
-        stall          = 1'b1;
-
         repeat (3) begin
             @(posedge clk); #0;
-            assert(pc == 32'h1000_0000);
+            assert(pc == pc_hold)
+                else $display("ERROR: multi-cycle stall changed PC, expected %h got %h",
+                              pc_hold, pc);
         end
 
         stall = 1'b0;
 
         @(posedge clk); #0;
-        assert(pc == 32'h1000_0000 + 32'd4);
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: multi-cycle stall did not resume from PC+4, expected %h got %h",
+                          pc_hold + 32'd4, pc);
 
-        // --------------------------------------------------------------------
-        // 7. Multi-cycle stall normal
-        // --------------------------------------------------------------------
+        // ================================================================
+        // 5. in_valid during a SINGLE-cycle stall
+        //     - in_valid goes high while stall=1
+        //     - PC must hold during stall
+        //     - after stall clears, PC must equal 'in'
+        // ================================================================
         @(posedge clk); #0;
         pc_hold = pc;
 
-        stall = 1'b1;
+        stall    = 1'b1;
+        in       = 32'hAAAA_BBBB;
+        in_valid = 1'b1;
 
-        repeat (3) begin
-            @(posedge clk); #0;
-            assert(pc == pc_hold);
-        end
-
-        stall = 1'b0;
-
-        @(posedge clk); #0;
-        assert(pc == pc_hold + 32'd4);
-
-        // --------------------------------------------------------------------
-        // 8. Multicycle stall with redirect on the FIRST stall cycle
-        //     - redirect_taken asserted only on first stalled cycle
-        //     - PC must hold during all stall cycles
-        //     - When stall drops, PC must jump to redirect
-        // --------------------------------------------------------------------
-        @(posedge clk); #0;
-        pc_hold        = pc;              // baseline before stall+redirect
-        redirect       = 32'h2000_0000;
-        stall          = 1'b1;
-        redirect_taken = 1'b1;
-
-        // First stall cycle: redirect_taken is high, but PC must still hold
         @(posedge clk); #0;
         assert(pc == pc_hold)
-            else $display("ERROR: test8: redirect applied during stall");
+            else $display("ERROR: in_valid changed PC during single-cycle stall");
 
-        // Subsequent stall cycles: redirect_taken is now low, PC still holds
-        redirect_taken = 1'b0;
+        stall    = 1'b0;
+        in_valid = 1'b0;
+        in       = 32'h0;
+
+        @(posedge clk); #0;
+        assert(pc == 32'hAAAA_BBBB)
+            else $display("ERROR: in_valid during single stall not applied after stall, got %h", pc);
+
+        // Increment after that
+        pc_hold = pc;
+        @(posedge clk); #0;
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: increment after in_valid+stall failed");
+
+        // ================================================================
+        // 6. in_valid during a MULTI-cycle stall
+        //     - in_valid only high for one cycle while stall=1
+        //     - PC must hold for all stall cycles
+        //     - after stall clears, PC must equal 'in'
+        // ================================================================
+        @(posedge clk); #0;
+        pc_hold = pc;
+
+        stall    = 1'b1;
+        in       = 32'hCCCC_DDDD;
+        in_valid = 1'b1;
+
+        @(posedge clk); #0;
+        assert(pc == pc_hold)
+            else $display("ERROR: in_valid changed PC during first cycle of multi stall");
+
+        // Drop in_valid, keep stalling a few more cycles
+        in_valid = 1'b0;
+        in       = 32'h0;
 
         repeat (2) begin
             @(posedge clk); #0;
             assert(pc == pc_hold)
-                else $display("ERROR: test8: PC changed during multicycle stall");
+                else $display("ERROR: PC changed during multi stall after in_valid");
         end
 
-        // Drop stall: redirect should now finally be applied
         stall = 1'b0;
 
         @(posedge clk); #0;
-        assert(pc == 32'h2000_0000)
-            else $display("ERROR: test8: redirect NOT applied after multicycle stall");
+        assert(pc == 32'hCCCC_DDDD)
+            else $display("ERROR: in_valid during multi stall not applied after stall, got %h", pc);
 
-        // And then it should resume incrementing from redirect
+        // Resume incrementing
+        pc_hold = pc;
         @(posedge clk); #0;
-        assert(pc == 32'h2000_0000 + 32'd4)
-            else $display("ERROR: test8: PC did not increment after redirect");
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: increment after multi stall + in_valid failed");
+
+        // ================================================================
+        // 7. flush behavior (no stall)
+        //     - flush high (with in_valid) should set out= in SAME CYCLE
+        // ================================================================
+        @(posedge clk); #0;
+
+        flush    = 1'b1;
+        in_valid = 1'b1;
+        in       = 32'hDEAD_BEEF;
+
+        @(posedge clk); #0;
+        assert(pc == 32'hDEAD_BEEF)
+            else $display("ERROR: flush (no stall) did not set PC to in, got %h", pc);
+
+        flush    = 1'b0;
+        in_valid = 1'b0;
+        in       = 32'h0;
+
+        // Increment from flush destination
+        pc_hold = pc;
+        @(posedge clk); #0;
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: increment after flush failed");
+
+        // ================================================================
+        // 8. flush WHILE stall=1
+        //     - current stall is ignored
+        //     - out must reflect 'in' SAME cycle flush goes high
+        // ================================================================
+        @(posedge clk); #0;
+        pc_hold = pc;
+
+        stall    = 1'b1;
+
+        @(posedge clk); #0; // now in stalled state, PC must hold
+        assert(pc == pc_hold)
+            else $display("ERROR: PC changed entering stall before flush");
+
+        // Now assert flush + in_valid while stall is still 1
+        in       = 32'hF00D_CAFE;
+        flush    = 1'b1;
+        in_valid = 1'b1;
+
+        @(posedge clk); #0;
+        assert(pc == 32'hF00D_CAFE)
+            else $display("ERROR: flush did not override stall, got %h", pc);
+
+        // Clear everything
+        stall    = 1'b0;
+        flush    = 1'b0;
+        in_valid = 1'b0;
+        in       = 32'h0;
+
+        // Increment from new PC
+        pc_hold = pc;
+        @(posedge clk); #0;
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: increment after flush+stall failed");
+
+        // ================================================================
+        // 9. Stall immediately AFTER a flush
+        //     - flush sets PC to 'in'
+        //     - next cycle stall holds that value
+        // ================================================================
+        @(posedge clk); #0;
+
+        flush    = 1'b1;
+        in_valid = 1'b1;
+        in       = 32'hABCD_1234;
+
+        @(posedge clk); #0;
+        assert(pc == 32'hABCD_1234)
+            else $display("ERROR: flush before stall did not set PC to in");
+
+        flush    = 1'b0;
+        in_valid = 1'b0;
+        in       = 32'h0;
+
+        // Now immediately stall
+        stall   = 1'b1;
+        pc_hold = pc;
+
+        @(posedge clk); #0;
+        assert(pc == pc_hold)
+            else $display("ERROR: stall after flush did not hold flushed PC");
+
+        stall = 1'b0;
+
+        @(posedge clk); #0;
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: increment after stall following flush failed");
+
+        // ================================================================
+        // 10. in_valid HIGH one cycle BEFORE stall
+        //      - in_valid sets PC to 'in'
+        //      - stall next cycle holds that value
+        //      - after stall, continue incrementing
+        // ================================================================
+        @(posedge clk); #0;
+
+        in       = 32'h5555_6666;
+        in_valid = 1'b1;
+
+        @(posedge clk); #0;
+        assert(pc == 32'h5555_6666)
+            else $display("ERROR: in_valid before stall: PC not set to in");
+
+        in_valid = 1'b0;
+        in       = 32'h0;
+
+        // Now stall one cycle
+        stall   = 1'b1;
+        pc_hold = pc;
+
+        @(posedge clk); #0;
+        assert(pc == pc_hold)
+            else $display("ERROR: stall after in_valid did not hold PC=in");
+
+        stall = 1'b0;
+
+        @(posedge clk); #0;
+        assert(pc == pc_hold + 32'd4)
+            else $display("ERROR: increment after in_valid-then-stall failed");
+
+        // ================================================================
+        // 11. Final sanity: a few more plain increments
+        // ================================================================
+        pc_hold = pc;
+        @(posedge clk); #0;
+        assert(pc == pc_hold + 32'd4);
+
+        pc_hold = pc;
+        @(posedge clk); #0;
+        assert(pc == pc_hold + 32'd4);
 
         $display("FINISHED: program_counter testbench complete");
         $finish;

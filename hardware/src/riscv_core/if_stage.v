@@ -9,7 +9,6 @@ module if_stage #(
     input ex_stall,
     input mem_flush,
     input id_target_taken,
-    input mem_redirect_taken,
     input [31:0] id_target,
     input [31:0] mem_alu,
     
@@ -18,28 +17,30 @@ module if_stage #(
     output if_bios_en
 );  
 
-    wire [31:0] if_pc;
-
-    assign if_addr = if_pc;
-
-    wire stall = id_stall | ex_stall;
-
-    assign if_bios_en = if_pc[30] == `INST_BIOS;
-
     // MARK: Program Counter
 
+    wire [31:0] if_pc;
+    wire stall = id_stall || ex_stall;
+    wire [31:0] in = mem_flush ? mem_alu : id_target;
+    wire in_valid = mem_flush || id_target_taken;
+    
     program_counter #(
         .RESET_PC(RESET_PC)
     ) program_counter (
         .clk(clk),
         .rst(rst),
         .stall(stall),
-        .target_taken(id_target_taken),
-        .target(id_target),
-        .redirect_taken(mem_redirect_taken),
-        .redirect(mem_alu),
-        .pc_out(if_pc)
+        .flush(mem_flush),
+        .in_valid(in_valid),
+        .in(in),
+        .out(if_pc)
     );
+
+    // MARK: Control Logic
+
+    assign if_addr = if_pc;
+
+    assign if_bios_en = if_pc[30] == `INST_BIOS;
 
     // MARK: Pipeline Registers
 
