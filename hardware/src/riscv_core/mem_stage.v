@@ -11,9 +11,8 @@ module mem_stage #(
     input [31:0] mem_alu, 
     input [31:0] mem_fpu,
     input [31:0] mem_rd2,
-    input mem_br_suc, // Branch prediction success flag
+    input mem_br_suc,
     input [31:0] mem_inst,
-    input [31:0] wb_wdata, // Forwarded result from WB stage
     input serial_in,
     input ex_stall,
 
@@ -50,7 +49,6 @@ module mem_stage #(
     wire [`DIN_NUM_INPUTS*32-1:0] din_mux_in;
     wire [31:0] din_mux_out;
 
-    assign din_mux_in[`DIN_WDATA * 32 +: 32] = wb_wdata;
     assign din_mux_in[`DIN_RD2 * 32 +: 32] = mem_rd2;
     assign din_mux_in[`DIN_FPU * 32 +: 32] = mem_fpu;
 
@@ -119,7 +117,6 @@ module mem_stage #(
         .pc(mem_pc),
         .addr(mem_alu),
         .inst(mem_inst),
-        .wb_inst(wb_inst),
         
         .din_sel(din_mux_sel),
         .size(store_size),

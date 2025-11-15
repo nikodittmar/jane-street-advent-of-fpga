@@ -142,7 +142,6 @@ module cpu #(
         .mem_rd2(mem_rd2),
         .mem_br_suc(mem_br_suc),
         .mem_inst(mem_inst),
-        .wb_wdata(wb_wdata),
         .serial_in(serial_in),
 
         .serial_out(serial_out),

@@ -37,11 +37,6 @@
 
 // ***** EX STAGE *****
 
-// Forwarding muxes
-`define EX_FWD_NUM_INPUTS       2
-`define EX_FWD_NONE             1'b0
-`define EX_FWD_MEM              1'b1
-
 // BrUn
 `define BRUN_DONT_CARE          1'b0
 
@@ -92,11 +87,10 @@
 // ***** MEM STAGE *****
 
 // Data in sel
-`define DIN_NUM_INPUTS        3
-`define DIN_WDATA             2'b00
-`define DIN_RD2               2'b01
-`define DIN_FPU               2'b10
-`define DIN_DONT_CARE         2'b00
+`define DIN_NUM_INPUTS        2
+`define DIN_RD2               1'b0
+`define DIN_FPU               1'b1
+`define DIN_DONT_CARE         1'b0
 
 // PC sel
 `define MEM_PC_4                1'b0

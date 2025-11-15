@@ -5,9 +5,8 @@ module mem_control (
     input [31:0] pc,
     input [31:0] addr,
     input [31:0] inst, 
-    input [31:0] wb_inst, // next instruction for hazard detection
 
-    output reg [1:0] din_sel, // Forwarding MUX selector
+    output reg din_sel, // Forwarding MUX selector
     output reg [1:0] size, // Store size
     output reg br_inst, // Branch instruction flag
     output reg imem_en,
@@ -26,30 +25,6 @@ assign opcode5 = inst[6:2];
 assign funct3 = inst[14:12];
 assign funct7 = inst[31:25];
 assign funct4 = inst[31:28];
-
-wire [4:0] rs2;
-wire has_rs2;
-
-wire [4:0] fs2;
-wire has_fs2;
-
-wire [4:0] wb_rd;
-wire wb_has_rd;
-
-wire [4:0] wb_fd;
-wire wb_has_fd;
-
-assign rs2 = inst[24:20];
-assign has_rs2 = (inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH) && rs2 != 5'b0;
-
-assign fs2 = inst[24:20];
-assign has_fs2 = inst[6:0] == `OPC_FP_STORE || inst[6:0] == `OPC_FP_MADD || (inst[6:0] == `OPC_FP && (inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
-
-assign wb_rd = wb_inst[11:7];
-assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR && wb_inst[6:0] != `OPC_FP_LOAD && wb_inst[6:0] != `OPC_FP_STORE && wb_inst[6:0] != `OPC_FP_MADD && (wb_inst[6:0] != `OPC_FP || wb_inst[31:25] == `FNC7_FP_MV_X_W);
-
-assign wb_fd = wb_inst[11:7];
-assign wb_has_fd = wb_inst[6:0] == `OPC_FP_LOAD || wb_inst[6:0] == `OPC_FP_MADD || (wb_inst[6:0] == `OPC_FP && wb_inst[31:25] != `FNC7_FP_MV_X_W);
 
 assign bubble = inst == `NOP;
 
@@ -181,11 +156,7 @@ always @ (*) begin
         end
         endcase
 
-        if (has_rs2 && wb_has_rd && rs2 == wb_rd) begin
-            din_sel = `DIN_WDATA;
-        end else begin 
-            din_sel = `DIN_RD2;
-        end
+        din_sel = `DIN_RD2;
 
         case (funct3)
         `FNC_SB: begin
@@ -261,11 +232,7 @@ always @ (*) begin
         end
         endcase
 
-        if (has_fs2 && wb_has_fd && fs2 == wb_fd) begin
-            din_sel = `DIN_WDATA;
-        end else begin 
-            din_sel = `DIN_FPU;
-        end
+        din_sel = `DIN_FPU;
 
         size = `MEM_SIZE_WORD;
     end

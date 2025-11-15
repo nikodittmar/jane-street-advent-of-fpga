@@ -31,7 +31,7 @@ module id_stage (
     wire id_reg_we;
 
     assign id_reg_we = ~id_stall & ~ex_stall;
-    assign id_reg_rst = id_stall | mem_flush | rst;
+    assign id_reg_rst = !ex_stall && (id_stall | mem_flush | rst);
 
     // MARK: InstSel
 

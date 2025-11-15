@@ -4,14 +4,11 @@
 module ex_control (
     input clk,
     input [31:0] inst,
-    input [31:0] mem_inst,
     input breq, 
     input brlt,
     input br_taken,
 
     output reg brun, 
-    output reg fwda, fwdb,
-    output reg fwd_fpa, fwd_fpb, fwd_fpc,
     output reg asel, bsel,
     output reg fpa_sel,
     output reg csr_mux_sel,
@@ -33,48 +30,6 @@ assign funct3 = inst[14:12];
 assign funct7 = inst[31:25];
 assign funct4 = inst[31:28];
 
-wire [4:0] rs1;
-wire has_rs1;
-
-wire [4:0] rs2;
-wire has_rs2;
-
-wire [4:0] fs1;
-wire has_fs1;
-
-wire [4:0] fs2;
-wire has_fs2;
-
-wire [4:0] fs3;
-wire has_fs3;
-
-wire [4:0] mem_rd;
-wire mem_has_rd;
-
-wire [4:0] mem_fd;
-wire mem_has_fd;
-
-assign rs1 = inst[19:15];
-assign has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] != `OPC_JAL && (inst[6:0] != `OPC_CSR || inst[14:12] == `FNC_CSRRW) && rs1 != 5'b0 && inst[6:0] != `OPC_FP_MADD && (inst[6:0] != `OPC_FP || inst[31:25] == `FNC7_FP_MV_W_X || inst[31:25] == `FNC7_FP_CVT_S_W);
-
-assign rs2 = inst[24:20];
-assign has_rs2 = (inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH) && rs2 != 5'b0;
-
-assign fs1 = inst[19:15];
-assign has_fs1 = inst[6:0] == `OPC_FP_MADD || (inst[6:0] == `OPC_FP && (inst[31:25] == `FNC7_FP_MV_X_W || inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
-
-assign fs2 = inst[24:20];
-assign has_fs2 = inst[6:0] == `OPC_FP_STORE || inst[6:0] == `OPC_FP_MADD || (inst[6:0] == `OPC_FP && (inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
-
-assign fs3 = inst[31:27];
-assign has_fs3 = inst[6:0] == `OPC_FP_MADD;
-
-assign mem_rd = mem_inst[11:7];
-assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && mem_inst[6:0] != `OPC_CSR && mem_inst[6:0] != `OPC_FP_LOAD && mem_inst[6:0] != `OPC_FP_STORE && mem_inst[6:0] != `OPC_FP_MADD && (mem_inst[6:0] != `OPC_FP || mem_inst[31:25] == `FNC7_FP_MV_X_W);
-
-assign mem_fd = mem_inst[11:7];
-assign mem_has_fd = mem_inst[6:0] == `OPC_FP_LOAD || mem_inst[6:0] == `OPC_FP_MADD || (mem_inst[6:0] == `OPC_FP && mem_inst[31:25] != `FNC7_FP_MV_X_W);
-
 reg [31:0] last_inst;
 reg inst_changed;
 
@@ -86,11 +41,6 @@ always @(*) begin
     inst_changed = last_inst != inst;
 
     brun = `BRUN_DONT_CARE;
-    fwda = `EX_FWD_NONE;
-    fwdb = `EX_FWD_NONE;
-    fwd_fpa = `EX_FWD_NONE;
-    fwd_fpb = `EX_FWD_NONE;
-    fwd_fpc = `EX_FWD_NONE;
     fpa_sel = `FP_A_DONT_CARE;
     asel = `A_DONT_CARE;
     bsel = `B_DONT_CARE;
@@ -101,27 +51,6 @@ always @(*) begin
     fpusel = `FPU_DONT_CARE;
     flush = 1'b0;
     fpu_valid = 1'b0;
-
-
-    if (has_rs1 && mem_has_rd && rs1 == mem_rd) begin 
-        fwda = `EX_FWD_MEM;
-    end
-
-    if (has_rs2 && mem_has_rd && rs2 == mem_rd) begin 
-        fwdb = `EX_FWD_MEM;
-    end
-
-    if (has_fs1 && mem_has_fd && fs1 == mem_fd) begin 
-        fwd_fpa = `EX_FWD_MEM;
-    end
-
-    if (has_fs2 && mem_has_fd && fs2 == mem_fd) begin 
-        fwd_fpb = `EX_FWD_MEM;
-    end
-
-    if (has_fs3 && mem_has_fd && fs3 == mem_fd) begin 
-        fwd_fpc = `EX_FWD_MEM;
-    end
     
     case (opcode5)
     `OPC_ARI_RTYPE_5:

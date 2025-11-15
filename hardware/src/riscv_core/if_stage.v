@@ -44,7 +44,7 @@ module if_stage #(
 
     // MARK: Pipeline Registers
 
-    wire pc_we = ~id_stall & ~ex_stall;
+    wire pc_we = (!id_stall && !ex_stall) || mem_flush;
 
     pipeline_reg pc_reg (
         .clk(clk),

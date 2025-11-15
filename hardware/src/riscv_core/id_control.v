@@ -97,43 +97,23 @@ always @(*) begin
     // Note, we do not have WB -> ALU forwarding so we need to stall for 1 cycle apart ALU -> ALU hazards
     // and we must also stall for MEM -> ALU hazards (for up to two cycles)
 
-    // Non-store MEM -> ALU hazards
-    if (!is_store && ex_load_inst && ex_has_rd && ((has_rs1 && rs1 == ex_rd) || (has_rs2 && rs2 == ex_rd))) begin
+    // hazards
+    if (ex_has_rd && ((has_rs1 && rs1 == ex_rd) || (has_rs2 && rs2 == ex_rd))) begin
         stall = 1'b1;
     end
 
-    // MEM -> FPU hazards
-    if (ex_load_inst && ex_has_fd && ((has_fs1 && fs1 == ex_fd) || (has_fs2 && fs2 == ex_fd) || (has_fs3 && fs3 == ex_fd))) begin
+    // FPU hazards
+    if (ex_has_fd && ((has_fs1 && fs1 == ex_fd) || (has_fs2 && fs2 == ex_fd) || (has_fs3 && fs3 == ex_fd))) begin
         stall = 1'b1;
     end
 
-    // MEM -> ALU store hazards
-    if (is_store && ex_load_inst && rs1 == ex_rd) begin
-        stall = 1'b1;
-    end
-
-    // One cycle apart ALU -> ALU hazards
+    // One cycle apart hazards
     if (mem_has_rd && ((has_rs1 && rs1 == mem_rd) || (has_rs2 && rs2 == mem_rd))) begin
         stall = 1'b1;
     end
 
-    // One cycle apart FPU -> FPU hazards
+    // One cycle apart hazards
     if (mem_has_fd && ((has_fs1 && fs1 == mem_fd) || (has_fs2 && fs2 == mem_fd) || (has_fs3 && fs3 == mem_fd))) begin
-        stall = 1'b1;
-    end
-
-    // One cycle apart non-store MEM -> ALU hazards
-    if (!is_store && mem_load_inst && mem_has_rd && ((has_rs1 && rs1 == mem_rd) || (has_rs2 && rs2 == mem_rd))) begin
-        stall = 1'b1;
-    end
-
-    // One cycle apart MEM -> FPU hazards
-    if (mem_load_inst && mem_has_fd && ((has_fs1 && fs1 == mem_fd) || (has_fs2 && fs2 == mem_fd) || (has_fs3 && fs3 == mem_fd))) begin
-        stall = 1'b1;
-    end
-
-    // One cycle apart MEM -> ALU store hazards
-    if (is_store && mem_load_inst && rs1 == mem_rd) begin
         stall = 1'b1;
     end
 
