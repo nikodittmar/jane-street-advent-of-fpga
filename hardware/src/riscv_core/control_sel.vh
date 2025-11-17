@@ -18,9 +18,10 @@
 `define NOP                     32'h0000_0013
 
 // Instruction sel
-`define INST_SEL_NUM_INPUTS     2
-`define INST_IMEM               1'b0
-`define INST_BIOS               1'b1
+`define INST_SEL_NUM_INPUTS     3
+`define INST_IMEM               2'b00
+`define INST_BIOS               2'b01
+`define INST_NOP                2'b10
 
 // Immediate generator sel
 `define IMM_I                   3'b000 // I-type immediates

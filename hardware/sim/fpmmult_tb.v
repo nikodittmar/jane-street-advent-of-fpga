@@ -73,8 +73,8 @@ module fpmmult_tb();
         serial_in = 1;
         #(BAUD_PERIOD);
 
-        //$display("[time %t, sim. cycle %d] [Host (tb) --> FPGA_SERIAL_RX] Sent char 8'h%h",
-                 //$time, cycle, chars_from_host[c1]);
+        $display("[time %t, sim. cycle %d] [Host (tb) --> FPGA_SERIAL_RX] Sent char 8'h%h",
+                 $time, cycle, chars_from_host[c1]);
         repeat (100) @(posedge clk); // Give time for the  program to process each character
       end
     end

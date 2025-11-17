@@ -14,8 +14,8 @@ module id_stage (
     input [31:0] wb_inst,
     input ex_stall,
     
-    output [31:0] id_target, // Branch predictor/target generator output
-    output id_target_taken, // Use output of branch predictor/target generator flag
+    output [31:0] ex_target, // Branch predictor/target generator output
+    output ex_target_taken, // Use output of branch predictor/target generator flag
     output ex_br_taken, // Branch predictor branch taken flag
     output [31:0] ex_pc,
     output [31:0] ex_rd1,
@@ -30,18 +30,19 @@ module id_stage (
     wire id_reg_rst;
     wire id_reg_we;
 
-    assign id_reg_we = ~id_stall & ~ex_stall;
-    assign id_reg_rst = !ex_stall && (id_stall | mem_flush | rst);
+    assign id_reg_we = !id_stall && !ex_stall;
+    assign id_reg_rst = !ex_stall && (id_stall || mem_flush || rst);
 
     // MARK: InstSel
 
     wire [31:0] id_inst;
 
-    wire [$clog2(`INST_SEL_NUM_INPUTS)-1:0] inst_sel = id_pc[30];
+    wire [$clog2(`INST_SEL_NUM_INPUTS)-1:0] inst_sel = ex_target_taken ? `INST_NOP : (id_pc[30] ? `INST_BIOS : `INST_IMEM);
     wire [`INST_SEL_NUM_INPUTS*32-1:0] inst_mux_in;
 
     assign inst_mux_in[`INST_BIOS * 32 +: 32] = id_bios_inst;
     assign inst_mux_in[`INST_IMEM * 32 +: 32] = id_imem_inst;
+    assign inst_mux_in[`INST_NOP * 32 +: 32] = 32'h0000_0013;
 
     mux #(
         .NUM_INPUTS(`INST_SEL_NUM_INPUTS)
@@ -102,6 +103,9 @@ module id_stage (
     wire target_gen_sel;
     wire target_gen_en;
     wire br_taken;
+
+    wire [31:0] target;
+    wire target_taken;
     
     target_gen target_gen (
         .pc(id_pc),
@@ -109,8 +113,8 @@ module id_stage (
         .en(target_gen_en),
         .imm(imm),
 
-        .target(id_target),
-        .target_taken(id_target_taken),
+        .target(target),
+        .target_taken(target_taken),
         .branch_taken(br_taken)
     );
 
@@ -214,6 +218,26 @@ module id_stage (
         .in(id_inst),
 
         .out(ex_inst)
+    );
+
+    pipeline_reg target_reg (
+        .clk(clk),
+        .rst(id_reg_rst),
+        .we(id_reg_we),
+        .in(target),
+
+        .out(ex_target)
+    );
+
+    pipeline_reg #(
+        .WIDTH(1)
+    ) target_taken_reg (
+        .clk(clk),
+        .rst(id_reg_rst),
+        .we(id_reg_we),
+        .in(target_taken),
+
+        .out(ex_target_taken)
     );
 
     /*

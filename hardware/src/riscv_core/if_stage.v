@@ -8,8 +8,8 @@ module if_stage #(
     input id_stall,
     input ex_stall,
     input mem_flush,
-    input id_target_taken,
-    input [31:0] id_target,
+    input ex_target_taken,
+    input [31:0] ex_target,
     input [31:0] mem_alu,
     
     output [31:0] id_pc,
@@ -21,8 +21,9 @@ module if_stage #(
 
     wire [31:0] if_pc;
     wire stall = id_stall || ex_stall;
-    wire [31:0] in = mem_flush ? mem_alu : id_target;
-    wire in_valid = mem_flush || id_target_taken;
+    wire [31:0] in = mem_flush ? mem_alu : ex_target;
+    wire in_valid = mem_flush || ex_target_taken;
+    wire flush = mem_flush || ex_target_taken;
     
     program_counter #(
         .RESET_PC(RESET_PC)
@@ -30,7 +31,7 @@ module if_stage #(
         .clk(clk),
         .rst(rst),
         .stall(stall),
-        .flush(mem_flush),
+        .flush(flush),
         .in_valid(in_valid),
         .in(in),
         .out(if_pc)
@@ -44,7 +45,7 @@ module if_stage #(
 
     // MARK: Pipeline Registers
 
-    wire pc_we = (!id_stall && !ex_stall) || mem_flush;
+    wire pc_we = (!id_stall && !ex_stall) || flush;
 
     pipeline_reg pc_reg (
         .clk(clk),
