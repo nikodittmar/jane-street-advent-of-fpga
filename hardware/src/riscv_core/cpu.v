@@ -17,6 +17,7 @@ module cpu #(
     wire [31:0] if_addr;
     wire [31:0] ex_inst;
     wire [31:0] mem_inst;
+    wire [31:0] mem_fp_inst;
     wire [31:0] wb_inst;
     wire ex_target_taken;
     wire [31:0] ex_target;
@@ -52,6 +53,12 @@ module cpu #(
     wire mem_imem_en;
     wire mem_bios_en;
     wire if_bios_en;
+    wire [31:0] wb_fp_wdata;
+    wire [31:0] wb_fp_inst;
+    wire [31:0] mem_fd2;
+    wire ex_fpu_almost_done;
+    wire [31:0] mem_fp_inst;
+    wire [31:0] ex_fp_inst;
 
     // MARK: Instruction Fetch
 
@@ -61,7 +68,6 @@ module cpu #(
         .clk(clk),
         .rst(rst),
         .id_stall(id_stall),
-        .ex_stall(ex_stall),
         .mem_flush(mem_flush),
         .ex_target_taken(ex_target_taken),
         .ex_target(ex_target),
@@ -81,12 +87,17 @@ module cpu #(
         .id_pc(id_pc),
         .id_bios_inst(id_bios_inst),
         .id_imem_inst(id_imem_inst),
+        .ex_fp_inst(ex_fp_inst),
+        .mem_fp_inst(mem_fp_inst),
         .mem_inst(mem_inst),
         .wb_fpregwen(wb_fpregwen),
         .wb_regwen(wb_regwen),
         .wb_wdata(wb_wdata),
         .wb_inst(wb_inst),
+        .wb_fp_wdata(wb_fp_wdata),
+        .wb_fp_inst(wb_fp_inst),
         .ex_stall(ex_stall),
+        .ex_fpu_almost_done(ex_fpu_almost_done),
 
         .ex_target(ex_target),
         .ex_target_taken(ex_target_taken),
@@ -125,7 +136,11 @@ module cpu #(
         .mem_alu(mem_alu),
         .mem_fpu(mem_fpu),
         .mem_rd2(mem_rd2),
-        .mem_inst(mem_inst)
+        .mem_fd2(mem_fd2),
+        .mem_inst(mem_inst),
+        .mem_fp_inst(mem_fp_inst),
+        .ex_fp_inst(ex_fp_inst),
+        .ex_fpu_almost_done(ex_fpu_almost_done)
     );
 
     // MARK: Memory
@@ -140,8 +155,10 @@ module cpu #(
         .mem_alu(mem_alu), 
         .mem_fpu(mem_fpu), 
         .mem_rd2(mem_rd2),
+        .mem_fd2(mem_fd2),
         .mem_br_suc(mem_br_suc),
         .mem_inst(mem_inst),
+        .mem_fp_inst(mem_fp_inst),
         .serial_in(serial_in),
 
         .serial_out(serial_out),
@@ -151,6 +168,7 @@ module cpu #(
         .wb_dmem_dout(wb_dmem_dout), 
         .wb_io_dout(wb_io_dout),
         .wb_inst(wb_inst),
+        .wb_fp_inst(wb_fp_inst),
         .mem_addr(mem_addr),
         .ex_stall(ex_stall),
 
@@ -171,10 +189,12 @@ module cpu #(
         .wb_dmem_dout(wb_dmem_dout), 
         .wb_io_dout(wb_io_dout),
         .wb_inst(wb_inst),
+        .wb_fp_inst(wb_fp_inst),
 
         .wb_regwen(wb_regwen),
         .wb_fpregwen(wb_fpregwen),
-        .wb_wdata(wb_wdata)
+        .wb_wdata(wb_wdata),
+        .wb_fp_wdata(wb_fp_wdata)
     );
 
     // MARK: BIOS Memory

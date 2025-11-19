@@ -358,18 +358,15 @@ always @(*) begin
     end
     `OPC_FP_STORE_5: begin 
         // FSW
-        fpusel = `FPU_BSEL;
         asel = `A_REG;
         bsel = `B_IMM;
         alusel = `ALU_ADD;
-        fpu_valid = inst_changed;
     end
     `OPC_FP_LOAD_5: begin 
         // FLW
         asel = `A_REG;
         bsel = `B_IMM;
         alusel = `ALU_ADD;
-        fpu_valid = inst_changed;
     end
     `OPC_FP_5: begin 
         fpu_valid = inst_changed;

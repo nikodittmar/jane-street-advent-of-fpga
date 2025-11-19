@@ -7,12 +7,17 @@ module id_stage (
     input [31:0] id_pc,
     input [31:0] id_bios_inst,
     input [31:0] id_imem_inst,
+    input [31:0] ex_fp_inst,
+    input [31:0] mem_fp_inst,
     input [31:0] mem_inst,
     input wb_regwen,
     input wb_fpregwen,
     input [31:0] wb_wdata,
     input [31:0] wb_inst,
+    input [31:0] wb_fp_wdata,
+    input [31:0] wb_fp_inst,
     input ex_stall,
+    input ex_fpu_almost_done,
     
     output [31:0] ex_target, // Branch predictor/target generator output
     output ex_target_taken, // Use output of branch predictor/target generator flag
@@ -27,11 +32,13 @@ module id_stage (
     output [31:0] ex_inst,
     output id_stall
 );
+    wire id_ex_stall;
+    wire stall;
     wire id_reg_rst;
     wire id_reg_we;
 
-    assign id_reg_we = !id_stall && !ex_stall;
-    assign id_reg_rst = !ex_stall && (id_stall || mem_flush || rst);
+    assign id_reg_we = !stall && !id_ex_stall;
+    assign id_reg_rst = !id_ex_stall && (stall || mem_flush || rst);
 
     // MARK: InstSel
 
@@ -73,6 +80,7 @@ module id_stage (
     // MARK: Floating Point RegFile
 
     wire [4:0] ra3 = id_inst[31:27];
+    wire [4:0] fwa = wb_inst[6:0] == `OPC_FP_LOAD ? wb_inst[11:7] : wb_fp_inst[11:7];
     wire [31:0] fd1;
     wire [31:0] fd2;
     wire [31:0] fd3;
@@ -80,8 +88,8 @@ module id_stage (
     fp_reg_file fp_reg_file (
         .clk(clk),
         .we(wb_fpregwen),
-        .ra1(ra1), .ra2(ra2), .ra3(ra3), .wa(wa),
-        .wd(wb_wdata),
+        .ra1(ra1), .ra2(ra2), .ra3(ra3), .wa(fwa),
+        .wd(wb_fp_wdata),
 
         .rd1(fd1), .rd2(fd2), .rd3(fd3)
     );
@@ -119,18 +127,24 @@ module id_stage (
     );
 
     // MARK: Control
+    assign id_stall = id_ex_stall || stall;
 
     id_control control (
         //.clk(clk),
         //.rst(rst),
         .inst(id_inst),
         .ex_inst(ex_inst),
+        .ex_fp_inst(ex_fp_inst),
         .mem_inst(mem_inst),
+        .mem_fp_inst(mem_fp_inst),
+        .ex_stall(ex_stall),
+        .ex_fpu_almost_done(ex_fpu_almost_done),
     
         .imm_sel(imm_sel),
         .target_gen_sel(target_gen_sel),
         .target_gen_en(target_gen_en),
-        .stall(id_stall)
+        .stall(stall),
+        .id_ex_stall(id_ex_stall)
     );
 
     // MARK: Pipeline registers

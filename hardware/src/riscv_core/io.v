@@ -9,7 +9,9 @@ module io #(
     input [31:0] addr, 
     input [31:0] din,
     input io_en,
-    input br_inst, 
+    input br_inst,
+    input [31:0] fp_inst,
+    input [31:0] inst,
     input br_suc,
     input bubble,
     input serial_in,
@@ -37,6 +39,7 @@ reg next_can_read;
 
 reg [31:0] cycle_cnt;
 reg [31:0] inst_cnt;
+reg [31:0] fp_inst_cnt;
 
 reg [31:0] br_inst_cnt;
 reg [31:0] br_suc_cnt;
@@ -45,6 +48,7 @@ reg [31:0] next_dout;
 
 reg [31:0] next_cycle_cnt;
 reg [31:0] next_inst_cnt;
+reg [31:0] next_fp_inst_cnt;
 
 reg [31:0] next_br_inst_cnt;
 reg [31:0] next_br_suc_cnt;
@@ -72,6 +76,7 @@ always @ (posedge clk) begin
     if (rst) begin 
         cycle_cnt <= 32'b0;
         inst_cnt <= 32'b0;
+        fp_inst_cnt <= 32'b0;
         br_inst_cnt <= 32'b0;
         br_suc_cnt <= 32'b0;
 
@@ -86,6 +91,7 @@ always @ (posedge clk) begin
     end else begin 
         cycle_cnt <= next_cycle_cnt;
         inst_cnt <= next_inst_cnt;
+        fp_inst_cnt <= next_fp_inst_cnt;
 
         br_inst_cnt <= next_br_inst_cnt;
         br_suc_cnt <= next_br_suc_cnt;
@@ -103,7 +109,16 @@ end
 
 always @(*) begin
     next_cycle_cnt = cycle_cnt + 32'd1;
-    next_inst_cnt = bubble ? inst_cnt : inst_cnt + 32'd1;
+    next_inst_cnt = inst_cnt;
+    next_fp_inst_cnt = fp_inst_cnt;
+    
+    if (inst != `NOP) begin
+        next_inst_cnt = inst_cnt + 32'd1;
+    end
+
+    if (fp_inst != `NOP && fp_inst != inst) begin
+        next_fp_inst_cnt = fp_inst_cnt + 32'd1;
+    end
 
     next_br_inst_cnt = br_inst ? (br_inst_cnt + 32'd1) : br_inst_cnt;
     next_br_suc_cnt = br_suc  ? (br_suc_cnt  + 32'd1) : br_suc_cnt;
@@ -145,7 +160,7 @@ always @(*) begin
             next_dout = cycle_cnt;
         end
         `MEM_IO_INST_CNT: begin
-            next_dout = inst_cnt;
+            next_dout = inst_cnt + fp_inst_cnt;
         end
         `MEM_IO_RST_CNT: begin 
             next_cycle_cnt = 32'b0;

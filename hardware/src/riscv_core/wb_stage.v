@@ -10,10 +10,12 @@ module wb_stage (
     input [31:0] wb_dmem_dout, 
     input [31:0] wb_io_dout, 
     input [31:0] wb_inst,
+    input [31:0] wb_fp_inst,
 
     output wb_regwen,
     output wb_fpregwen,
-    output [31:0] wb_wdata
+    output [31:0] wb_wdata,
+    output [31:0] wb_fp_wdata
 );
 
     wire [31:0] mem;
@@ -56,6 +58,24 @@ module wb_stage (
         .out(wb_wdata)
     );
 
+    // MARK: FP Writeback Mux
+
+    wire [$clog2(`FP_WB_NUM_INPUTS)-1:0] fp_wb_sel;
+    wire [`FP_WB_NUM_INPUTS*32-1:0] fp_wb_in;
+
+    assign fp_wb_in[`FP_WB_ALU * 32 +: 32] = wb_alu;
+    assign fp_wb_in[`FP_WB_FPU * 32 +: 32] = wb_fpu;
+    assign fp_wb_in[`FP_WB_MEM * 32 +: 32] = masked_mem;
+
+    mux #(
+        .NUM_INPUTS(`FP_WB_NUM_INPUTS)
+    ) fp_wb_mux (
+        .in(fp_wb_in),
+        .sel(fp_wb_sel),
+
+        .out(wb_fp_wdata)
+    );
+
     // MARK: Memory Mask
 
     wire mask_un;
@@ -72,9 +92,11 @@ module wb_stage (
 
     wb_control control (
         .inst(wb_inst),
+        .fp_inst(wb_fp_inst),
         .addr(wb_alu),
 
         .wb_sel(wb_sel),
+        .fp_wb_sel(fp_wb_sel),
         .dout_sel(dout_sel),
         .mask(mask),
         .mask_un(mask_un),

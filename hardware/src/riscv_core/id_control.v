@@ -6,15 +6,18 @@ module id_control (
     //input rst,
     input [31:0] inst,
     input [31:0] ex_inst,
+    input [31:0] ex_fp_inst,
     input [31:0] mem_inst,
+    input [31:0] mem_fp_inst,
+    input ex_stall,
+    input ex_fpu_almost_done,
 
     output reg [2:0] imm_sel,
     output reg target_gen_sel,
     output reg target_gen_en,
-    output reg stall
+    output reg stall,
+    output reg id_ex_stall
 );
-
-//reg [31:0] mem_inst;
 
 wire [4:0] opcode5;
 wire [2:0] funct3;
@@ -71,14 +74,14 @@ assign has_fs3 = inst[6:0] == `OPC_FP_MADD;
 assign ex_rd = ex_inst[11:7];
 assign ex_has_rd = ex_inst[6:0] != `OPC_STORE && ex_inst[6:0] != `OPC_BRANCH && ex_inst[6:0] != `OPC_CSR && ex_inst[6:0] != `OPC_FP_LOAD && ex_inst[6:0] != `OPC_FP_STORE && ex_inst[6:0] != `OPC_FP_MADD && (ex_inst[6:0] != `OPC_FP || ex_inst[31:25] == `FNC7_FP_MV_X_W);
 
-assign ex_fd = ex_inst[11:7];
-assign ex_has_fd = ex_inst[6:0] == `OPC_FP_LOAD || ex_inst[6:0] == `OPC_FP_MADD || (ex_inst[6:0] == `OPC_FP && ex_inst[31:25] != `FNC7_FP_MV_X_W);
+assign ex_fd =  ex_inst[6:0] == `OPC_FP_LOAD ? ex_inst[11:7] : ex_fp_inst[11:7];
+assign ex_has_fd = ex_inst[6:0] == `OPC_FP_LOAD || ex_fp_inst[6:0] == `OPC_FP_MADD || (ex_fp_inst[6:0] == `OPC_FP && ex_fp_inst[31:25] != `FNC7_FP_MV_X_W);
 
 assign mem_rd = mem_inst[11:7];
 assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && mem_inst[6:0] != `OPC_CSR && mem_inst[6:0] != `OPC_FP_LOAD && mem_inst[6:0] != `OPC_FP_STORE && mem_inst[6:0] != `OPC_FP_MADD && (mem_inst[6:0] != `OPC_FP || mem_inst[31:25] == `FNC7_FP_MV_X_W);
 
-assign mem_fd = mem_inst[11:7];
-assign mem_has_fd = mem_inst[6:0] == `OPC_FP_LOAD || mem_inst[6:0] == `OPC_FP_MADD || (mem_inst[6:0] == `OPC_FP && mem_inst[31:25] != `FNC7_FP_MV_X_W);
+assign mem_fd = mem_inst[6:0] == `OPC_FP_LOAD ? mem_inst[11:7] : mem_fp_inst[11:7];
+assign mem_has_fd = mem_inst[6:0] == `OPC_FP_LOAD || mem_fp_inst[6:0] == `OPC_FP_MADD || (mem_fp_inst[6:0] == `OPC_FP && mem_fp_inst[31:25] != `FNC7_FP_MV_X_W);
 
 wire is_store;
 wire ex_load_inst;
@@ -88,15 +91,25 @@ assign is_store = inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_FP_STORE;
 assign ex_load_inst = ex_inst[6:2] == `OPC_LOAD_5 || ex_inst[6:2] == `OPC_FP_LOAD_5;
 assign mem_load_inst = mem_inst[6:2] == `OPC_LOAD_5 || mem_inst[6:2] == `OPC_FP_LOAD_5;
 
+wire [4:0] fpu_fd;
+assign fpu_fd = ex_fp_inst[11:7];
+
+wire fpu_inst;
+assign fpu_inst = inst[6:0] == `OPC_FP || inst[6:0] == `OPC_FP_MADD;
+
+
 always @(*) begin
     imm_sel = `IMM_DONT_CARE;
     target_gen_sel = `TGT_GEN_DONT_CARE;
     target_gen_en = 1'b0;
     stall = 1'b0;
 
-    // Note, we do not have WB -> ALU forwarding so we need to stall for 1 cycle apart ALU -> ALU hazards
-    // and we must also stall for MEM -> ALU hazards (for up to two cycles)
+    id_ex_stall = ex_stall;
 
+    if (ex_stall) begin 
+        id_ex_stall = fpu_inst;
+    end
+   
     // hazards
     if (ex_has_rd && ((has_rs1 && rs1 == ex_rd) || (has_rs2 && rs2 == ex_rd))) begin
         stall = 1'b1;

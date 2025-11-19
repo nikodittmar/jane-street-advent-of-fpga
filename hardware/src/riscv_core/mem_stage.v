@@ -11,8 +11,10 @@ module mem_stage #(
     input [31:0] mem_alu, 
     input [31:0] mem_fpu,
     input [31:0] mem_rd2,
+    input [31:0] mem_fd2,
     input mem_br_suc,
     input [31:0] mem_inst,
+    input [31:0] mem_fp_inst,
     input serial_in,
     input ex_stall,
 
@@ -23,6 +25,7 @@ module mem_stage #(
     output [31:0] wb_dmem_dout, 
     output [31:0] wb_io_dout, 
     output [31:0] wb_inst,
+    output [31:0] wb_fp_inst,
     output [31:0] mem_addr,
     output [31:0] mem_imem_din,
     output [3:0] mem_imem_we,
@@ -50,7 +53,7 @@ module mem_stage #(
     wire [31:0] din_mux_out;
 
     assign din_mux_in[`DIN_RD2 * 32 +: 32] = mem_rd2;
-    assign din_mux_in[`DIN_FPU * 32 +: 32] = mem_fpu;
+    assign din_mux_in[`DIN_FD2 * 32 +: 32] = mem_fd2;
 
     mux #(
         .NUM_INPUTS(`DIN_NUM_INPUTS)
@@ -103,6 +106,8 @@ module mem_stage #(
         .din(din),
         .io_en(io_en),
         .br_inst(br_inst),
+        .fp_inst(ex_fp_inst),
+        .inst(ex_inst),
         .br_suc(mem_br_suc),
         .bubble(bubble),
         .serial_in(serial_in),
@@ -166,6 +171,17 @@ module mem_stage #(
         .in(mem_inst),
 
         .out(wb_inst)
+    );
+
+    pipeline_reg #(
+        .RESET_VAL(`NOP)
+    ) fp_inst_reg (
+        .clk(clk),
+        .rst(mem_reg_rst),
+        .we(mem_reg_we),
+        .in(mem_fp_inst),
+
+        .out(wb_fp_inst)
     );
 
     /*

@@ -6,7 +6,6 @@ module if_stage #(
     input clk,
     input rst,
     input id_stall,
-    input ex_stall,
     input mem_flush,
     input ex_target_taken,
     input [31:0] ex_target,
@@ -20,7 +19,7 @@ module if_stage #(
     // MARK: Program Counter
 
     wire [31:0] if_pc;
-    wire stall = id_stall || ex_stall;
+    wire stall = id_stall;
     wire [31:0] in = mem_flush ? mem_alu : ex_target;
     wire in_valid = mem_flush || ex_target_taken;
     wire flush = mem_flush || ex_target_taken;
@@ -41,11 +40,11 @@ module if_stage #(
 
     assign if_addr = if_pc;
 
-    assign if_bios_en = if_pc[30] == `INST_BIOS;
+    assign if_bios_en = if_pc[30];
 
     // MARK: Pipeline Registers
 
-    wire pc_we = (!id_stall && !ex_stall) || flush;
+    wire pc_we = !id_stall || flush;
 
     pipeline_reg pc_reg (
         .clk(clk),

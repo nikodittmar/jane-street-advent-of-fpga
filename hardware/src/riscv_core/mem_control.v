@@ -232,7 +232,7 @@ always @ (*) begin
         end
         endcase
 
-        din_sel = `DIN_FPU;
+        din_sel = `DIN_FD2;
 
         size = `MEM_SIZE_WORD;
     end

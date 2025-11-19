@@ -90,7 +90,7 @@
 // Data in sel
 `define DIN_NUM_INPUTS        2
 `define DIN_RD2               1'b0
-`define DIN_FPU               1'b1
+`define DIN_FD2               1'b1
 `define DIN_DONT_CARE         1'b0
 
 // PC sel
@@ -137,6 +137,13 @@
 `define WB_FPU                  2'b11
 `define WB_DONT_CARE            2'b00
 
+// FP WB Sel
+`define FP_WB_NUM_INPUTS        3
+`define FP_WB_ALU               2'b00
+`define FP_WB_MEM               2'b01
+`define FP_WB_FPU               2'b10
+`define FP_WB_DONT_CARE         2'b00
+
 // ***** FLOATING POINT *****
 
 // FPU sel
@@ -145,7 +152,6 @@
 `define FPU_CVT                 3'b011
 `define FPU_SGNJ                3'b100
 `define FPU_ASEL                3'b101
-`define FPU_BSEL                3'b110
 `define FPU_DONT_CARE           3'b000
 
 `endif // CONTROL_SEL

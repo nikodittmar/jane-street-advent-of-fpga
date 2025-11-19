@@ -16,19 +16,29 @@ module ex_stage (
     output [31:0] ex_alu,
     output mem_flush, // Flush flag in the event of control hazards
     output ex_stall,
+    output ex_fpu_almost_done,
     output mem_br_suc, // Branch prediction success flag
     output [31:0] mem_pc,
     output [31:0] mem_alu,
     output [31:0] mem_fpu,
     output [31:0] mem_rd2,
-    output [31:0] mem_inst
+    output [31:0] mem_fd2,
+    output [31:0] mem_inst,
+    output [31:0] mem_fp_inst,
+    output [31:0] ex_fp_inst
 );
 
     wire ex_reg_rst;
     wire ex_reg_we;
 
-    assign ex_reg_we = ~rst & ~ex_stall;
-    assign ex_reg_rst = rst | ex_stall | mem_flush;
+    assign ex_reg_we = ~rst;
+    assign ex_reg_rst = rst | mem_flush;
+
+    wire ex_fp_reg_we;
+    wire ex_fp_reg_rst;
+
+    assign ex_fp_reg_we = ~rst & ~ex_stall;
+    assign ex_fp_reg_rst = rst | ex_stall | mem_flush;
 
     // MARK: FPU
 
@@ -39,6 +49,8 @@ module ex_stage (
     wire [2:0] fpu_sel;
     wire [31:0] ex_fpu;
     wire fpu_valid;
+    wire [31:0] fpu_inst;
+    assign ex_fp_inst = fpu_inst;
 
     fpu fpu (
         .clk(clk),
@@ -48,8 +60,11 @@ module ex_stage (
         .c(fp_c),
         .sel(fpu_sel),
         .input_valid(fpu_valid),
+        .inst_in(ex_inst),
         .res(ex_fpu),
-        .busy(ex_stall)
+        .busy(ex_stall),
+        .inst_out(fpu_inst),
+        .almost_done(ex_fpu_almost_done)
     );
 
     // MARK: FP A Sel
@@ -212,11 +227,20 @@ module ex_stage (
 
     pipeline_reg fpu_reg (
         .clk(clk),
-        .rst(ex_reg_rst),
-        .we(ex_reg_we),
+        .rst(ex_fp_reg_rst),
+        .we(ex_fp_reg_we),
         .in(ex_fpu),
 
         .out(mem_fpu)
+    );
+
+    pipeline_reg fd2_reg (
+        .clk(clk),
+        .rst(ex_reg_rst),
+        .we(ex_reg_we),
+        .in(ex_fd2),
+
+        .out(mem_fd2)
     );
 
     pipeline_reg rd2_reg (
@@ -248,6 +272,17 @@ module ex_stage (
         .in(ex_inst),
 
         .out(mem_inst)
+    );
+
+    pipeline_reg #(
+        .RESET_VAL(`NOP)
+    ) fp_inst_reg (
+        .clk(clk),
+        .rst(ex_fp_reg_rst),
+        .we(ex_fp_reg_we),
+        .in(fpu_inst),
+
+        .out(mem_fp_inst)
     );
 
     pipeline_reg #(
