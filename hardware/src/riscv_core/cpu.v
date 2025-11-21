@@ -57,7 +57,6 @@ module cpu #(
     wire [31:0] wb_fp_inst;
     wire [31:0] mem_fd2;
     wire ex_fpu_almost_done;
-    wire [31:0] mem_fp_inst;
     wire [31:0] ex_fp_inst;
 
     // MARK: Instruction Fetch
