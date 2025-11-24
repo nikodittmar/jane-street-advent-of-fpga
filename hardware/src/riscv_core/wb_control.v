@@ -6,157 +6,44 @@ module wb_control (
     input [31:0] fp_inst,
     input [31:0] addr,
     
+    output reg [3:0] mask,
     output reg [1:0] wb_sel, 
     output reg [1:0] fp_wb_sel,
     output reg [1:0] dout_sel,
-    output reg [3:0] mask,
     output reg mask_un,
     output reg regwen,
-    output reg fpregwen
+    output reg fp_regwen
 );
 
-wire [4:0] opcode5;
-wire [2:0] funct3;
-wire [6:0] funct7;
-wire [3:0] funct4;
+wire [4:0] opcode5 = inst[6:2];
+wire [2:0] funct3 = inst[14:12];
+wire [6:0] funct7 = inst[31:25];
+wire [3:0] funct4 = inst[31:28];
 
-assign opcode5 = inst[6:2];
-assign funct3 = inst[14:12];
-assign funct7 = inst[31:25];
-assign funct4 = inst[31:28];
-
-wire [4:0] fp_opcode5;
-wire [2:0] fp_funct3;
-wire [6:0] fp_funct7;
-wire [3:0] fp_funct4;
-
-assign fp_opcode5 = fp_inst[6:2];
-assign fp_funct3 = fp_inst[14:12];
-assign fp_funct7 = fp_inst[31:25];
-assign fp_funct4 = fp_inst[31:28];
+wire [4:0] fp_opcode5 = fp_inst[6:2];
+wire [2:0] fp_funct3 = fp_inst[14:12];
+wire [6:0] fp_funct7 = fp_inst[31:25];
+wire [3:0] fp_funct4 = fp_inst[31:28];
 
 always @ (*) begin
+    mask = 4'b0000;
     wb_sel = `WB_DONT_CARE;
     fp_wb_sel = `FP_WB_DONT_CARE;
     dout_sel = `DOUT_DONT_CARE;
-    mask = 4'b0000;
     mask_un = 1'b0;
     regwen = 1'b0;
-    fpregwen = 1'b0;
+    fp_regwen = 1'b0;
 
     case (opcode5)
-    `OPC_ARI_RTYPE_5:
-        case (funct3)
-        `FNC_ADD_SUB:
-            case (inst[30])
-            `FNC2_ADD: begin
-                // ADD
-                wb_sel = `WB_ALU;
-                regwen = 1'b1;
-            end
-            `FNC2_SUB: begin
-                // SUB
-                wb_sel = `WB_ALU;
-                regwen = 1'b1;
-            end
-            endcase
-        `FNC_AND: begin
-            // AND
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_OR: begin
-            // OR
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_XOR: begin
-            // XOR
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_SLL: begin
-            // SLL
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_SRL_SRA:
-            case (inst[30])
-            `FNC2_SRL: begin
-                // SRL
-                wb_sel = `WB_ALU;
-                regwen = 1'b1;
-            end
-            `FNC2_SRA: begin
-                // SRA
-                wb_sel = `WB_ALU;
-                regwen = 1'b1;
-            end
-            endcase
-        `FNC_SLT: begin
-            // SLT
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_SLTU: begin
-            // SLTU
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        endcase
-    `OPC_ARI_ITYPE_5:
-        case (funct3)
-        `FNC_ADD_SUB: begin
-            // ADDI
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_SLL: begin
-            // SLLI
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_SLT: begin
-            // SLTI
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_SLTU: begin
-            // SLTIU
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_XOR: begin
-            // XORI
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_OR: begin
-            // ORI
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_AND: begin
-            // ANDI
-            wb_sel = `WB_ALU;
-            regwen = 1'b1;
-        end
-        `FNC_SRL_SRA:
-            case (inst[30])
-            `FNC2_SRL: begin
-                // SRLI
-                wb_sel = `WB_ALU;
-                regwen = 1'b1;
-            end
-            `FNC2_SRA: begin
-                // SRAI
-                wb_sel = `WB_ALU;
-                regwen = 1'b1;
-            end
-            endcase
-        endcase
+    `OPC_ARI_RTYPE_5: begin
+        wb_sel = `WB_ALU;
+        regwen = 1'b1;
+    end
+    `OPC_ARI_ITYPE_5: begin
+        wb_sel = `WB_ALU;
+        regwen = 1'b1;
+    end
     `OPC_LOAD_5: begin
-
         wb_sel = `WB_MEM;
         regwen = 1'b1;
 
@@ -210,40 +97,6 @@ always @ (*) begin
         end
         endcase
     end
-    `OPC_STORE_5:
-        case (funct3)
-        `FNC_SB: begin
-            // SB
-        end
-        `FNC_SH: begin
-            // SH
-        end
-        `FNC_SW: begin
-            // SW
-        end
-        endcase
-    `OPC_BRANCH_5:
-        case (funct3)
-        `FNC_BEQ: begin
-            // BEQ
-        end
-        `FNC_BNE: begin
-            // BNE
-        end
-        `FNC_BLT: begin
-            // BLT
-        end
-        `FNC_BGE: begin
-            // BGE
-        end
-        `FNC_BLTU: begin
-            // BLTU
-        end
-        `FNC_BGEU: begin
-            // BGEU
-        end
-        endcase
-    
     `OPC_JAL_5: begin
         // JAL
         wb_sel = `WB_PC4;
@@ -254,7 +107,6 @@ always @ (*) begin
         wb_sel = `WB_PC4;
         regwen = 1'b1;
     end
-
     `OPC_LUI_5: begin
         // LUI
         wb_sel = `WB_ALU;
@@ -265,16 +117,13 @@ always @ (*) begin
         wb_sel = `WB_ALU;
         regwen = 1'b1;
     end
-    `OPC_FP_STORE_5: begin 
-        // FSW
-    end
     `OPC_FP_LOAD_5: begin 
         // FLW
         fp_wb_sel = `FP_WB_MEM;
-        fpregwen = 1'b1;
+        fp_regwen = 1'b1;
         mask = 4'b1111;
         
-        case(addr[31:28]) // NEED NEW ADDR
+        case(addr[31:28])
         `ADDR_IO: dout_sel = `DOUT_IO;
         `ADDR_BIOS: dout_sel = `DOUT_BIOS;
         `ADDR_DMEM: dout_sel = `DOUT_DMEM;
@@ -289,12 +138,12 @@ always @ (*) begin
         `FNC4_FP_ADD: begin 
             // FADD
             fp_wb_sel = `FP_WB_FPU;
-            fpregwen = 1'b1;
+            fp_regwen = 1'b1;
         end
         `FNC4_FP_FSGNJ_S: begin 
             // FSGNJ.S
             fp_wb_sel = `FP_WB_FPU;
-            fpregwen = 1'b1;
+            fp_regwen = 1'b1;
         end
         `FNC4_FP_MV_X_W: begin 
             // FMV.X.W
@@ -304,21 +153,20 @@ always @ (*) begin
         `FNC4_FP_MV_W_X: begin 
             // FMV.W.X
             fp_wb_sel = `FP_WB_FPU;
-            fpregwen = 1'b1;
+            fp_regwen = 1'b1;
         end
         `FNC4_FP_CVT_S_W: begin 
             // FCVT.S.W
             fp_wb_sel = `FP_WB_FPU;
-            fpregwen = 1'b1;
+            fp_regwen = 1'b1;
         end
         endcase
     end
     `OPC_FP_MADD_5: begin 
         // FMADD
         fp_wb_sel = `FP_WB_FPU;
-        fpregwen = 1'b1;
+        fp_regwen = 1'b1;
     end
     endcase
 end
-
 endmodule

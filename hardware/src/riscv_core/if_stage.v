@@ -5,24 +5,33 @@ module if_stage #(
 ) (
     input clk,
     input rst,
+
     input id_stall,
-    input mem_flush,
-    input ex_target_taken,
+
     input [31:0] ex_target,
-    input [31:0] mem_alu,
+    input ex_target_taken,
+
+    input [31:0] wb_alu,
+    input wb_flush,
     
-    output [31:0] id_pc,
     output [31:0] if_addr,
-    output if_bios_en
+    output if_bios_en,
+
+    output [31:0] id_pc,
+    output [1:0]  id_inst_sel
 );  
 
     // MARK: Program Counter
 
     wire [31:0] if_pc;
+    
+    assign if_addr = if_pc;
+    assign if_bios_en = if_pc[30];
+
     wire stall = id_stall;
-    wire [31:0] in = mem_flush ? mem_alu : ex_target;
-    wire in_valid = mem_flush || ex_target_taken;
-    wire flush = mem_flush || ex_target_taken;
+    wire [31:0] in = wb_flush ? wb_alu : ex_target;
+    wire in_valid = wb_flush || ex_target_taken;
+    wire flush = wb_flush || ex_target_taken;
     
     program_counter #(
         .RESET_PC(RESET_PC)
@@ -35,12 +44,6 @@ module if_stage #(
         .in(in),
         .out(if_pc)
     );
-
-    // MARK: Control Logic
-
-    assign if_addr = if_pc;
-
-    assign if_bios_en = if_pc[30];
 
     // MARK: Pipeline Registers
 
@@ -55,12 +58,17 @@ module if_stage #(
         .out(id_pc)
     );
 
-    /*
-    // System Verilog Assertions 
+    wire [1:0] inst_sel = if_pc[30] ? `INST_BIOS : `INST_IMEM;
 
-    program_counter_eq_pc_reset_on_reset:
-        assert property ( @(posedge clk)
-            (rst) |=> (if_pc == RESET_PC)
-        ) else $error("");
-    */
+    pipeline_reg #(
+        .WIDTH(2)
+    ) inst_sel_reg (
+        .clk(clk),
+        .rst(rst),
+        .we(pc_we),
+        .in(inst_sel),
+
+        .out(id_inst_sel)
+    );
+
 endmodule

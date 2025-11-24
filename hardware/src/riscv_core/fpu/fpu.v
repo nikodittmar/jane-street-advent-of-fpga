@@ -9,10 +9,10 @@ module fpu (
     input [2:0] sel,
     input input_valid,
     input [31:0] inst_in,
+    
     output reg [31:0] res,
     output reg busy,
-    output reg [31:0] inst_out,
-    output reg almost_done
+    output reg [31:0] inst_out
 );
 
     reg [2:0] int_sel;
@@ -91,7 +91,6 @@ module fpu (
     always @(*) begin
         res = 32'b0;
         op_lat = 4'b0;
-        almost_done = 1'b0;
         next_int_sel = input_valid ? sel : busy ? int_sel : 4'd0;
         fpu_sel = input_valid ? sel : int_sel;
 
@@ -108,12 +107,10 @@ module fpu (
         `FPU_ADD: begin 
             res = add_res;
             op_lat = 4'd4;
-            almost_done = cnt == 4'd3;
         end
         `FPU_MADD: begin 
             res = add_res;
             op_lat = 4'd5;
-            almost_done = cnt == 4'd4;
         end
         `FPU_CVT: begin 
             res = cvt_res;

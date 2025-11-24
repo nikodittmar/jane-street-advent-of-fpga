@@ -29,6 +29,7 @@
 `define IMM_B                   3'b010 // B-type immediates
 `define IMM_U                   3'b011 // U-type immediates
 `define IMM_J                   3'b100 // J-type immediates
+`define IMM_CSR                 3'b101 // CSR immediate
 `define IMM_DONT_CARE           3'b000
 
 // Target generator sel
@@ -60,6 +61,7 @@
 `define B_DONT_CARE             1'b0
 
 // ALU sel
+`define ALU_NUM_OPS             12
 `define ALU_ADD                 4'b0000
 `define ALU_SLL                 4'b0001
 `define ALU_SLT                 4'b0010
@@ -84,8 +86,6 @@
 `define REDIR_ALU               1'b0
 `define REDIR_PC4               1'b1
 `define REDIR_DONT_CARE         1'b0
-
-// ***** MEM STAGE *****
 
 // Data in sel
 `define DIN_NUM_INPUTS        2
@@ -147,6 +147,7 @@
 // ***** FLOATING POINT *****
 
 // FPU sel
+`define FPU_NUM_OPS             5
 `define FPU_ADD                 3'b001
 `define FPU_MADD                3'b010
 `define FPU_CVT                 3'b011
