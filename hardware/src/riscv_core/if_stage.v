@@ -51,8 +51,8 @@ module if_stage #(
 
     pipeline_reg pc_reg (
         .clk(clk),
-        .rst(rst),
-        .we(pc_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(if_pc),
 
         .out(id_pc)
@@ -64,8 +64,8 @@ module if_stage #(
         .WIDTH(2)
     ) inst_sel_reg (
         .clk(clk),
-        .rst(rst),
-        .we(pc_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(inst_sel),
 
         .out(id_inst_sel)

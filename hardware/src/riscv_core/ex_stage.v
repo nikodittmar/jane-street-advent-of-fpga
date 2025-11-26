@@ -6,6 +6,7 @@ module ex_stage #(
 ) (
     input clk,
     input rst,
+
     input [31:0] ex_pc,
     input [31:0] ex_inst,
     input [31:0] ex_rd1,
@@ -259,8 +260,8 @@ module ex_stage #(
 
     pipeline_reg pc_reg (
         .clk(clk),
-        .rst(ex_reg_rst),
-        .we(ex_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(pc4),
 
         .out(wb_pc4)
@@ -268,8 +269,8 @@ module ex_stage #(
 
     pipeline_reg alu_reg (
         .clk(clk),
-        .rst(ex_reg_rst),
-        .we(ex_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(alu_out),
 
         .out(wb_alu)
@@ -277,8 +278,8 @@ module ex_stage #(
     
     pipeline_reg fpu_reg (
         .clk(clk),
-        .rst(ex_fp_reg_rst),
-        .we(ex_fp_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(fpu_out),
 
         .out(wb_fpu)

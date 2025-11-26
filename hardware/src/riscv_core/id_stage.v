@@ -149,8 +149,8 @@ module id_stage (
 
     pipeline_reg pc_reg (
         .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(id_pc),
 
         .out(ex_pc)
@@ -158,8 +158,8 @@ module id_stage (
 
     pipeline_reg rd1_reg (
         .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(rd1),
 
         .out(ex_rd1)
@@ -167,8 +167,8 @@ module id_stage (
 
     pipeline_reg rd2_reg (
         .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(rd2),
 
         .out(ex_rd2)
@@ -176,8 +176,8 @@ module id_stage (
 
     pipeline_reg fd1_reg (
         .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(fd1),
 
         .out(ex_fd1)
@@ -185,8 +185,8 @@ module id_stage (
 
     pipeline_reg fd2_reg (
         .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(fd2),
 
         .out(ex_fd2)
@@ -194,8 +194,8 @@ module id_stage (
 
     pipeline_reg fd3_reg (
         .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(fd3),
 
         .out(ex_fd3)
@@ -203,8 +203,8 @@ module id_stage (
 
     pipeline_reg imm_reg (
         .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(imm),
 
         .out(ex_imm)
@@ -234,8 +234,8 @@ module id_stage (
 
     pipeline_reg target_reg (
         .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
+        .rst(1'b0),
+        .we(1'b1),
         .in(target),
 
         .out(ex_target)
@@ -262,5 +262,4 @@ module id_stage (
 
         .out(ex_fpu_valid)
     );
-
 endmodule

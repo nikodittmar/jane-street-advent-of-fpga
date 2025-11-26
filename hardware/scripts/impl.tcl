@@ -18,9 +18,13 @@ report_timing_summary -warn_on_violation -file post_place_timing_summary.rpt
 
 phys_opt_design -directive AggressiveExplore
 
-route_design -directive Explore
+route_design -directive AggressiveExplore
 
 phys_opt_design -directive AggressiveExplore
+
+phys_opt_design -critical_pin_opt -routing_opt
+write_checkpoint -force ${TOP}_routed_srl_critpin.dcp
+report_timing_summary -warn_on_violation -file post_route_srl_critpin_timing_summary.rpt
 
 write_checkpoint -force ${TOP}_routed.dcp
 write_verilog    -force post_route.v
