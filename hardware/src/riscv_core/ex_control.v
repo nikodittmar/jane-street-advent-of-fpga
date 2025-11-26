@@ -2,7 +2,6 @@
 `include "opcode.vh"
 
 module ex_control (
-    input clk,
     input [31:0] inst,
     input [31:0] addr,
     input [31:0] pc,
@@ -21,27 +20,18 @@ module ex_control (
     output reg csr_en,
     output reg br_suc,
     output reg flush,
-    output reg fpu_valid,
     output reg din_sel,
     output reg br_inst,
     output reg imem_en,
     output reg dmem_en,
     output reg bios_en,
-    output reg io_en,
-    output reg bubble
+    output reg io_en
 );
 
     wire [4:0] opcode5 = inst[6:2];
     wire [2:0] funct3 = inst[14:12];
     wire [6:0] funct7 = inst[31:25];
     wire [3:0] funct4 = inst[31:28];
-
-    reg [31:0] last_inst;
-    reg inst_changed;
-
-    always @(posedge clk) begin 
-        last_inst <= inst;
-    end
 
     always @(*) begin
         
@@ -57,15 +47,12 @@ module ex_control (
         csr_en = 1'b0;
         br_suc = 1'b0;
         flush = 1'b0;
-        fpu_valid = 1'b0;
         din_sel = `DIN_DONT_CARE;
         br_inst = 1'b0;
         imem_en = 1'b0;
         dmem_en = 1'b0; 
         bios_en = 1'b0;
         io_en = 1'b0;
-        bubble = inst == `NOP;
-        inst_changed = last_inst != inst;
         
         case (opcode5)
         `OPC_ARI_RTYPE_5: begin
@@ -370,7 +357,6 @@ module ex_control (
             endcase
         end
         `OPC_FP_5: begin 
-            fpu_valid = inst_changed;
             case (funct4)
             `FNC4_FP_ADD: begin 
                 // FADD
@@ -403,7 +389,6 @@ module ex_control (
             // FMADD
             fp_a_sel = `FP_A_FP_REG;
             fpu_sel = `FPU_MADD;
-            fpu_valid = inst_changed;
         end
         endcase
     end

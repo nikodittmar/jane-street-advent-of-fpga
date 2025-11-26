@@ -15,6 +15,7 @@ module ex_stage #(
     input [31:0] ex_fd3,
     input [31:0] ex_imm,
     input ex_br_taken,
+    input ex_fpu_valid,
 
     input serial_in,
     output serial_out,
@@ -59,7 +60,6 @@ module ex_stage #(
     wire [31:0] fp_c = ex_fd3;
     wire [31:0] fpu_out;
     wire [2:0] fpu_sel;
-    wire fpu_valid;
 
     fpu fpu (
         .clk(clk),
@@ -68,7 +68,7 @@ module ex_stage #(
         .b(fp_b),
         .c(fp_c),
         .sel(fpu_sel),
-        .input_valid(fpu_valid),
+        .input_valid(ex_fpu_valid),
         .inst_in(ex_inst),
         
         .res(fpu_out),
@@ -224,7 +224,6 @@ module ex_stage #(
 
     wire io_en;
     wire br_inst;
-    wire bubble;
     wire br_suc;
 
     io #(
@@ -233,17 +232,18 @@ module ex_stage #(
     ) io (
         .clk(clk),
         .rst(rst),
+
         .addr(alu_out),
         .din(ex_din),
-        .io_en(io_en),
-        .br_inst(br_inst),
-        .fp_inst(ex_fp_inst),
-        .inst(ex_inst),
+        .inst(wb_inst),
+        .fp_inst(wb_fp_inst),
+        .en(io_en),
         .br_suc(br_suc),
-        .bubble(bubble),
-        .serial_in(serial_in),
+        .br_inst(br_inst),
 
+        .serial_in(serial_in),
         .serial_out(serial_out),
+
         .dout(wb_io_dout)
     );
 
@@ -322,7 +322,6 @@ module ex_stage #(
     // MARK: Control Logic
 
     ex_control control (
-        .clk(clk),
         .inst(ex_inst),
         .addr(alu_out),
         .pc(ex_pc),
@@ -341,14 +340,12 @@ module ex_stage #(
         .csr_en(csr_en),
         .br_suc(br_suc),
         .flush(flush),
-        .fpu_valid(fpu_valid),
         .din_sel(din_mux_sel),
         .br_inst(br_inst),
         .imem_en(ex_imem_en),
         .dmem_en(dmem_en),
         .bios_en(ex_bios_en),
-        .io_en(io_en),
-        .bubble(bubble)
+        .io_en(io_en)
     );
 
 endmodule

@@ -38,6 +38,7 @@ module cpu #(
     wire ex_bios_en;
     wire ex_imem_en;
     wire ex_fpu_busy;
+    wire ex_fpu_valid;
 
     wire [31:0] wb_inst;
     wire [31:0] wb_fp_inst;
@@ -134,6 +135,7 @@ module cpu #(
         .ex_target(ex_target),
         .ex_target_taken(ex_target_taken),
         .ex_br_taken(ex_br_taken),
+        .ex_fpu_valid(ex_fpu_valid),
 
         .id_stall(id_stall)
     );
@@ -156,6 +158,7 @@ module cpu #(
         .ex_fd3(ex_fd3),
         .ex_imm(ex_imm),
         .ex_br_taken(ex_br_taken),
+        .ex_fpu_valid(ex_fpu_valid),
 
         .serial_in(serial_in),
         .serial_out(serial_out),

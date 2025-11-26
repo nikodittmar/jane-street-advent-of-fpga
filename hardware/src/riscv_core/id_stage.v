@@ -32,6 +32,7 @@ module id_stage (
     output [31:0] ex_target, // Branch predictor/target generator output
     output ex_target_taken, // Use output of branch predictor/target generator flag
     output ex_br_taken, // Branch predictor branch taken flag
+    output ex_fpu_valid,
 
     output id_stall
 );
@@ -128,6 +129,7 @@ module id_stage (
 
     // MARK: Control
     assign id_stall = id_ex_stall || stall;
+    wire fpu_valid;
 
     id_control control (
         .inst(id_inst),
@@ -139,7 +141,8 @@ module id_stage (
         .target_gen_sel(target_gen_sel),
         .target_gen_en(target_gen_en),
         .stall(stall),
-        .id_ex_stall(id_ex_stall)
+        .id_ex_stall(id_ex_stall),
+        .fpu_valid(fpu_valid)
     );
 
     // MARK: Pipeline registers
@@ -248,4 +251,16 @@ module id_stage (
 
         .out(ex_target_taken)
     );
+
+    pipeline_reg #(
+        .WIDTH(1)
+    ) fpu_valid_reg (
+        .clk(clk),
+        .rst(1'b0),
+        .we(1'b1),
+        .in(fpu_valid),
+
+        .out(ex_fpu_valid)
+    );
+
 endmodule

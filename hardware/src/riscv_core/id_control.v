@@ -11,7 +11,8 @@ module id_control (
     output reg target_gen_sel,
     output reg target_gen_en,
     output reg stall,
-    output reg id_ex_stall
+    output reg id_ex_stall,
+    output reg fpu_valid
 );
 
 wire [4:0] opcode5 = inst[6:2];
@@ -53,6 +54,7 @@ always @(*) begin
     target_gen_en = 1'b0;
     stall = 1'b0;
     id_ex_stall = fpu_busy && fpu_inst;
+    fpu_valid = fpu_inst && !fpu_busy;
    
     // hazards
     if (ex_has_rd && ((has_rs1 && rs1 == ex_rd) || (has_rs2 && rs2 == ex_rd))) begin
