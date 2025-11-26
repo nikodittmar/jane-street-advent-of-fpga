@@ -91,7 +91,7 @@ module io #(
             end
 
             if (en) begin 
-                case(addr)
+                case(addr[7:0])
                 `MEM_IO_UART_CTRL: begin
                     dout <= { 30'b0, can_read, uart_tx_data_in_ready };
                 end
