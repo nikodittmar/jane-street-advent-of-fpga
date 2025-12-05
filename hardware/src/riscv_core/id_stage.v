@@ -31,7 +31,6 @@ module id_stage (
     output [31:0] ex_inst,
     output [31:0] ex_target, // Branch predictor/target generator output
     output ex_target_taken, // Use output of branch predictor/target generator flag
-    output ex_br_taken, // Branch predictor branch taken flag
     output ex_fpu_valid,
 
     output id_stall
@@ -208,17 +207,6 @@ module id_stage (
         .in(imm),
 
         .out(ex_imm)
-    );
-
-    pipeline_reg #(
-        .WIDTH(1)
-    ) br_taken_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(br_taken),
-
-        .out(ex_br_taken)
     );
 
     pipeline_reg #(

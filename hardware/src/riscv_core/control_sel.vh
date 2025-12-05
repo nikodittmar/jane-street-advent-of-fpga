@@ -72,7 +72,6 @@
 `define ALU_AND                 4'b0111
 `define ALU_SUB                 4'b1100
 `define ALU_SRA                 4'b1101
-`define ALU_A_PLUS_4            4'b1110
 `define ALU_BSEL                4'b1111
 `define ALU_DONT_CARE           4'b0000
 
@@ -83,6 +82,7 @@
 `define CSR_DONT_CARE           1'b0
 
 // PC redirect sel
+`define REDIR_NUM_INPUTS        2
 `define REDIR_ALU               1'b0
 `define REDIR_PC4               1'b1
 `define REDIR_DONT_CARE         1'b0

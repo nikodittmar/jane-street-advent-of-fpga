@@ -7,7 +7,7 @@ module ex_control (
     input [31:0] pc,
     input breq,
     input brlt,
-    input br_taken,
+    input target_taken,
     
     output reg [$clog2(`ALU_NUM_OPS)-1:0] alu_sel,
     output reg [$clog2(`FPU_NUM_OPS)-1:0] fpu_sel,
@@ -25,13 +25,19 @@ module ex_control (
     output reg imem_en,
     output reg dmem_en,
     output reg bios_en,
-    output reg io_en
+    output reg io_en,
+    output reg redirect_sel,
+    output reg br_taken,
+    output reg uncond
 );
 
     wire [4:0] opcode5 = inst[6:2];
     wire [2:0] funct3 = inst[14:12];
     wire [6:0] funct7 = inst[31:25];
     wire [3:0] funct4 = inst[31:28];
+
+    assign flush = uncond || target_taken != br_taken;
+    assign br_suc = br_inst && target_taken == br_taken;
 
     always @(*) begin
         
@@ -45,14 +51,15 @@ module ex_control (
         fp_a_sel = `FP_A_DONT_CARE;
         csr_mux_sel = `CSR_DONT_CARE;
         csr_en = 1'b0;
-        br_suc = 1'b0;
-        flush = 1'b0;
         din_sel = `DIN_DONT_CARE;
         br_inst = 1'b0;
         imem_en = 1'b0;
         dmem_en = 1'b0; 
         bios_en = 1'b0;
         io_en = 1'b0;
+        redirect_sel = `REDIR_DONT_CARE;
+        br_taken = 1'b0;
+        uncond = 1'b0;
         
         case (opcode5)
         `OPC_ARI_RTYPE_5: begin
@@ -214,67 +221,39 @@ module ex_control (
 
             a_sel = `A_PC;
             b_sel = `B_IMM;
+            alu_sel = `ALU_ADD;
+            redirect_sel = target_taken;
 
             case (funct3)
             `FNC_BEQ: begin
                 // BEQ
                 brun = 1'b0;
-                if (breq == br_taken) begin
-                    br_suc = 1'b1;
-                end else begin 
-                    flush = 1'b1;
-                    alu_sel = breq ? `ALU_ADD : `ALU_A_PLUS_4;
-                end
+                br_taken = breq;
             end
             `FNC_BNE: begin
                 // BNE
                 brun = 1'b0;
-                if (breq != br_taken) begin
-                    br_suc = 1'b1;
-                end else begin 
-                    flush = 1'b1;
-                    alu_sel = !breq ? `ALU_ADD : `ALU_A_PLUS_4;
-                end
+                br_taken = !breq;
             end
             `FNC_BLT: begin
                 // BLT
                 brun = 1'b0;
-                if (brlt == br_taken) begin
-                    br_suc = 1'b1;
-                end else begin 
-                    flush = 1'b1;
-                    alu_sel = brlt ? `ALU_ADD : `ALU_A_PLUS_4;
-                end
+                br_taken = brlt;
             end
             `FNC_BGE: begin
                 // BGE
                 brun = 1'b0;
-                if (brlt != br_taken) begin
-                    br_suc = 1'b1;
-                end else begin 
-                    flush = 1'b1;
-                    alu_sel = !brlt ? `ALU_ADD : `ALU_A_PLUS_4;
-                end
+                br_taken = !brlt;
             end
             `FNC_BLTU: begin
                 // BLTU
                 brun = 1'b1;
-                if (brlt == br_taken) begin
-                    br_suc = 1'b1;
-                end else begin 
-                    flush = 1'b1;
-                    alu_sel = brlt ? `ALU_ADD : `ALU_A_PLUS_4;
-                end
+                br_taken = brlt;
             end
             `FNC_BGEU: begin
                 // BGEU
                 brun = 1'b1;
-                if (brlt != br_taken) begin
-                    br_suc = 1'b1;
-                end else begin 
-                    flush = 1'b1;
-                    alu_sel = !brlt ? `ALU_ADD : `ALU_A_PLUS_4;
-                end
+                br_taken = !brlt;
             end
             endcase
         end
@@ -283,13 +262,15 @@ module ex_control (
             a_sel = `A_PC;
             b_sel = `B_IMM;
             alu_sel = `ALU_ADD;
+            uncond = 1'b1;
         end
         `OPC_JALR_5: begin
             // JALR
             a_sel = `A_REG;
             b_sel = `B_IMM;
             alu_sel = `ALU_ADD;
-            flush = 1'b1;
+            redirect_sel = `REDIR_ALU;
+            uncond = 1'b1;
         end
 
         `OPC_LUI_5: begin

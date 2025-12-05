@@ -22,7 +22,6 @@ module cpu #(
 
     wire [31:0] ex_target;
     wire ex_target_taken;
-    wire ex_br_taken;
     wire [31:0] ex_pc;
     wire [31:0] ex_rd1;
     wire [31:0] ex_rd2;
@@ -40,6 +39,7 @@ module cpu #(
     wire ex_fpu_busy;
     wire ex_fpu_valid;
 
+    wire [31:0] wb_redirect;
     wire [31:0] wb_inst;
     wire [31:0] wb_fp_inst;
     wire [31:0] wb_alu;
@@ -92,7 +92,7 @@ module cpu #(
         .ex_target(ex_target),
         .ex_target_taken(ex_target_taken),
 
-        .wb_alu(wb_alu),
+        .wb_redirect(wb_redirect),
         .wb_flush(wb_flush),
 
         .if_addr(if_addr),
@@ -134,7 +134,6 @@ module cpu #(
         .ex_inst(ex_inst),
         .ex_target(ex_target),
         .ex_target_taken(ex_target_taken),
-        .ex_br_taken(ex_br_taken),
         .ex_fpu_valid(ex_fpu_valid),
 
         .id_stall(id_stall)
@@ -157,7 +156,7 @@ module cpu #(
         .ex_fd2(ex_fd2),
         .ex_fd3(ex_fd3),
         .ex_imm(ex_imm),
-        .ex_br_taken(ex_br_taken),
+        .ex_target_taken(ex_target_taken),
         .ex_fpu_valid(ex_fpu_valid),
 
         .serial_in(serial_in),
@@ -178,6 +177,7 @@ module cpu #(
         .wb_pc4(wb_pc4),
         .wb_dmem_dout(wb_dmem_dout),
         .wb_io_dout(wb_io_dout),
+        .wb_redirect(wb_redirect),
         .wb_flush(wb_flush) 
     );
 

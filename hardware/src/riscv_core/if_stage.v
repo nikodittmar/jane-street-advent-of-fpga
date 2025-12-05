@@ -11,7 +11,7 @@ module if_stage #(
     input [31:0] ex_target,
     input ex_target_taken,
 
-    input [31:0] wb_alu,
+    input [31:0] wb_redirect,
     input wb_flush,
     
     output [31:0] if_addr,
@@ -29,7 +29,7 @@ module if_stage #(
     assign if_bios_en = if_pc[30];
 
     wire stall = id_stall;
-    wire [31:0] in = wb_flush ? wb_alu : ex_target;
+    wire [31:0] in = wb_flush ? wb_redirect : ex_target;
     wire in_valid = wb_flush || ex_target_taken;
     wire flush = wb_flush || ex_target_taken;
     

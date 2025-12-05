@@ -15,7 +15,7 @@ module ex_stage #(
     input [31:0] ex_fd2,
     input [31:0] ex_fd3,
     input [31:0] ex_imm,
-    input ex_br_taken,
+    input ex_target_taken,
     input ex_fpu_valid,
 
     input serial_in,
@@ -36,6 +36,7 @@ module ex_stage #(
     output [31:0] wb_pc4,
     output [31:0] wb_dmem_dout, 
     output [31:0] wb_io_dout,
+    output [31:0] wb_redirect,
     output wb_flush
 );
 
@@ -248,6 +249,26 @@ module ex_stage #(
         .dout(wb_io_dout)
     );
 
+    // MARK: Redirect Mux
+
+    wire [31:0] pc4 = ex_pc + 32'd4;
+
+    wire [$clog2(`REDIR_NUM_INPUTS)-1:0] redirect_sel;
+    wire [`REDIR_NUM_INPUTS*32-1:0] redirect_mux_in;
+    wire [31:0] redirect;
+
+    assign redirect_mux_in[`REDIR_ALU * 32 +: 32] = alu_out;
+    assign redirect_mux_in[`REDIR_PC4 * 32 +: 32] = pc4;
+
+    mux #(
+        .NUM_INPUTS(`REDIR_NUM_INPUTS)
+    ) redirect_mux (
+        .in(redirect_mux_in),
+        .sel(redirect_sel),
+
+        .out(redirect)
+    );
+
     // MARK: Pipeline Registers
 
     wire ex_reg_rst = rst || wb_flush;
@@ -256,7 +277,14 @@ module ex_stage #(
     wire ex_fp_reg_rst = rst || ex_fpu_busy || wb_flush;
     wire ex_fp_reg_we = !rst && !ex_fpu_busy;
 
-    wire [31:0] pc4 = ex_pc + 32'd4;
+    pipeline_reg redirect_reg (
+        .clk(clk),
+        .rst(1'b0),
+        .we(1'b1),
+        .in(redirect),
+
+        .out(wb_redirect)
+    );
 
     pipeline_reg pc_reg (
         .clk(clk),
@@ -322,13 +350,16 @@ module ex_stage #(
 
     // MARK: Control Logic
 
+    wire uncond;
+    wire br_taken;
+
     ex_control control (
         .inst(ex_inst),
         .addr(alu_out),
         .pc(ex_pc),
         .breq(breq),
         .brlt(brlt),
-        .br_taken(ex_br_taken),
+        .target_taken(ex_target_taken),
     
         .alu_sel(alu_sel),
         .fpu_sel(fpu_sel),
@@ -346,7 +377,10 @@ module ex_stage #(
         .imem_en(ex_imem_en),
         .dmem_en(dmem_en),
         .bios_en(ex_bios_en),
-        .io_en(io_en)
+        .io_en(io_en),
+        .redirect_sel(redirect_sel),
+        .br_taken(br_taken),
+        .uncond(uncond)
     );
 
 endmodule
