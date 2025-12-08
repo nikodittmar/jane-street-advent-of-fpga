@@ -24,10 +24,16 @@ module ex_stage #(
     output [31:0] ex_fp_inst,
     output [31:0] ex_din,
     output [31:0] ex_addr,
+    output [31:0] ex_target,
     output [3:0] ex_we,
+    output ex_target_valid,
+    output ex_br_inst,
+    output ex_br_taken,
+    output ex_is_uncond,
     output ex_imem_en,
     output ex_bios_en,
     output ex_fpu_busy,
+    output ex_flush,
 
     output [31:0] wb_inst,
     output [31:0] wb_fp_inst,
@@ -103,6 +109,7 @@ module ex_stage #(
     wire [31:0] alu_out;
 
     assign ex_addr = alu_out;
+    assign ex_target = alu_out;
 
     alu alu (
         .a(a),
@@ -335,23 +342,21 @@ module ex_stage #(
         .out(wb_fp_inst)
     );
 
-    wire flush;
-
     pipeline_reg #(
         .WIDTH(1)
     ) flush_reg (
         .clk(clk),
-        .rst(ex_reg_rst),
-        .we(ex_reg_we),
-        .in(flush),
+        .rst(1'b0),
+        .we(1'b1),
+        .in(ex_flush),
 
         .out(wb_flush)
     );
 
     // MARK: Control Logic
 
-    wire uncond;
-    wire br_taken;
+    assign ex_target_valid = ex_is_uncond || br_inst;
+    assign ex_br_inst = br_inst;
 
     ex_control control (
         .inst(ex_inst),
@@ -371,7 +376,7 @@ module ex_stage #(
         .csr_mux_sel(csr_mux_sel),
         .csr_en(csr_en),
         .br_suc(br_suc),
-        .flush(flush),
+        .flush(ex_flush),
         .din_sel(din_mux_sel),
         .br_inst(br_inst),
         .imem_en(ex_imem_en),
@@ -379,8 +384,8 @@ module ex_stage #(
         .bios_en(ex_bios_en),
         .io_en(io_en),
         .redirect_sel(redirect_sel),
-        .br_taken(br_taken),
-        .uncond(uncond)
+        .br_taken(ex_br_taken),
+        .uncond(ex_is_uncond)
     );
 
 endmodule

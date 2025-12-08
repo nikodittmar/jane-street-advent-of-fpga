@@ -17,11 +17,12 @@ module cpu #(
     wire [31:0] id_pc;
     wire [31:0] id_bios_inst;
     wire [31:0] id_imem_inst;
-    wire [1:0] id_inst_sel;
+    wire [31:0] id_target;
+    wire id_inst_sel;
     wire id_stall;
+    wire id_target_taken;
 
     wire [31:0] ex_target;
-    wire ex_target_taken;
     wire [31:0] ex_pc;
     wire [31:0] ex_rd1;
     wire [31:0] ex_rd2;
@@ -34,10 +35,16 @@ module cpu #(
     wire [31:0] ex_addr;
     wire [31:0] ex_din;
     wire [3:0] ex_we;
+    wire ex_target_taken;
+    wire ex_br_inst;
+    wire ex_target_valid;
+    wire ex_is_uncond;
+    wire ex_br_taken;
     wire ex_bios_en;
     wire ex_imem_en;
     wire ex_fpu_busy;
     wire ex_fpu_valid;
+    wire ex_flush;
 
     wire [31:0] wb_redirect;
     wire [31:0] wb_inst;
@@ -79,6 +86,25 @@ module cpu #(
       .doutb(id_imem_inst)
     );
 
+    // MARK: Branch Predictor
+
+    branch_predictor bp (
+        .rst(rst),
+        .clk(clk),
+        .if_addr(if_addr),
+        .ex_addr(ex_pc),
+        .ex_target(ex_target),
+        .ex_target_valid(ex_target_valid),
+        .ex_br_inst(ex_br_inst),
+        .ex_is_uncond(ex_is_uncond),
+        .ex_br_taken(ex_br_taken),
+        .wb_flush(wb_flush),
+        .id_stall(id_stall),
+
+        .id_target(id_target),
+        .id_target_taken(id_target_taken)
+    );
+
     // MARK: Instruction Fetch
 
     if_stage #(
@@ -89,8 +115,8 @@ module cpu #(
 
         .id_stall(id_stall),
 
-        .ex_target(ex_target),
-        .ex_target_taken(ex_target_taken),
+        .id_target(id_target),
+        .id_target_taken(id_target_taken),
 
         .wb_redirect(wb_redirect),
         .wb_flush(wb_flush),
@@ -112,9 +138,11 @@ module cpu #(
         .id_bios_inst(id_bios_inst),
         .id_imem_inst(id_imem_inst),
         .id_inst_sel(id_inst_sel),
+        .id_target_taken(id_target_taken),
 
         .ex_fp_inst(ex_fp_inst),
         .ex_fpu_busy(ex_fpu_busy),
+        .ex_flush(ex_flush),
 
         .wb_inst(wb_inst),
         .wb_fp_inst(wb_fp_inst),
@@ -132,7 +160,6 @@ module cpu #(
         .ex_fd3(ex_fd3),
         .ex_imm(ex_imm),
         .ex_inst(ex_inst),
-        .ex_target(ex_target),
         .ex_target_taken(ex_target_taken),
         .ex_fpu_valid(ex_fpu_valid),
 
@@ -165,10 +192,16 @@ module cpu #(
         .ex_fp_inst(ex_fp_inst),
         .ex_din(ex_din),
         .ex_addr(ex_addr),
+        .ex_target(ex_target),
         .ex_we(ex_we),
+        .ex_target_valid(ex_target_valid),
+        .ex_br_inst(ex_br_inst),
+        .ex_br_taken(ex_br_taken),
+        .ex_is_uncond(ex_is_uncond),
         .ex_imem_en(ex_imem_en),
         .ex_bios_en(ex_bios_en),
         .ex_fpu_busy(ex_fpu_busy),
+        .ex_flush(ex_flush),
 
         .wb_inst(wb_inst),
         .wb_fp_inst(wb_fp_inst),

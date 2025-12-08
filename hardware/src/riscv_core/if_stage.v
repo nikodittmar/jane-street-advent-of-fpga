@@ -8,8 +8,8 @@ module if_stage #(
 
     input id_stall,
 
-    input [31:0] ex_target,
-    input ex_target_taken,
+    input [31:0] id_target,
+    input id_target_taken,
 
     input [31:0] wb_redirect,
     input wb_flush,
@@ -18,7 +18,7 @@ module if_stage #(
     output if_bios_en,
 
     output [31:0] id_pc,
-    output [1:0]  id_inst_sel
+    output id_inst_sel
 );  
 
     // MARK: Program Counter
@@ -29,9 +29,9 @@ module if_stage #(
     assign if_bios_en = if_pc[30];
 
     wire stall = id_stall;
-    wire [31:0] in = wb_flush ? wb_redirect : ex_target;
-    wire in_valid = wb_flush || ex_target_taken;
-    wire flush = wb_flush || ex_target_taken;
+    wire [31:0] in = wb_flush ? wb_redirect : id_target;
+    wire in_valid = wb_flush || id_target_taken;
+    wire flush = wb_flush;
     
     program_counter #(
         .RESET_PC(RESET_PC)
@@ -58,10 +58,10 @@ module if_stage #(
         .out(id_pc)
     );
 
-    wire [1:0] inst_sel = if_pc[30] ? `INST_BIOS : `INST_IMEM;
+    wire inst_sel = if_pc[30] ? `INST_BIOS : `INST_IMEM;
 
     pipeline_reg #(
-        .WIDTH(2)
+        .WIDTH(1)
     ) inst_sel_reg (
         .clk(clk),
         .rst(1'b0),

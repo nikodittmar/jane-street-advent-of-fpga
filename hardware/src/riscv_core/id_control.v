@@ -8,8 +8,6 @@ module id_control (
     input fpu_busy,
 
     output reg [2:0] imm_sel,
-    output reg target_gen_sel,
-    output reg target_gen_en,
     output reg stall,
     output reg id_ex_stall,
     output reg fpu_valid
@@ -50,8 +48,6 @@ wire fpu_inst = inst[6:0] == `OPC_FP || inst[6:0] == `OPC_FP_MADD;
 
 always @(*) begin
     imm_sel = `IMM_DONT_CARE;
-    target_gen_sel = `TGT_GEN_DONT_CARE;
-    target_gen_en = 1'b0;
     stall = 1'b0;
     id_ex_stall = fpu_busy && fpu_inst;
     fpu_valid = fpu_inst && !fpu_busy;
@@ -77,14 +73,10 @@ always @(*) begin
         imm_sel = `IMM_S;
     end
     `OPC_BRANCH_5: begin 
-        target_gen_en = 1'b1;
-        target_gen_sel = `TGT_GEN_BR;
         imm_sel = `IMM_B;
     end
     `OPC_JAL_5: begin
         // JAL
-        target_gen_en = 1'b1;
-        target_gen_sel = `TGT_GEN_JAL;
         imm_sel = `IMM_J;
     end
     `OPC_JALR_5: begin

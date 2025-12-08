@@ -8,10 +8,12 @@ module id_stage (
     input [31:0] id_pc,
     input [31:0] id_bios_inst,
     input [31:0] id_imem_inst,
-    input [1:0] id_inst_sel,
+    input id_inst_sel,
+    input id_target_taken,
 
     input [31:0] ex_fp_inst,
     input ex_fpu_busy,
+    input ex_flush,
 
     input [31:0] wb_inst,
     input [31:0] wb_fp_inst,
@@ -29,8 +31,7 @@ module id_stage (
     output [31:0] ex_fd3,
     output [31:0] ex_imm,
     output [31:0] ex_inst,
-    output [31:0] ex_target, // Branch predictor/target generator output
-    output ex_target_taken, // Use output of branch predictor/target generator flag
+    output ex_target_taken,
     output ex_fpu_valid,
 
     output id_stall
@@ -38,18 +39,17 @@ module id_stage (
     wire id_ex_stall;
     wire stall;
 
-    wire id_reg_rst = !id_ex_stall && (stall || wb_flush || rst);
-    wire id_reg_we = !stall && !id_ex_stall;
+    wire id_reg_rst = !id_ex_stall && (stall || ex_flush || rst || wb_flush);
+    wire id_reg_we = !stall && !id_ex_stall && !ex_flush && !wb_flush;
 
     // MARK: InstSel
 
-    wire [$clog2(`INST_SEL_NUM_INPUTS)-1:0] inst_sel = ex_target_taken ? `INST_NOP : id_inst_sel;
+    wire [$clog2(`INST_SEL_NUM_INPUTS)-1:0] inst_sel = id_inst_sel;
     wire [`INST_SEL_NUM_INPUTS*32-1:0] inst_mux_in;
     wire [31:0] id_inst;
 
     assign inst_mux_in[`INST_BIOS * 32 +: 32] = id_bios_inst;
     assign inst_mux_in[`INST_IMEM * 32 +: 32] = id_imem_inst;
-    assign inst_mux_in[`INST_NOP * 32 +: 32] = `NOP;
 
     mux #(
         .NUM_INPUTS(`INST_SEL_NUM_INPUTS)
@@ -106,26 +106,6 @@ module id_stage (
         .imm(imm)
     );
 
-    // MARK: TargetGen
-    
-    wire target_gen_sel;
-    wire target_gen_en;
-    wire br_taken;
-
-    wire [31:0] target;
-    wire target_taken;
-    
-    target_gen target_gen (
-        .pc(id_pc),
-        .sel(target_gen_sel),
-        .en(target_gen_en),
-        .imm(imm),
-
-        .target(target),
-        .target_taken(target_taken),
-        .branch_taken(br_taken)
-    );
-
     // MARK: Control
     assign id_stall = id_ex_stall || stall;
     wire fpu_valid;
@@ -137,8 +117,6 @@ module id_stage (
         .fpu_busy(ex_fpu_busy),
     
         .imm_sel(imm_sel),
-        .target_gen_sel(target_gen_sel),
-        .target_gen_en(target_gen_en),
         .stall(stall),
         .id_ex_stall(id_ex_stall),
         .fpu_valid(fpu_valid)
@@ -148,8 +126,8 @@ module id_stage (
 
     pipeline_reg pc_reg (
         .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
+        .rst(id_reg_rst),
+        .we(id_reg_we),
         .in(id_pc),
 
         .out(ex_pc)
@@ -157,8 +135,8 @@ module id_stage (
 
     pipeline_reg rd1_reg (
         .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
+        .rst(id_reg_rst),
+        .we(id_reg_we),
         .in(rd1),
 
         .out(ex_rd1)
@@ -166,8 +144,8 @@ module id_stage (
 
     pipeline_reg rd2_reg (
         .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
+        .rst(id_reg_rst),
+        .we(id_reg_we),
         .in(rd2),
 
         .out(ex_rd2)
@@ -202,8 +180,8 @@ module id_stage (
 
     pipeline_reg imm_reg (
         .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
+        .rst(id_reg_rst),
+        .we(id_reg_we),
         .in(imm),
 
         .out(ex_imm)
@@ -220,22 +198,13 @@ module id_stage (
         .out(ex_inst)
     );
 
-    pipeline_reg target_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(target),
-
-        .out(ex_target)
-    );
-
     pipeline_reg #(
         .WIDTH(1)
     ) target_taken_reg (
         .clk(clk),
         .rst(id_reg_rst),
         .we(id_reg_we),
-        .in(target_taken),
+        .in(id_target_taken),
 
         .out(ex_target_taken)
     );
