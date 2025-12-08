@@ -47,6 +47,12 @@
 `define FP_A_REG                1'b1
 `define FP_A_DONT_CARE          1'b0
 
+// FPU C input sel
+`define FP_C_NUM_INPUTS         2
+`define FP_C_REG                1'b0
+`define FP_C_FWD                1'b1
+`define FP_C_DONT_CARE          1'b0
+
 // ALU A input sel
 `define A_NUM_INPUTS            2
 `define A_REG                   1'b0

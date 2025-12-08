@@ -3,6 +3,7 @@
 
 module ex_control (
     input [31:0] inst,
+    input [31:0] wb_inst,
     input [31:0] addr,
     input [31:0] pc,
     input breq,
@@ -16,6 +17,7 @@ module ex_control (
     output reg a_sel,
     output reg b_sel,
     output reg fp_a_sel,
+    output reg fp_c_sel,
     output reg csr_mux_sel,
     output reg csr_en,
     output reg br_suc,
@@ -60,6 +62,7 @@ module ex_control (
         redirect_sel = `REDIR_DONT_CARE;
         br_taken = 1'b0;
         uncond = 1'b0;
+        fp_c_sel = wb_inst[6:2] == `OPC_FP_MADD_5;
         
         case (opcode5)
         `OPC_ARI_RTYPE_5: begin

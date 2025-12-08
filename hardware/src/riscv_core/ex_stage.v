@@ -65,7 +65,7 @@ module ex_stage #(
 
     wire [31:0] fp_a;
     wire [31:0] fp_b = ex_fd2;
-    wire [31:0] fp_c = ex_fd3;
+    wire [31:0] fp_c;
     wire [31:0] fpu_out;
     wire [2:0] fpu_sel;
 
@@ -86,19 +86,36 @@ module ex_stage #(
 
     // MARK: FP A Sel
 
-    wire [$clog2(`A_NUM_INPUTS)-1:0] fp_a_sel;
-    wire [`A_NUM_INPUTS*32-1:0] fp_a_in;
+    wire [$clog2(`FP_A_NUM_INPUTS)-1:0] fp_a_sel;
+    wire [`FP_A_NUM_INPUTS*32-1:0] fp_a_in;
 
     assign fp_a_in[`FP_A_FP_REG * 32 +: 32] = ex_fd1;
     assign fp_a_in[`FP_A_REG * 32 +: 32] = ex_rd1;
     
     mux #(
-        .NUM_INPUTS(`A_NUM_INPUTS)
+        .NUM_INPUTS(`FP_A_NUM_INPUTS)
     ) fp_a_mux (
         .in(fp_a_in),
         .sel(fp_a_sel),
 
         .out(fp_a)
+    );
+
+    // MARK: FP C Sel
+
+    wire [$clog2(`FP_C_NUM_INPUTS)-1:0] fp_c_sel;
+    wire [`FP_C_NUM_INPUTS*32-1:0] fp_c_in;
+
+    assign fp_c_in[`FP_C_REG * 32 +: 32] = ex_fd3;
+    assign fp_c_in[`FP_C_FWD * 32 +: 32] = wb_fpu;
+    
+    mux #(
+        .NUM_INPUTS(`FP_C_NUM_INPUTS)
+    ) fp_c_mux (
+        .in(fp_c_in),
+        .sel(fp_c_sel),
+
+        .out(fp_c)
     );
 
     // MARK: ALU
@@ -373,6 +390,7 @@ module ex_stage #(
         .a_sel(a_sel),
         .b_sel(b_sel),
         .fp_a_sel(fp_a_sel),
+        .fp_c_sel(fp_c_sel),
         .csr_mux_sel(csr_mux_sel),
         .csr_en(csr_en),
         .br_suc(br_suc),
