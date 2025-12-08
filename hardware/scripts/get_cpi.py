@@ -8,6 +8,9 @@ import argparse
 
 benchmark_path = '../software/benchmark'
 
+def in_range(val, correct, threshold):
+  return (correct - threshold) <= val and val <= (correct + threshold)
+
 def get_cpi_sim():
   print('Running simulation...')
   p = Popen('make small-tests -B', shell=True, stdout=PIPE, stderr=PIPE)
@@ -66,6 +69,8 @@ def get_cpi(port, com):
   np.set_printoptions(precision=2)
   print('CPIs: ' + np.array2string(cpis, separator=', '))
   integer_cpi = cpis.prod()**(1.0/len(cpis))
+  if not in_range(inst_cnts[0], 3888195, 5) or not in_range(inst_cnts[1], 12628457, 5):
+    print(f'Error: Integer benchmark instruction counts did not match expected values: bdd got {inst_cnts[0]}, expected 707392, mmult got {inst_cnts[1]} expected 12628457')
   print('Integer CPI (geomean): {:.2f}'.format(integer_cpi))
 
   print('Branch Predictor Accuracies: ' + np.array2string(prediction_accuracies, separator=', '))
@@ -73,11 +78,9 @@ def get_cpi(port, com):
   cycle_count, inst_count, branch_count, correct_count = run_fpga("../software/fpmmult/fpmmult.hex", port, com)
 
   fp_cpi = cycle_count / inst_count
-  fp_prediction_accuracy = correct_count / branch_count
-  print('FP CPI (geomean): {:.2f}'.format(fp_cpi))
-  print('FP Branch Count: {}'.format(branch_count))
-  print('FP Correct Branch Prediction Count: {}'.format(correct_count))
-  print('FP Branch Predictor Accuracy: {:.2f}'.format(fp_prediction_accuracy))
+  if not in_range(inst_count, 1614288, 5):
+    print(f'Error: Floating point benchmark instruction counts did not match expected values: fpmmult {inst_count}, expected 1614288')
+  print('FP CPI: {:.2f}'.format(fp_cpi))
 
   return (integer_cpi, fp_cpi)
 

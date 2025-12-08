@@ -3,7 +3,11 @@ import os
 import sys
 import re
 
-error_map = ["", "Invalid component synthesized. Please contact TA.", "Timing violation", "CPI tests are timing out"]
+expected_inst_counts = [3888195, 12628457, 1614288]
+cpi_test_names = ["bdd", "mmult", "fpmmult"]
+
+def in_range(val, correct, threshold):
+  return (correct - threshold) <= val and val <= (correct + threshold)
 
 def output_test_results(base, verbose=False):
     test_results = {}
@@ -24,7 +28,7 @@ def output_test_results(base, verbose=False):
         return test_results, lines[-1] == "All tests passed!"
 
 def output_fom_results(fom_file, verbose=False):
-    errors = False
+    errors = ""
     lines = {
         "fmax": "Fmax: ",
         "integer_cpi": "Integer CPI: ",
@@ -33,31 +37,38 @@ def output_fom_results(fom_file, verbose=False):
         "fom": "FOM: "
     }
     data = dict()
+    inst_count_num = 0
     with open(fom_file) as f:
         for line in f:
             if "Please report to TA" in line:
-                errors = 1
-                print("ERROR:", line[:-1])
+                errors = f"{line[:-2]}, "
             if "ERROR: Negative slack. Timing violated" in line:
-                errors = 2
-                if verbose:
-                    print("ERROR: Design has negative slack")
+                errors = f"{errors}Design has negative slack, "
             if "Timeout" in line:
-                if verbose:
-                    print("ERROR: CPI tests timed out")
-                errors = 3 
+                errors = f"{errors}CPI tests timed out, "
+            if "Error: Integer" in line or "Error: Floating" in line:
+                errors = f"{errors}Instruction counter does not match expected results, "
+            if line.startswith("Instruction Count: "):
+                cc = int(line[len("Instruction Count: "):-1], 16)
+                if not in_range(cc, expected_inst_counts[inst_count_num], 5):
+                    errors = f"{errors}Instruction count does not match expected results for {cpi_test_names[inst_count_num]} (got {hex(cc)}, expected {hex(expected_inst_counts[inst_count_num])}), "
+                inst_count_num += 1
             for k in lines:
                 if line.startswith(lines[k]):
                     data[k] = float(line[len(lines[k]):])
     if "fom" not in data:
-        if verbose:
-            print("ERROR: FOM was not found, one of the previous steps is failing")
-        errors = True
+        errors = f"{errors}FOM was not found, one of the previous steps is failing, "
     else:
         if verbose:
             for k in data:
                 print(f"{lines[k]}{data[k]}")
-    return (data, errors)
+    if len(errors) == 0:
+        return (data, False)
+    else:
+        errors = errors[:-2]
+        if verbose:
+            print(f"ERRORS: {errors}")
+        return (data, errors)
     
 
 if __name__ == "__main__":
