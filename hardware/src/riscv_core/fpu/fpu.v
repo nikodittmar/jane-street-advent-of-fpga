@@ -12,6 +12,7 @@ module fpu (
     
     output reg [31:0] res,
     output reg busy,
+    output reg madd_almost_done,
     output reg [31:0] inst_out
 );
 
@@ -111,6 +112,7 @@ module fpu (
         `FPU_MADD: begin 
             res = add_res;
             op_lat = 4'd5;
+            madd_almost_done = cnt == 4'd4;
         end
         `FPU_CVT: begin 
             res = cvt_res;

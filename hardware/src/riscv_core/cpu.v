@@ -43,6 +43,7 @@ module cpu #(
     wire ex_bios_en;
     wire ex_imem_en;
     wire ex_fpu_busy;
+    wire ex_madd_almost_done;
     wire ex_fpu_valid;
     wire ex_flush;
 
@@ -142,6 +143,7 @@ module cpu #(
 
         .ex_fp_inst(ex_fp_inst),
         .ex_fpu_busy(ex_fpu_busy),
+        .ex_madd_almost_done(ex_madd_almost_done),
         .ex_flush(ex_flush),
 
         .wb_inst(wb_inst),
@@ -201,6 +203,7 @@ module cpu #(
         .ex_imem_en(ex_imem_en),
         .ex_bios_en(ex_bios_en),
         .ex_fpu_busy(ex_fpu_busy),
+        .ex_madd_almost_done(ex_madd_almost_done),
         .ex_flush(ex_flush),
 
         .wb_inst(wb_inst),

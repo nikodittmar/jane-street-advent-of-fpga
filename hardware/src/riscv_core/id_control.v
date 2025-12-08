@@ -6,6 +6,7 @@ module id_control (
     input [31:0] ex_inst,
     input [31:0] ex_fp_inst,
     input fpu_busy,
+    input madd_almost_done,
 
     output reg [2:0] imm_sel,
     output reg stall,
@@ -45,11 +46,12 @@ wire ex_load_inst = ex_inst[6:2] == `OPC_LOAD_5 || ex_inst[6:2] == `OPC_FP_LOAD_
 wire [4:0] fpu_fd = ex_fp_inst[11:7];
 
 wire fpu_inst = inst[6:0] == `OPC_FP || inst[6:0] == `OPC_FP_MADD;
+//wire madd_inst = inst[6:2] == `OPC_FP_MADD_5;
 
 always @(*) begin
     imm_sel = `IMM_DONT_CARE;
     stall = 1'b0;
-    id_ex_stall = fpu_busy && fpu_inst;
+    id_ex_stall = fpu_busy && fpu_inst;// && (!madd_almost_done || !madd_inst);
     fpu_valid = fpu_inst && !fpu_busy;
    
     // hazards
@@ -58,7 +60,7 @@ always @(*) begin
     end
 
     // FPU hazards
-    if (ex_has_fd && ((has_fs1 && fs1 == ex_fd) || (has_fs2 && fs2 == ex_fd) || (has_fs3 && fs3 == ex_fd))) begin
+    if (ex_has_fd && ((has_fs1 && fs1 == ex_fd) || (has_fs2 && fs2 == ex_fd))) begin
         stall = 1'b1;
     end
 

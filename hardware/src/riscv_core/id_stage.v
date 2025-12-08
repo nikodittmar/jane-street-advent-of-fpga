@@ -13,6 +13,7 @@ module id_stage (
 
     input [31:0] ex_fp_inst,
     input ex_fpu_busy,
+    input ex_madd_almost_done,
     input ex_flush,
 
     input [31:0] wb_inst,
@@ -115,6 +116,7 @@ module id_stage (
         .ex_inst(ex_inst),
         .ex_fp_inst(ex_fp_inst),
         .fpu_busy(ex_fpu_busy),
+        .madd_almost_done(ex_madd_almost_done),
     
         .imm_sel(imm_sel),
         .stall(stall),
