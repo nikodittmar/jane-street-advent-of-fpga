@@ -11,6 +11,8 @@ module if_stage #(
     input [31:0] id_target,
     input id_target_taken,
 
+    input ex_flush,
+
     input [31:0] wb_redirect,
     input wb_flush,
     
@@ -30,7 +32,7 @@ module if_stage #(
 
     wire stall = id_stall;
     wire [31:0] in = wb_flush ? wb_redirect : id_target;
-    wire in_valid = wb_flush || id_target_taken;
+    wire in_valid = wb_flush || (id_target_taken && !ex_flush);
     wire flush = wb_flush;
     
     program_counter #(

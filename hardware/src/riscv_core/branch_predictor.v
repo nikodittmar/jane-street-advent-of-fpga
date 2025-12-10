@@ -27,6 +27,7 @@ module branch_predictor (
     gshare gs (
         .rst(rst),
         .clk(clk),
+        .stall(id_stall),
         .predict_addr(if_addr),
 
         .update_br_taken(ex_br_taken),
@@ -65,5 +66,14 @@ module branch_predictor (
     end
 
     assign id_target_taken = lookup_hit && (lookup_is_uncond || predict_taken);
-
+/*
+    property PredictTakenStableAfterStall;
+        @(posedge clk) disable iff (rst)
+        ($past(id_stall) && !id_stall) |-> 
+        (predict_taken == $past(predict_taken));
+    endproperty
+    PredictTakenStableAfterStall_A: assert property (PredictTakenStableAfterStall)
+    else
+        $error("%m predict_taken changed on stall release");
+*/
 endmodule

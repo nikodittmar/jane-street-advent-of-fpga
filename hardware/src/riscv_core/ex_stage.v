@@ -33,7 +33,6 @@ module ex_stage #(
     output ex_imem_en,
     output ex_bios_en,
     output ex_fpu_busy,
-    output ex_madd_almost_done,
     output ex_flush,
 
     output [31:0] wb_inst,
@@ -82,7 +81,6 @@ module ex_stage #(
         
         .res(fpu_out),
         .busy(ex_fpu_busy),
-        .madd_almost_done(ex_madd_almost_done),
         .inst_out(ex_fp_inst)
     );
 

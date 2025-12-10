@@ -6,7 +6,6 @@ module id_control (
     input [31:0] ex_inst,
     input [31:0] ex_fp_inst,
     input fpu_busy,
-    input madd_almost_done,
 
     output reg [2:0] imm_sel,
     output reg stall,
@@ -20,38 +19,32 @@ wire [6:0] funct7 = inst[31:25];
 wire [3:0] funct4 = inst[31:28];
 
 wire [4:0] rs1 = inst[19:15];
-wire has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] != `OPC_JAL && (inst[6:0] != `OPC_CSR || inst[14:12] == `FNC_CSRRW) && rs1 != 5'b0 && inst[6:0] != `OPC_FP_MADD && (inst[6:0] != `OPC_FP || inst[31:25] == `FNC7_FP_MV_W_X || inst[31:25] == `FNC7_FP_CVT_S_W);
+wire has_rs1 = inst[6:2] != `OPC_AUIPC_5 && inst[6:2] != `OPC_LUI_5 && inst[6:2] != `OPC_JAL_5 && (inst[6:2] != `OPC_CSR_5 || inst[14:12] == `FNC_CSRRW) && rs1 != 5'b0 && inst[6:2] != `OPC_FP_MADD_5 && (inst[6:2] != `OPC_FP_5 || inst[31:25] == `FNC7_FP_MV_W_X || inst[31:25] == `FNC7_FP_CVT_S_W);
 
 wire [4:0] rs2 = inst[24:20];
-wire has_rs2 = (inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH) && rs2 != 5'b0;
+wire has_rs2 = (inst[6:2] == `OPC_ARI_RTYPE_5 || inst[6:2] == `OPC_STORE_5 || inst[6:2] == `OPC_BRANCH_5) && rs2 != 5'b0;
 
 wire [4:0] fs1 = inst[19:15];
-wire has_fs1 = inst[6:0] == `OPC_FP_MADD || (inst[6:0] == `OPC_FP && (inst[31:25] == `FNC7_FP_MV_X_W || inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
+wire has_fs1 = inst[6:2] == `OPC_FP_MADD_5 || (inst[6:2] == `OPC_FP_5 && (inst[31:25] == `FNC7_FP_MV_X_W || inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
 
 wire [4:0] fs2 = inst[24:20];
-wire has_fs2 = inst[6:0] == `OPC_FP_STORE || inst[6:0] == `OPC_FP_MADD || (inst[6:0] == `OPC_FP && (inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
-
-wire [4:0] fs3 = inst[31:27];
-wire has_fs3 = inst[6:0] == `OPC_FP_MADD;
+wire has_fs2 = inst[6:2] == `OPC_FP_STORE_5 || inst[6:2] == `OPC_FP_MADD_5 || (inst[6:2] == `OPC_FP_5 && (inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
 
 wire [4:0] ex_rd = ex_inst[11:7];
-wire ex_has_rd = ex_inst[6:0] != `OPC_STORE && ex_inst[6:0] != `OPC_BRANCH && ex_inst[6:0] != `OPC_CSR && ex_inst[6:0] != `OPC_FP_LOAD && ex_inst[6:0] != `OPC_FP_STORE && ex_inst[6:0] != `OPC_FP_MADD && (ex_inst[6:0] != `OPC_FP || ex_inst[31:25] == `FNC7_FP_MV_X_W);
+wire ex_has_rd = ex_inst[6:2] != `OPC_STORE_5 && ex_inst[6:2] != `OPC_BRANCH_5 && ex_inst[6:2] != `OPC_CSR_5 && ex_inst[6:2] != `OPC_FP_LOAD_5 && ex_inst[6:2] != `OPC_FP_STORE_5 && ex_inst[6:2] != `OPC_FP_MADD_5 && (ex_inst[6:2] != `OPC_FP_5 || ex_inst[31:25] == `FNC7_FP_MV_X_W);
 
-wire [4:0] ex_fd =  ex_inst[6:0] == `OPC_FP_LOAD ? ex_inst[11:7] : ex_fp_inst[11:7];
-wire ex_has_fd = ex_inst[6:0] == `OPC_FP_LOAD || ex_fp_inst[6:0] == `OPC_FP_MADD || (ex_fp_inst[6:0] == `OPC_FP && ex_fp_inst[31:25] != `FNC7_FP_MV_X_W);
+wire [4:0] ex_fd =  ex_inst[6:2] == `OPC_FP_LOAD_5 ? ex_inst[11:7] : ex_fp_inst[11:7];
+wire ex_has_fd = ex_inst[6:2] == `OPC_FP_LOAD_5 || ex_fp_inst[6:2] == `OPC_FP_MADD_5 || (ex_fp_inst[6:2] == `OPC_FP_5 && ex_fp_inst[31:25] != `FNC7_FP_MV_X_W);
 
-wire is_store = inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_FP_STORE;
+wire is_store = inst[6:2] == `OPC_STORE_5 || inst[6:2] == `OPC_FP_STORE_5;
 wire ex_load_inst = ex_inst[6:2] == `OPC_LOAD_5 || ex_inst[6:2] == `OPC_FP_LOAD_5;
 
-wire [4:0] fpu_fd = ex_fp_inst[11:7];
-
-wire fpu_inst = inst[6:0] == `OPC_FP || inst[6:0] == `OPC_FP_MADD;
-//wire madd_inst = inst[6:2] == `OPC_FP_MADD_5;
+wire fpu_inst = inst[6:2] == `OPC_FP_5 || inst[6:2] == `OPC_FP_MADD_5;
 
 always @(*) begin
     imm_sel = `IMM_DONT_CARE;
     stall = 1'b0;
-    id_ex_stall = fpu_busy && fpu_inst;// && (!madd_almost_done || !madd_inst);
+    id_ex_stall = fpu_busy && fpu_inst;
     fpu_valid = fpu_inst && !fpu_busy;
    
     // hazards

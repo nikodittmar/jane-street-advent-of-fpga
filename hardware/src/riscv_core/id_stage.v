@@ -13,7 +13,6 @@ module id_stage (
 
     input [31:0] ex_fp_inst,
     input ex_fpu_busy,
-    input ex_madd_almost_done,
     input ex_flush,
 
     input [31:0] wb_inst,
@@ -45,7 +44,7 @@ module id_stage (
 
     // MARK: InstSel
 
-    wire [$clog2(`INST_SEL_NUM_INPUTS)-1:0] inst_sel = id_inst_sel;
+    wire [$clog2(`INST_SEL_NUM_INPUTS)-1:0] inst_sel = id_pc[30];
     wire [`INST_SEL_NUM_INPUTS*32-1:0] inst_mux_in;
     wire [31:0] id_inst;
 
@@ -116,7 +115,6 @@ module id_stage (
         .ex_inst(ex_inst),
         .ex_fp_inst(ex_fp_inst),
         .fpu_busy(ex_fpu_busy),
-        .madd_almost_done(ex_madd_almost_done),
     
         .imm_sel(imm_sel),
         .stall(stall),

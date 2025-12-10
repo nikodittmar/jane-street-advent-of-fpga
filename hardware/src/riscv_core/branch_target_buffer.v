@@ -1,5 +1,5 @@
 module branch_target_buffer #(
-    parameter SIZE = 16
+    parameter SIZE = 32
 ) (
     input rst,
     input clk,
@@ -19,7 +19,7 @@ module branch_target_buffer #(
     localparam TAG_SIZE = 30 - IDX_SIZE;
 
     // Target Buffer: { tag, target, is unconditional } 
-    reg [TAG_SIZE + 31 + 1:0] tb [0:SIZE-1];
+    (* ram_style = "block" *) reg [TAG_SIZE + 31 + 1:0] tb [0:SIZE-1];
     reg [SIZE - 1:0] valid;
 
     reg [TAG_SIZE + 32:0] tb_entry;
@@ -36,6 +36,7 @@ module branch_target_buffer #(
             valid <= 'b0;
             tb_entry <= 'b0;
             lookup_tag <= 'b0;
+            tb_entry_valid <= 'b0;
         end else begin
             tb_entry <= tb[lookup_idx]; 
             tb_entry_valid <= valid[lookup_idx];

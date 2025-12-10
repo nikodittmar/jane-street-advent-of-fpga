@@ -77,8 +77,8 @@ module mmult_small_tb();
       $vcdpluson;
     `endif
     `ifdef IVERILOG
-      $dumpfile("mmult_small.fst");
-      $dumpvars(0, c_tests_tb);
+      $dumpfile("mmult_small_tb.fst");
+      $dumpvars(0, mmult_small_tb);
     `endif
 
     rst = 1;

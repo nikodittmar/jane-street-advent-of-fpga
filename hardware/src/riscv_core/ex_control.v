@@ -38,7 +38,9 @@ module ex_control (
     wire [6:0] funct7 = inst[31:25];
     wire [3:0] funct4 = inst[31:28];
 
-    assign flush = uncond || target_taken != br_taken;
+    reg jalr;
+
+    assign flush = jalr || uncond || target_taken != br_taken;
     assign br_suc = br_inst && target_taken == br_taken;
 
     always @(*) begin
@@ -63,6 +65,7 @@ module ex_control (
         br_taken = 1'b0;
         uncond = 1'b0;
         fp_c_sel = wb_inst[6:2] == `OPC_FP_MADD_5;
+        jalr = 1'b0;
         
         case (opcode5)
         `OPC_ARI_RTYPE_5: begin
@@ -273,7 +276,7 @@ module ex_control (
             b_sel = `B_IMM;
             alu_sel = `ALU_ADD;
             redirect_sel = `REDIR_ALU;
-            uncond = 1'b1;
+            jalr = 1'b1;
         end
 
         `OPC_LUI_5: begin

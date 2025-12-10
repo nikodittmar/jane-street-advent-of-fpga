@@ -1,10 +1,11 @@
 module gshare #(
-    parameter SIZE = 64
+    parameter SIZE = 32
 ) (
     input rst,
     input clk,
+    input stall,
     input [31:0] predict_addr,
-
+    
     input update_br_taken,
     input update_br_inst,
     input [$clog2(SIZE)-1:0] update_idx,
@@ -17,7 +18,7 @@ module gshare #(
 
     reg [$clog2(SIZE)-1:0] ghr;
 
-    reg [1:0] pht [0:SIZE-1];
+    (* ram_style = "block" *) reg [1:0] pht [0:SIZE-1];
     reg [SIZE-1:0] valid;
 
     reg [1:0] pht_entry;
@@ -32,10 +33,11 @@ module gshare #(
             pht_entry <= 'b0;
             pht_entry_valid <= 'b0;
         end else begin
-            pht_entry <= pht[lookup_idx];
-            pht_entry_valid <= valid[lookup_idx];
-            predict_idx <= lookup_idx;
-
+            if (!stall) begin
+                pht_entry <= pht[lookup_idx];
+                pht_entry_valid <= valid[lookup_idx];
+                predict_idx <= lookup_idx;
+            end
             if (update_br_inst) begin 
                 ghr <= { ghr[$clog2(SIZE)-2:0], update_br_taken};
                 valid[update_idx] <= 1'b1;
@@ -51,14 +53,12 @@ module gshare #(
 
     always @(*) begin 
         if (pht_entry_valid) begin 
-            //predict_taken = pht_entry > 2'b01;
+            predict_taken = pht_entry > 2'b01;
             predict_sc = pht_entry;
         end else begin 
-            //predict_taken = 1'b0;
+            predict_taken = 1'b0;
             predict_sc = 2'b01;
         end
     end
-
-    assign predict_taken = 1'b1;
 
 endmodule
