@@ -18,7 +18,6 @@ module cpu #(
     wire [31:0] id_bios_inst;
     wire [31:0] id_imem_inst;
     wire [31:0] id_target;
-    wire id_inst_sel;
     wire id_stall;
     wire id_target_taken;
 
@@ -126,8 +125,7 @@ module cpu #(
         .if_addr(if_addr),
         .if_bios_en(if_bios_en),
 
-        .id_pc(id_pc),
-        .id_inst_sel(id_inst_sel)
+        .id_pc(id_pc)
     );
 
     // MARK: Instruction Decode
@@ -139,7 +137,6 @@ module cpu #(
         .id_pc(id_pc),
         .id_bios_inst(id_bios_inst),
         .id_imem_inst(id_imem_inst),
-        .id_inst_sel(id_inst_sel),
         .id_target_taken(id_target_taken),
 
         .ex_fp_inst(ex_fp_inst),
@@ -219,8 +216,6 @@ module cpu #(
     // MARK: Writeback
 
     wb_stage wb_stage (
-        .clk(clk),
-
         .wb_inst(wb_inst),
         .wb_fp_inst(wb_fp_inst),
         .wb_pc4(wb_pc4),

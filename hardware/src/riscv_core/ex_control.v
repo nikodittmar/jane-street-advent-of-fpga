@@ -18,8 +18,6 @@ module ex_control (
     output reg b_sel,
     output reg fp_a_sel,
     output reg fp_c_sel,
-    output reg csr_mux_sel,
-    output reg csr_en,
     output reg br_suc,
     output reg flush,
     output reg din_sel,
@@ -35,13 +33,14 @@ module ex_control (
 
     wire [4:0] opcode5 = inst[6:2];
     wire [2:0] funct3 = inst[14:12];
-    wire [6:0] funct7 = inst[31:25];
     wire [3:0] funct4 = inst[31:28];
 
     reg jalr;
 
-    assign flush = jalr || uncond || target_taken != br_taken;
-    assign br_suc = br_inst && target_taken == br_taken;
+    wire br_mispredict = br_inst && (target_taken ^ br_taken);
+
+    assign flush  = jalr || uncond || br_mispredict;
+    assign br_suc = br_inst && !br_mispredict;
 
     always @(*) begin
         
@@ -53,8 +52,6 @@ module ex_control (
         a_sel = `A_DONT_CARE;
         b_sel = `B_DONT_CARE;
         fp_a_sel = `FP_A_DONT_CARE;
-        csr_mux_sel = `CSR_DONT_CARE;
-        csr_en = 1'b0;
         din_sel = `DIN_DONT_CARE;
         br_inst = 1'b0;
         imem_en = 1'b0;
@@ -229,36 +226,31 @@ module ex_control (
             b_sel = `B_IMM;
             alu_sel = `ALU_ADD;
             redirect_sel = target_taken;
+            brun = (funct3[2:1] == 2'b11);
 
             case (funct3)
             `FNC_BEQ: begin
                 // BEQ
-                brun = 1'b0;
                 br_taken = breq;
             end
             `FNC_BNE: begin
                 // BNE
-                brun = 1'b0;
                 br_taken = !breq;
             end
             `FNC_BLT: begin
                 // BLT
-                brun = 1'b0;
                 br_taken = brlt;
             end
             `FNC_BGE: begin
                 // BGE
-                brun = 1'b0;
                 br_taken = !brlt;
             end
             `FNC_BLTU: begin
                 // BLTU
-                brun = 1'b1;
                 br_taken = brlt;
             end
             `FNC_BGEU: begin
                 // BGEU
-                brun = 1'b1;
                 br_taken = !brlt;
             end
             endcase
@@ -290,21 +282,6 @@ module ex_control (
             a_sel = `A_PC;
             b_sel = `B_IMM;
             alu_sel = `ALU_ADD;
-        end
-        `OPC_CSR_5: begin
-
-            csr_en = 1'b1;
-
-            case (funct3)
-            `FNC_CSRRW: begin
-                // CSRRW
-                csr_mux_sel = `CSR_RD1;
-            end
-            `FNC_CSRRWI: begin
-                // CSRRWI
-                csr_mux_sel = `CSR_IMM; 
-            end
-            endcase
         end
         `OPC_FP_STORE_5: begin 
             // FSW

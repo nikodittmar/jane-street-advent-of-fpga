@@ -1,4 +1,5 @@
 `include "control_sel.vh"
+`include "opcode.vh"
 
 module ex_stage #(
     parameter CLOCK_FREQ = 125_000_000,
@@ -170,11 +171,13 @@ module ex_stage #(
         .out(b)
     );
 
+    `ifndef SYNTHESIS
+
     // MARK: CSR Register
 
     wire [31:0] csr_in;
     wire [31:0] tohost_csr;
-    wire csr_en;
+    reg csr_en;
 
     pipeline_reg csr_reg (
         .clk(clk),
@@ -186,10 +189,10 @@ module ex_stage #(
 
     // MARK: CSR Mux
 
-    wire [$clog2(`CSR_MUX_NUM_INPUTS)-1:0] csr_mux_sel;
+    reg [$clog2(`CSR_MUX_NUM_INPUTS)-1:0] csr_mux_sel;
     wire [`CSR_MUX_NUM_INPUTS*32-1:0] csr_mux_in;
 
-    assign csr_mux_in[`CSR_IMM * 32 +: 32] = ex_imm;
+    assign csr_mux_in[`CSR_IMM * 32 +: 32] = { 27'b0, ex_inst[19:15] };
     assign csr_mux_in[`CSR_RD1 * 32 +: 32] = ex_rd1;
     
     mux #(
@@ -200,6 +203,31 @@ module ex_stage #(
 
         .out(csr_in)
     );
+
+    wire [4:0] opcode5 = ex_inst[6:2];
+    wire [2:0] funct3 = ex_inst[14:12];
+
+
+    always @(*) begin 
+        if (opcode5 == `OPC_CSR_5) begin
+            csr_en = 1'b1;
+
+            case (funct3)
+            `FNC_CSRRW: begin
+                // CSRRW
+                csr_mux_sel = `CSR_RD1;
+            end
+            `FNC_CSRRWI: begin
+                // CSRRWI
+                csr_mux_sel = `CSR_IMM; 
+            end
+            endcase
+        end else begin 
+            csr_en = 1'b0;
+        end
+    end
+
+    `endif
 
     // MARK: Din Mux
 
@@ -301,74 +329,46 @@ module ex_stage #(
     wire ex_fp_reg_rst = rst || ex_fpu_busy || wb_flush;
     wire ex_fp_reg_we = !rst && !ex_fpu_busy;
 
-    pipeline_reg redirect_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(redirect),
+    wire [63:0] ex_fp = { 
+        fpu_out,
+        ex_fp_inst
+    };
 
-        .out(wb_redirect)
-    );
+    wire [128:0] ex = {
+        ex_flush,
+        redirect,
+        pc4,
+        alu_out,
+        ex_inst
+    };
 
-    pipeline_reg pc_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(pc4),
+    reg [63:0] wb_fp;
+    reg [128:0] wb;
 
-        .out(wb_pc4)
-    );
+    always @(posedge clk) begin 
+        if (ex_reg_rst) begin 
+            wb <= 129'b0;
+        end else if (ex_reg_we) begin 
+            wb <= ex;
+        end
+    end
 
-    pipeline_reg alu_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(alu_out),
+    always @(posedge clk) begin 
+        if (ex_fp_reg_rst) begin 
+            wb_fp <= 64'b0;
+        end else if (ex_fp_reg_we) begin 
+            wb_fp <= ex_fp;
+        end
+    end
 
-        .out(wb_alu)
-    );
-    
-    pipeline_reg fpu_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(fpu_out),
+    assign wb_flush = wb[128];
+    assign wb_redirect = wb[127:96];
+    assign wb_pc4 = wb[95:64];
+    assign wb_alu = wb[63:32];
+    assign wb_inst = wb[31:0];
 
-        .out(wb_fpu)
-    );
-
-    pipeline_reg #(
-        .RESET_VAL(`NOP)
-    ) inst_reg (
-        .clk(clk),
-        .rst(ex_reg_rst),
-        .we(ex_reg_we),
-        .in(ex_inst),
-
-        .out(wb_inst)
-    );
-
-    pipeline_reg #(
-        .RESET_VAL(`NOP)
-    ) fp_inst_reg (
-        .clk(clk),
-        .rst(ex_fp_reg_rst),
-        .we(ex_fp_reg_we),
-        .in(ex_fp_inst),
-
-        .out(wb_fp_inst)
-    );
-
-    pipeline_reg #(
-        .WIDTH(1)
-    ) flush_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(ex_flush),
-
-        .out(wb_flush)
-    );
+    assign wb_fpu = wb_fp[63:32];
+    assign wb_fp_inst = wb_fp[31:0];
 
     // MARK: Control Logic
 
@@ -392,8 +392,6 @@ module ex_stage #(
         .b_sel(b_sel),
         .fp_a_sel(fp_a_sel),
         .fp_c_sel(fp_c_sel),
-        .csr_mux_sel(csr_mux_sel),
-        .csr_en(csr_en),
         .br_suc(br_suc),
         .flush(ex_flush),
         .din_sel(din_mux_sel),

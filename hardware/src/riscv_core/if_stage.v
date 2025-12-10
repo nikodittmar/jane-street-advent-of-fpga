@@ -19,8 +19,7 @@ module if_stage #(
     output [31:0] if_addr,
     output if_bios_en,
 
-    output [31:0] id_pc,
-    output id_inst_sel
+    output [31:0] id_pc
 );  
 
     // MARK: Program Counter
@@ -58,19 +57,6 @@ module if_stage #(
         .in(if_pc),
 
         .out(id_pc)
-    );
-
-    wire inst_sel = if_pc[30] ? `INST_BIOS : `INST_IMEM;
-
-    pipeline_reg #(
-        .WIDTH(1)
-    ) inst_sel_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(inst_sel),
-
-        .out(id_inst_sel)
     );
 
 endmodule

@@ -12,7 +12,6 @@ module imm_gen (
             `IMM_B: imm = { {19{inst[31]}}, inst[31], inst[7], inst[30:25], inst[11:8], 1'b0 };
             `IMM_U: imm = { inst[31:12], 12'b0 };
             `IMM_J: imm = { {11{inst[31]}}, inst[31], inst[19:12], inst[20], inst[30:21], 1'b0 };
-            `IMM_CSR: imm = { 27'b0, inst[19:15]};
             default: imm = 32'b0;
         endcase
     end

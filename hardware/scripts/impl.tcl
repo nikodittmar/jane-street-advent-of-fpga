@@ -24,7 +24,16 @@ phys_opt_design -directive AggressiveExplore
 phys_opt_design -directive AggressiveFanoutOpt
 route_design -directive AggressiveExplore
 
+phys_opt_design -directive AggressiveExplore
+route_design -directive NoTimingRelaxation
+
+phys_opt_design -directive AggressiveExplore
+phys_opt_design -directive AggressiveFanoutOpt
+route_design -directive MoreGlobalIterations
+
 phys_opt_design -critical_pin_opt -routing_opt
+route_design -directive AggressiveExplore
+
 write_checkpoint -force ${TOP}_routed_srl_critpin.dcp
 report_timing_summary -warn_on_violation -file post_route_srl_critpin_timing_summary.rpt
 

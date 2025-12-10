@@ -60,14 +60,12 @@ module io #(
         .serial_out(serial_out)
     );
 
-
     always @(posedge clk) begin 
         if (rst) begin 
             cycle_cnt <= 28'b0;
             inst_cnt <= 24'b0;
             br_inst_cnt <= 24'b0;
             br_suc_cnt <= 24'b0;
-
             uart_tx_data_in <= 8'b0;
             uart_tx_data_in_valid <= 1'b0;
             uart_rx_data_out_ready <= 1'b1;
@@ -77,8 +75,12 @@ module io #(
         end else begin 
             cycle_cnt <= cycle_cnt + 28'b1;
             inst_cnt <= inst_cnt + { 22'b0, inst_inc };
-            br_inst_cnt <= br_inst_cnt + { 23'b0, br_inst };
-            br_suc_cnt <= br_suc_cnt + { 23'b0, br_suc };
+
+
+            `ifndef SYNTHESIS 
+                br_inst_cnt <= br_inst_cnt + { 23'b0, br_inst };
+                br_suc_cnt <= br_suc_cnt + { 23'b0, br_suc };
+            `endif
 
             if (uart_tx_data_in_valid && uart_tx_data_in_ready) begin 
                 uart_tx_data_in_valid <= 1'b0;

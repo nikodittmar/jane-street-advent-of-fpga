@@ -8,7 +8,6 @@ module id_stage (
     input [31:0] id_pc,
     input [31:0] id_bios_inst,
     input [31:0] id_imem_inst,
-    input id_inst_sel,
     input id_target_taken,
 
     input [31:0] ex_fp_inst,
@@ -32,7 +31,7 @@ module id_stage (
     output [31:0] ex_imm,
     output [31:0] ex_inst,
     output ex_target_taken,
-    output ex_fpu_valid,
+    output reg ex_fpu_valid,
 
     output id_stall
 );
@@ -124,99 +123,40 @@ module id_stage (
 
     // MARK: Pipeline registers
 
-    pipeline_reg pc_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(id_pc),
+    wire [256:0] id = {
+        id_pc,
+        id_inst,
+        rd1,
+        rd2,
+        fd1,
+        fd2,
+        fd3,
+        imm,
+        id_target_taken
+    };
 
-        .out(ex_pc)
-    );
+    reg [256:0] ex;
 
-    pipeline_reg rd1_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(rd1),
+    always @(posedge clk) begin 
+        if (id_reg_rst) begin 
+            ex <= 257'd0;
+        end else if (id_reg_we) begin 
+            ex <= id;
+        end
+    end
 
-        .out(ex_rd1)
-    );
+    always @(posedge clk) begin 
+        ex_fpu_valid <= fpu_valid;
+    end
 
-    pipeline_reg rd2_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(rd2),
+    assign ex_pc = ex[256:225];
+    assign ex_inst = ex[224:193];
+    assign ex_rd1 = ex[192:161];
+    assign ex_rd2 = ex[160:129];
+    assign ex_fd1 = ex[128:97];
+    assign ex_fd2 = ex[96:65];
+    assign ex_fd3 = ex[64:33];
+    assign ex_imm = ex[32:1];
+    assign ex_target_taken = ex[0];
 
-        .out(ex_rd2)
-    );
-
-    pipeline_reg fd1_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(fd1),
-
-        .out(ex_fd1)
-    );
-
-    pipeline_reg fd2_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(fd2),
-
-        .out(ex_fd2)
-    );
-
-    pipeline_reg fd3_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(fd3),
-
-        .out(ex_fd3)
-    );
-
-    pipeline_reg imm_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(imm),
-
-        .out(ex_imm)
-    );
-
-    pipeline_reg #(
-        .RESET_VAL(`NOP)
-    ) inst_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(id_inst),
-
-        .out(ex_inst)
-    );
-
-    pipeline_reg #(
-        .WIDTH(1)
-    ) target_taken_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(id_target_taken),
-
-        .out(ex_target_taken)
-    );
-
-    pipeline_reg #(
-        .WIDTH(1)
-    ) fpu_valid_reg (
-        .clk(clk),
-        .rst(1'b0),
-        .we(1'b1),
-        .in(fpu_valid),
-
-        .out(ex_fpu_valid)
-    );
 endmodule

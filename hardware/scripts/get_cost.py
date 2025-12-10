@@ -55,11 +55,6 @@ if __name__ == '__main__':
   parser.add_argument('rpt', action='store', help='resource utilization report')
   parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + version)
 
-  args = parser.parse_args()
-  if os.path.isfile(args.rpt):
-    f = open(args.rpt, 'r')
-  else:
-    print(args.rpt + ' not found')
-    exit()
+  f = open("build/synth/post_synth_utilization.rpt", 'r')
 
   print('Cost: ' + str(get_cost(f)))

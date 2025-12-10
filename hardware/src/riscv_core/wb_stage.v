@@ -1,8 +1,6 @@
 `include "control_sel.vh"
 
-module wb_stage (
-    input clk,
-    
+module wb_stage (    
     input [31:0] wb_inst,
     input [31:0] wb_fp_inst,
     input [31:0] wb_pc4,

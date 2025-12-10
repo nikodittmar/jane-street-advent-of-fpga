@@ -15,11 +15,11 @@ module branch_predictor (
     output id_target_taken
 );
 
-    wire [5:0] predict_idx;
+    wire [4:0] predict_idx;
     wire [1:0] predict_sc;
     wire predict_taken;
 
-    reg [5:0] update_idx;
+    reg [4:0] update_idx;
     reg [1:0] update_sc;
 
     wire update_br_inst = !wb_flush && ex_br_inst;
