@@ -54,16 +54,18 @@
 `define FP_C_DONT_CARE          1'b0
 
 // ALU A input sel
-`define A_NUM_INPUTS            2
-`define A_REG                   1'b0
-`define A_PC                    1'b1
-`define A_DONT_CARE             1'b0
+`define A_NUM_INPUTS            3
+`define A_REG                   2'b00
+`define A_FWD                   2'b01
+`define A_PC                    2'b10
+`define A_DONT_CARE             2'b00
 
 // ALU B input sel
-`define B_NUM_INPUTS            2
-`define B_REG                   1'b0
-`define B_IMM                   1'b1
-`define B_DONT_CARE             1'b0
+`define B_NUM_INPUTS            3
+`define B_REG                   2'b00
+`define B_FWD                   2'b01
+`define B_IMM                   2'b10
+`define B_DONT_CARE             2'b00
 
 // ALU sel
 `define ALU_NUM_OPS             12

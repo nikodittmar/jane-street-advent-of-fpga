@@ -44,6 +44,8 @@ module cpu #(
     wire ex_fpu_busy;
     wire ex_fpu_valid;
     wire ex_flush;
+    wire ex_fwd_rs1;
+    wire ex_fwd_rs2;
 
     wire [31:0] wb_redirect;
     wire [31:0] wb_inst;
@@ -161,6 +163,8 @@ module cpu #(
         .ex_inst(ex_inst),
         .ex_target_taken(ex_target_taken),
         .ex_fpu_valid(ex_fpu_valid),
+        .ex_fwd_rs1(ex_fwd_rs1),
+        .ex_fwd_rs2(ex_fwd_rs2),
 
         .id_stall(id_stall)
     );
@@ -184,6 +188,8 @@ module cpu #(
         .ex_imm(ex_imm),
         .ex_target_taken(ex_target_taken),
         .ex_fpu_valid(ex_fpu_valid),
+        .ex_fwd_rs1(ex_fwd_rs1),
+        .ex_fwd_rs2(ex_fwd_rs2),
 
         .serial_in(serial_in),
         .serial_out(serial_out),

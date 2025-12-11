@@ -18,6 +18,8 @@ module ex_stage #(
     input [31:0] ex_imm,
     input ex_target_taken,
     input ex_fpu_valid,
+    input ex_fwd_rs1,
+    input ex_fwd_rs2,
 
     input serial_in,
     output serial_out,
@@ -143,6 +145,7 @@ module ex_stage #(
     wire [`A_NUM_INPUTS*32-1:0] a_in;
 
     assign a_in[`A_REG * 32 +: 32] = ex_rd1;
+    assign a_in[`A_FWD * 32 +: 32] = wb_alu;
     assign a_in[`A_PC * 32 +: 32] = ex_pc;
     
     mux #(
@@ -160,6 +163,7 @@ module ex_stage #(
     wire [`B_NUM_INPUTS*32-1:0] b_in;
 
     assign b_in[`B_REG * 32 +: 32] = ex_rd2;
+    assign b_in[`B_FWD * 32 +: 32] = wb_alu;
     assign b_in[`B_IMM * 32 +: 32] = ex_imm;
 
     mux #(
@@ -383,13 +387,15 @@ module ex_stage #(
         .breq(breq),
         .brlt(brlt),
         .target_taken(ex_target_taken),
+        .fwd_rs1(ex_fwd_rs1),
+        .fwd_rs2(ex_fwd_rs2),
     
         .alu_sel(alu_sel),
         .fpu_sel(fpu_sel),
-        .size(store_size),
-        .brun(brun),
         .a_sel(a_sel),
         .b_sel(b_sel),
+        .size(store_size),
+        .brun(brun),
         .fp_a_sel(fp_a_sel),
         .fp_c_sel(fp_c_sel),
         .br_suc(br_suc),

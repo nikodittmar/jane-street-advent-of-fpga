@@ -29,7 +29,6 @@ set_property -dict {PACKAGE_PIN M19 IOSTANDARD LVCMOS33} [get_ports {SWITCHES[1]
 
 set_property -dict {PACKAGE_PIN H16 IOSTANDARD LVCMOS33} [get_ports CLK_125MHZ_FPGA]
 create_clock -period 8.000 -name CLK_125MHZ_FPGA -waveform {0.000 4.000} -add [get_ports CLK_125MHZ_FPGA]
-set_clock_uncertainty 0.05 [get_clocks CLK_125MHZ_FPGA]
 
 #set_property -dict {PACKAGE_PIN Y18 IOSTANDARD LVCMOS33} [get_ports CTS]
 set_property -dict {PACKAGE_PIN Y19 IOSTANDARD LVCMOS33 IOB TRUE} [get_ports FPGA_SERIAL_TX]

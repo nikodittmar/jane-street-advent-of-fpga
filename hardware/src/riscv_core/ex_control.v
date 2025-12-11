@@ -9,17 +9,19 @@ module ex_control (
     input breq,
     input brlt,
     input target_taken,
+    input fwd_rs1,
+    input fwd_rs2,
     
     output reg [$clog2(`ALU_NUM_OPS)-1:0] alu_sel,
     output reg [$clog2(`FPU_NUM_OPS)-1:0] fpu_sel,
+    output reg [$clog2(`A_NUM_INPUTS)-1:0] a_sel,
+    output reg [$clog2(`B_NUM_INPUTS)-1:0] b_sel,
     output reg [1:0] size,
     output reg brun,
-    output reg a_sel,
-    output reg b_sel,
     output reg fp_a_sel,
     output reg fp_c_sel,
-    output reg br_suc,
-    output reg flush,
+    output br_suc,
+    output flush,
     output reg din_sel,
     output reg br_inst,
     output reg imem_en,
@@ -41,6 +43,9 @@ module ex_control (
 
     assign flush  = jalr || uncond || br_mispredict;
     assign br_suc = br_inst && !br_mispredict;
+
+    wire [1:0] rs1 = {1'b0, fwd_rs1};
+    wire [1:0] rs2 = {1'b0, fwd_rs2};
 
     always @(*) begin
         
@@ -67,8 +72,8 @@ module ex_control (
         case (opcode5)
         `OPC_ARI_RTYPE_5: begin
 
-            a_sel = `A_REG;
-            b_sel = `B_REG;
+            a_sel = rs1;
+            b_sel = rs2;
 
             case (funct3)
             `FNC_ADD_SUB:
@@ -121,7 +126,7 @@ module ex_control (
         end
         `OPC_ARI_ITYPE_5: begin
 
-            a_sel = `A_REG;
+            a_sel = rs1;
             b_sel = `B_IMM;
 
             case (funct3)
@@ -168,7 +173,7 @@ module ex_control (
         end
         `OPC_LOAD_5: begin
 
-            a_sel = `A_REG;
+            a_sel = rs1;
             b_sel = `B_IMM;
             alu_sel = `ALU_ADD;
 
@@ -181,7 +186,7 @@ module ex_control (
         end
         `OPC_STORE_5: begin
 
-            a_sel = `A_REG;
+            a_sel = rs1;
             b_sel = `B_IMM;
             alu_sel = `ALU_ADD;
 
@@ -264,7 +269,7 @@ module ex_control (
         end
         `OPC_JALR_5: begin
             // JALR
-            a_sel = `A_REG;
+            a_sel = rs1;
             b_sel = `B_IMM;
             alu_sel = `ALU_ADD;
             redirect_sel = `REDIR_ALU;
@@ -285,7 +290,7 @@ module ex_control (
         end
         `OPC_FP_STORE_5: begin 
             // FSW
-            a_sel = `A_REG;
+            a_sel = rs1;
             b_sel = `B_IMM;
             alu_sel = `ALU_ADD;
             din_sel = `DIN_FD2;
@@ -309,7 +314,7 @@ module ex_control (
         end
         `OPC_FP_LOAD_5: begin 
             // FLW
-            a_sel = `A_REG;
+            a_sel = rs1;
             b_sel = `B_IMM;
             alu_sel = `ALU_ADD;
 

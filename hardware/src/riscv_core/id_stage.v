@@ -32,6 +32,8 @@ module id_stage (
     output [31:0] ex_inst,
     output ex_target_taken,
     output reg ex_fpu_valid,
+    output ex_fwd_rs1,
+    output ex_fwd_rs2,
 
     output id_stall
 );
@@ -108,6 +110,8 @@ module id_stage (
     // MARK: Control
     assign id_stall = id_ex_stall || stall;
     wire fpu_valid;
+    wire fwd_rs1;
+    wire fwd_rs2;
 
     id_control control (
         .inst(id_inst),
@@ -118,12 +122,16 @@ module id_stage (
         .imm_sel(imm_sel),
         .stall(stall),
         .id_ex_stall(id_ex_stall),
-        .fpu_valid(fpu_valid)
+        .fpu_valid(fpu_valid),
+        .fwd_rs1(fwd_rs1),
+        .fwd_rs2(fwd_rs2)
     );
 
     // MARK: Pipeline registers
 
-    wire [256:0] id = {
+    wire [258:0] id = {
+        fwd_rs1,
+        fwd_rs2,
         id_pc,
         id_inst,
         rd1,
@@ -135,11 +143,11 @@ module id_stage (
         id_target_taken
     };
 
-    reg [256:0] ex;
+    reg [258:0] ex;
 
     always @(posedge clk) begin 
         if (id_reg_rst) begin 
-            ex <= 257'd0;
+            ex <= 259'd0;
         end else if (id_reg_we) begin 
             ex <= id;
         end
@@ -149,6 +157,8 @@ module id_stage (
         ex_fpu_valid <= fpu_valid;
     end
 
+    assign ex_fwd_rs1 = ex[258];
+    assign ex_fwd_rs2 = ex[257];
     assign ex_pc = ex[256:225];
     assign ex_inst = ex[224:193];
     assign ex_rd1 = ex[192:161];
