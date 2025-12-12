@@ -1,7 +1,7 @@
 `timescale 1ns/1ns
 `include "mem_path.vh"
 
-module bdd_tb();
+module bsort_tb();
   reg clk, rst;
   parameter CPU_CLOCK_PERIOD = 20;
   parameter CPU_CLOCK_FREQ   = 1_000_000_000 / CPU_CLOCK_PERIOD;
@@ -11,8 +11,8 @@ module bdd_tb();
   localparam CHAR0     = 8'h61; // ~ 'a'
   localparam NUM_CHARS = 200;
 
-//   localparam TIMEOUT_CYCLE = 10_000 * NUM_CHARS;
-    localparam TIMEOUT_CYCLE = 10000000000;
+  // localparam TIMEOUT_CYCLE = 10_000 * NUM_CHARS;
+  localparam TIMEOUT_CYCLE = 10000000000;
 
   initial clk = 0;
   always #(CPU_CLOCK_PERIOD/2) clk = ~clk;
@@ -103,15 +103,15 @@ module bdd_tb();
   endtask
 
   initial begin
-    $readmemh("../../software/benchmark/bdd/bdd.hex", `IMEM_PATH.mem, 0, 16384-1);
-    $readmemh("../../software/benchmark/bdd/bdd.hex", `DMEM_PATH.mem, 0, 16384-1);
+    $readmemh("../../software/bsort/bsort.hex", `IMEM_PATH.mem, 0, 16384-1);
+    $readmemh("../../software/bsort/bsort.hex", `DMEM_PATH.mem, 0, 16384-1);
 
     `ifndef IVERILOG
         $vcdpluson;
     `endif
     `ifdef IVERILOG
-        $dumpfile("bdd_tb.fst");
-        $dumpvars(0, bdd_tb);
+        $dumpfile("bsort_tb.fst");
+        $dumpvars(0, bsort_tb);
     `endif
     rst = 1;
     serial_in = 1;

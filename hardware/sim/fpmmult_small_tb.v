@@ -76,7 +76,7 @@ module fpmmult_small_tb();
       $vcdpluson;
     `endif
     `ifdef IVERILOG
-      $dumpfile("fpmmult_small.fst");
+      $dumpfile("fpmmult_small_tb.fst");
       $dumpvars(0, fpmmult_small_tb);
     `endif
 

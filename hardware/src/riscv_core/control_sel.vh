@@ -15,7 +15,7 @@
 // ***** ID STAGE *****
 
 // Nop instruction
-`define NOP                     32'h0000_0013
+`define NOP                     32'h0000_0000
 
 // Instruction sel
 `define INST_SEL_NUM_INPUTS     2
@@ -28,6 +28,7 @@
 `define IMM_B                   3'b010 // B-type immediates
 `define IMM_U                   3'b011 // U-type immediates
 `define IMM_J                   3'b100 // J-type immediates
+`define IMM_CSR                 3'b101 // CSR immediate
 `define IMM_DONT_CARE           3'b000
 
 // Target generator sel
@@ -36,12 +37,6 @@
 `define TGT_GEN_DONT_CARE           1'b0
 
 // ***** EX STAGE *****
-
-// Forwarding muxes
-`define EX_FWD_NUM_INPUTS       3
-`define EX_FWD_NONE             2'b00
-`define EX_FWD_MEM              2'b01
-`define EX_FWD_WB               2'b10
 
 // BrUn
 `define BRUN_DONT_CARE          1'b0
@@ -52,19 +47,28 @@
 `define FP_A_REG                1'b1
 `define FP_A_DONT_CARE          1'b0
 
+// FPU C input sel
+`define FP_C_NUM_INPUTS         2
+`define FP_C_REG                1'b0
+`define FP_C_FWD                1'b1
+`define FP_C_DONT_CARE          1'b0
+
 // ALU A input sel
-`define A_NUM_INPUTS            2
-`define A_REG                   1'b0
-`define A_PC                    1'b1
-`define A_DONT_CARE             1'b0
+`define A_NUM_INPUTS            3
+`define A_REG                   2'b00
+`define A_FWD                   2'b01
+`define A_PC                    2'b10
+`define A_DONT_CARE             2'b00
 
 // ALU B input sel
-`define B_NUM_INPUTS            2
-`define B_REG                   1'b0
-`define B_IMM                   1'b1
-`define B_DONT_CARE             1'b0
+`define B_NUM_INPUTS            3
+`define B_REG                   2'b00
+`define B_FWD                   2'b01
+`define B_IMM                   2'b10
+`define B_DONT_CARE             2'b00
 
 // ALU sel
+`define ALU_NUM_OPS             12
 `define ALU_ADD                 4'b0000
 `define ALU_SLL                 4'b0001
 `define ALU_SLT                 4'b0010
@@ -75,7 +79,6 @@
 `define ALU_AND                 4'b0111
 `define ALU_SUB                 4'b1100
 `define ALU_SRA                 4'b1101
-`define ALU_A_PLUS_4            4'b1110
 `define ALU_BSEL                4'b1111
 `define ALU_DONT_CARE           4'b0000
 
@@ -86,18 +89,16 @@
 `define CSR_DONT_CARE           1'b0
 
 // PC redirect sel
+`define REDIR_NUM_INPUTS        2
 `define REDIR_ALU               1'b0
 `define REDIR_PC4               1'b1
 `define REDIR_DONT_CARE         1'b0
 
-// ***** MEM STAGE *****
-
 // Data in sel
-`define DIN_NUM_INPUTS        3
-`define DIN_WDATA             2'b00
-`define DIN_RD2               2'b01
-`define DIN_FPU               2'b10
-`define DIN_DONT_CARE         2'b00
+`define DIN_NUM_INPUTS        2
+`define DIN_RD2               1'b0
+`define DIN_FD2               1'b1
+`define DIN_DONT_CARE         1'b0
 
 // PC sel
 `define MEM_PC_4                1'b0
@@ -117,14 +118,14 @@
 `define MEM_SIZE_UNDEFINED      2'b11 // Doesn't work if it is 00?
 
 // Memory mapped I/O
-`define MEM_IO_UART_CTRL        32'h8000_0000
-`define MEM_IO_UART_RDATA       32'h8000_0004
-`define MEM_IO_UART_TDATA       32'h8000_0008
-`define MEM_IO_CYCLE_CNT        32'h8000_0010
-`define MEM_IO_INST_CNT         32'h8000_0014
-`define MEM_IO_RST_CNT          32'h8000_0018
-`define MEM_IO_BR_INST_CNT      32'h8000_001c
-`define MEM_IO_BR_SUC_CNT       32'h8000_0020
+`define MEM_IO_UART_CTRL        8'h00
+`define MEM_IO_UART_RDATA       8'h04
+`define MEM_IO_UART_TDATA       8'h08
+`define MEM_IO_CYCLE_CNT        8'h10
+`define MEM_IO_INST_CNT         8'h14
+`define MEM_IO_RST_CNT          8'h18
+`define MEM_IO_BR_INST_CNT      8'h1c
+`define MEM_IO_BR_SUC_CNT       8'h20
 
 // ***** WB STAGE *****
 
@@ -143,15 +144,22 @@
 `define WB_FPU                  2'b11
 `define WB_DONT_CARE            2'b00
 
+// FP WB Sel
+`define FP_WB_NUM_INPUTS        3
+`define FP_WB_ALU               2'b00
+`define FP_WB_MEM               2'b01
+`define FP_WB_FPU               2'b10
+`define FP_WB_DONT_CARE         2'b00
+
 // ***** FLOATING POINT *****
 
 // FPU sel
+`define FPU_NUM_OPS             5
 `define FPU_ADD                 3'b001
 `define FPU_MADD                3'b010
 `define FPU_CVT                 3'b011
 `define FPU_SGNJ                3'b100
 `define FPU_ASEL                3'b101
-`define FPU_BSEL                3'b110
 `define FPU_DONT_CARE           3'b000
 
 `endif // CONTROL_SEL

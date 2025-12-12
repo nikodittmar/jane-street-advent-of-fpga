@@ -77,8 +77,8 @@ module bdd_small_tb();
       $vcdpluson;
     `endif
     `ifdef IVERILOG
-      $dumpfile("bdd_small.fst");
-      $dumpvars(0, c_tests_tb);
+      $dumpfile("bdd_small_tb.fst");
+      $dumpvars(0, bdd_small_tb);
     `endif
 
     rst = 1;

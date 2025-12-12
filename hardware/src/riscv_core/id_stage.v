@@ -1,21 +1,29 @@
 `include "control_sel.vh"
+`include "opcode.vh"
 
 module id_stage (
     input clk,
     input rst,
-    input mem_flush,
+
     input [31:0] id_pc,
     input [31:0] id_bios_inst,
     input [31:0] id_imem_inst,
-    input wb_regwen,
-    input wb_fpregwen,
-    input [31:0] wb_wdata,
+    input id_target_taken,
+
+    input [31:0] ex_fp_inst,
+    input ex_fpu_busy,
+    input ex_flush,
+
     input [31:0] wb_inst,
-    input ex_stall,
+    input [31:0] wb_fp_inst,
+    input [31:0] wb_wdata,
+    input [31:0] wb_fp_wdata,
+    input wb_flush,
+    input wb_regwen,
+    input wb_fp_regwen,
+
+    output reg ex_id_ex_stall,
     
-    output [31:0] id_target, // Branch predictor/target generator output
-    output id_target_taken, // Use output of branch predictor/target generator flag
-    output ex_br_taken, // Branch predictor branch taken flag
     output [31:0] ex_pc,
     output [31:0] ex_rd1,
     output [31:0] ex_rd2,
@@ -24,20 +32,24 @@ module id_stage (
     output [31:0] ex_fd3,
     output [31:0] ex_imm,
     output [31:0] ex_inst,
+    output ex_target_taken,
+    output reg ex_fpu_valid,
+    output ex_fwd_rs1,
+    output ex_fwd_rs2,
+
     output id_stall
 );
-    wire id_reg_rst;
-    wire id_reg_we;
+    wire id_ex_stall;
+    wire stall;
 
-    assign id_reg_we = ~id_stall & ~ex_stall;
-    assign id_reg_rst = id_stall | mem_flush | rst;
+    wire id_reg_rst = !id_ex_stall && (stall || ex_flush || rst || wb_flush);
+    wire id_reg_we = !stall && !id_ex_stall && !ex_flush && !wb_flush;
 
     // MARK: InstSel
 
-    wire [31:0] id_inst;
-
     wire [$clog2(`INST_SEL_NUM_INPUTS)-1:0] inst_sel = id_pc[30];
     wire [`INST_SEL_NUM_INPUTS*32-1:0] inst_mux_in;
+    wire [31:0] id_inst;
 
     assign inst_mux_in[`INST_BIOS * 32 +: 32] = id_bios_inst;
     assign inst_mux_in[`INST_IMEM * 32 +: 32] = id_imem_inst;
@@ -68,18 +80,19 @@ module id_stage (
         .rd1(rd1), .rd2(rd2)
     );
 
-    // MARK: Floating Point RegFile
+    // MARK: FP RegFile
 
     wire [4:0] ra3 = id_inst[31:27];
+    wire [4:0] fwa = wb_inst[6:0] == `OPC_FP_LOAD ? wb_inst[11:7] : wb_fp_inst[11:7];
     wire [31:0] fd1;
     wire [31:0] fd2;
     wire [31:0] fd3;
 
     fp_reg_file fp_reg_file (
         .clk(clk),
-        .we(wb_fpregwen),
-        .ra1(ra1), .ra2(ra2), .ra3(ra3), .wa(wa),
-        .wd(wb_wdata),
+        .we(wb_fp_regwen),
+        .ra1(ra1), .ra2(ra2), .ra3(ra3), .wa(fwa),
+        .wd(wb_fp_wdata),
 
         .rd1(fd1), .rd2(fd2), .rd3(fd3)
     );
@@ -96,143 +109,67 @@ module id_stage (
         .imm(imm)
     );
 
-    // MARK: TargetGen
-    
-    wire target_gen_sel;
-    wire target_gen_en;
-    wire br_taken;
-    
-    target_gen target_gen (
-        .pc(id_pc),
-        .sel(target_gen_sel),
-        .en(target_gen_en),
-        .imm(imm),
-
-        .target(id_target),
-        .target_taken(id_target_taken),
-        .branch_taken(br_taken)
-    );
-
     // MARK: Control
+    assign id_stall = id_ex_stall || stall;
+    wire fpu_valid;
+    wire fwd_rs1;
+    wire fwd_rs2;
 
     id_control control (
         .inst(id_inst),
         .ex_inst(ex_inst),
+        .ex_fp_inst(ex_fp_inst),
+        .fpu_busy(ex_fpu_busy),
     
         .imm_sel(imm_sel),
-        .target_gen_sel(target_gen_sel),
-        .target_gen_en(target_gen_en),
-        .stall(id_stall)
+        .stall(stall),
+        .id_ex_stall(id_ex_stall),
+        .fpu_valid(fpu_valid),
+        .fwd_rs1(fwd_rs1),
+        .fwd_rs2(fwd_rs2)
     );
 
     // MARK: Pipeline registers
 
-    pipeline_reg pc_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(id_pc),
+    wire [258:0] id = {
+        fwd_rs1,
+        fwd_rs2,
+        id_pc,
+        id_inst,
+        rd1,
+        rd2,
+        fd1,
+        fd2,
+        fd3,
+        imm,
+        id_target_taken
+    };
 
-        .out(ex_pc)
-    );
+    reg [258:0] ex;
 
-    pipeline_reg rd1_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(rd1),
-
-        .out(ex_rd1)
-    );
-
-    pipeline_reg rd2_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(rd2),
-
-        .out(ex_rd2)
-    );
-
-    pipeline_reg fd1_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(fd1),
-
-        .out(ex_fd1)
-    );
-
-    pipeline_reg fd2_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(fd2),
-
-        .out(ex_fd2)
-    );
-
-    pipeline_reg fd3_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(fd3),
-
-        .out(ex_fd3)
-    );
-
-    pipeline_reg imm_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(imm),
-
-        .out(ex_imm)
-    );
-
-    pipeline_reg #(
-        .WIDTH(1)
-    ) br_taken_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(br_taken),
-
-        .out(ex_br_taken)
-    );
-
-    pipeline_reg #(
-        .RESET_VAL(`NOP)
-    ) inst_reg (
-        .clk(clk),
-        .rst(id_reg_rst),
-        .we(id_reg_we),
-        .in(id_inst),
-
-        .out(ex_inst)
-    );
-
-    /*
-    // System Verilog Assertions
-
-    x_zero_is_always_zero:
-        assert property ( @(posedge clk)
-            (ra1 == 5'b0) |-> (rd1 == 32'b0) && (ra2 == 5'b0) |-> (rd2 == 32'b0)
-        ) else $error("reading from x0 must always be zero!");
-    */
-    /*
-    // MARK: Hazard Analysis
-
-    reg [31:0] stall_cnt;
-    
     always @(posedge clk) begin 
-        if (rst) begin 
-                stall_cnt <= 32'b0;
-        end else begin 
-            if (id_stall) begin 
-                stall_cnt <= stall_cnt + 32'd1;
-            end
+        if (id_reg_rst) begin 
+            ex <= 259'd0;
+        end else if (id_reg_we) begin 
+            ex <= id;
         end
     end
-    */
+
+    always @(posedge clk) begin 
+        ex_fpu_valid <= fpu_valid;
+        ex_id_ex_stall <= id_ex_stall;
+    end
+
+    assign ex_fwd_rs1 = ex[258];
+    assign ex_fwd_rs2 = ex[257];
+    assign ex_pc = ex[256:225];
+    assign ex_inst = ex[224:193];
+    assign ex_rd1 = ex[192:161];
+    assign ex_rd2 = ex[160:129];
+    assign ex_fd1 = ex[128:97];
+    assign ex_fd2 = ex[96:65];
+    assign ex_fd3 = ex[64:33];
+    assign ex_imm = ex[32:1];
+    assign ex_target_taken = ex[0];
+
 endmodule

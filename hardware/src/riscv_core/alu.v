@@ -18,7 +18,6 @@ module alu (
         `ALU_AND:   res = a & b;
         `ALU_SUB:   res = a - b;
         `ALU_SRA:   res = $signed(a) >>> b[4:0];
-        `ALU_A_PLUS_4: res = a + 32'd4;
         `ALU_BSEL:  res = b;
         default:    res = 32'b0;
         endcase

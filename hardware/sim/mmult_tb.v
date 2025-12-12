@@ -5,21 +5,16 @@ module mmult_tb();
   reg clk, rst;
   parameter CPU_CLOCK_PERIOD = 20;
   parameter CPU_CLOCK_FREQ   = 1_000_000_000 / CPU_CLOCK_PERIOD;
-  localparam BAUD_RATE       = 1_000_000;
+
+  localparam TIMEOUT_CYCLE = 500_000_000;
+  localparam BAUD_RATE       = 10_000_000;
   localparam BAUD_PERIOD     = 1_000_000_000 / BAUD_RATE; // 8680.55 ns
-
-  localparam CHAR0     = 8'h61; // ~ 'a'
-  localparam NUM_CHARS = 200;
-
-//   localparam TIMEOUT_CYCLE = 10_000 * NUM_CHARS;
-    localparam TIMEOUT_CYCLE = 10000000000;
 
   initial clk = 0;
   always #(CPU_CLOCK_PERIOD/2) clk = ~clk;
 
-  reg  serial_in;
-  wire serial_out;
   reg bp_enable = 1'b0;
+  wire serial_out;
 
   cpu # (
     .CPU_CLOCK_FREQ(CPU_CLOCK_FREQ),
@@ -29,11 +24,10 @@ module mmult_tb();
     .clk(clk),
     .rst(rst),
     .bp_enable(bp_enable),
-    .serial_in(serial_in),   // input
-    .serial_out(serial_out)  // output
+    .serial_in(1'b1), // input
+    .serial_out(serial_out)     // output
   );
 
-  integer i, j, c, c1, c2;
   reg [31:0] cycle;
   always @(posedge clk) begin
     if (rst === 1)
@@ -42,79 +36,49 @@ module mmult_tb();
       cycle <= cycle + 1;
   end
 
-  integer num_mismatches = 0;
+  reg [9:0] char_out;
+  integer j;
 
-  // this holds characters sent by the host via serial line
-  reg [7:0] chars_from_host [NUM_CHARS-1:0];
-  // this holds characters received by the host via serial line
-  reg [9:0] chars_to_host   [NUM_CHARS-1:0];
+  reg [7:0] msg_out [156:0];
+  integer char_i = 0;
 
-  // initialize test vectors
-  initial begin
-    #0;
-    for (c = 0; c < NUM_CHARS; c = c + 1) begin
-      chars_from_host[c] = CHAR0 + c;
-    end
-  end
-
-  // Host off-chip UART --> FPGA on-chip UART (receiver)
-  // The host (testbench) sends a character to the CPU via the serial line
-  task host_to_fpga;
-    begin
-      for (c1 = 0; c1 < NUM_CHARS; c1 = c1 + 1) begin
-        serial_in = 0;
-        #(BAUD_PERIOD);
-        // Data bits (payload)
-        for (i = 0; i < 8; i = i + 1) begin
-          serial_in = chars_from_host[c1][i];
-          #(BAUD_PERIOD);
-        end
-        // Stop bit
-        serial_in = 1;
-        #(BAUD_PERIOD);
-
-        $display("[time %t, sim. cycle %d] [Host (tb) --> FPGA_SERIAL_RX] Sent char 8'h%h",
-                 $time, cycle, chars_from_host[c1]);
-        repeat (100) @(posedge clk); // Give time for the  program to process each character
-      end
-    end
-  endtask
+  integer i;
 
   // Host off-chip UART <-- FPGA on-chip UART (transmitter)
-  // The host (testbench) expects to receive a character from the CPU via the serial line ()
+  // The host (testbench) expects to receive a character from the CPU via the serial line
   task fpga_to_host;
     begin
+      // Wait until serial_out is LOW (start of transaction)
+      wait (serial_out === 1'b0);
 
-      for (c2 = 0; c2 < NUM_CHARS; c2 = c2 + 1) begin
-        // Wait until serial_out is LOW (start of transaction)
-        wait (serial_out === 1'b0);
-
-        for (j = 0; j < 10; j = j + 1) begin
-          // sample output half-way through the baud period to avoid tricky edge cases
-          #(BAUD_PERIOD / 2);
-          chars_to_host[c2][j] = serial_out;
-          #(BAUD_PERIOD / 2);
-        end
-
-        $display("[time %t, sim. cycle %d] [Host (tb) <-- FPGA_SERIAL_TX] Got char: start_bit=%b, payload=8'h%h, stop_bit=%b",
-                 $time, cycle, chars_to_host[c2][0], chars_to_host[c2][8:1], chars_to_host[c2][9]);
+      for (j = 0; j < 10; j = j + 1) begin
+        // sample output half-way through the baud period to avoid tricky edge cases
+        #(BAUD_PERIOD / 2);
+        char_out[j] = serial_out;
+        #(BAUD_PERIOD / 2);
       end
+
+      msg_out[char_i][7:0] = char_out[8:1];
+      char_i = char_i + 1;
     end
   endtask
 
+  reg [255:0] MIF_FILE;
+  string output_string;
   initial begin
-    $readmemh("../../software/benchmark/mmult/mmult.hex", `IMEM_PATH.mem, 0, 16384-1);
-    $readmemh("../../software/benchmark/mmult/mmult.hex", `DMEM_PATH.mem, 0, 16384-1);
+    $readmemh("../../software/bios/bios.hex", `BIOS_PATH.mem, 0, 4095);
+    $readmemh("../../software/mmult/mmult.hex", `IMEM_PATH.mem, 0, 16384-1);
+    $readmemh("../../software/mmult/mmult.hex", `DMEM_PATH.mem, 0, 16384-1);
 
     `ifndef IVERILOG
-        $vcdpluson;
+      $vcdpluson;
     `endif
     `ifdef IVERILOG
-        $dumpfile("mmult_tb.fst");
-        $dumpvars(0, mmult_tb);
+      $dumpfile("fpmmult_tb.fst");
+      $dumpvars(0, fpmmult_tb);
     `endif
+
     rst = 1;
-    serial_in = 1;
 
     // Hold reset for a while
     repeat (10) @(posedge clk);
@@ -123,38 +87,32 @@ module mmult_tb();
     rst = 0;
 
     // Delay for some time
-    repeat (10) @(posedge clk);
+    repeat (1000) @(posedge clk);
 
-    fork
-      begin
-        host_to_fpga();
-      end
-      begin
-        fpga_to_host();
-      end
-    join
+    fork 
 
-    // Check results
-    for (c = 0; c < NUM_CHARS; c = c + 1) begin
-      if (chars_from_host[c] !== chars_to_host[c][8:1]) begin
-        $display("Mismatches at char %d: char_from_host=%h, char_to_host=%h",
-                 c, chars_from_host[c], chars_to_host[c][8:1]);
-                 num_mismatches = num_mismatches + 1;
+      begin
+        $display("[TEST] This test multiplies a 64x64 identity matrix (A) by a 64x64 matrix (B) where B[i, j] = j. The result is stored in S");
+        $display("[TEST] Expecting result of 0x0001f800");
+        repeat (156) fpga_to_host();
       end
+
+      begin
+        repeat (TIMEOUT_CYCLE) @(posedge clk);
+        $display("[TEST] WARNING: Timeout while waiting for BIOS to finish\n");
+      end
+
+    join_any
+
+    $display("[TEST] BIOS output...\n");
+
+    output_string = "";
+    for (i = 0; i < 156; i = i + 1) begin
+      output_string = {output_string, $sformatf("%s", msg_out[i][7:0])};
     end
-
-    if (num_mismatches > 0)
-      $display("Test failed");
-    else
-      $display("Test passed!");
-
+    $display("%s", output_string);
+    
     $finish();
-  end
-
-  initial begin
-    repeat (TIMEOUT_CYCLE) @(posedge clk);
-    $display("Timeout!");
-    $fatal();
   end
 
 endmodule

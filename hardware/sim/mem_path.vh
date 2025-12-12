@@ -2,7 +2,7 @@
 // to a different module
 `define RF_PATH   cpu.id_stage.reg_file
 `define FPRF_PATH cpu.id_stage.fp_reg_file
-`define DMEM_PATH cpu.mem_stage.dmem
+`define DMEM_PATH cpu.ex_stage.dmem
 `define IMEM_PATH cpu.imem
 `define BIOS_PATH cpu.bios_mem
 `define CSR_PATH  cpu.ex_stage.tohost_csr

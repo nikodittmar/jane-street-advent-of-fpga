@@ -2,506 +2,363 @@
 `include "opcode.vh"
 
 module ex_control (
-    input clk,
     input [31:0] inst,
-    input [31:0] mem_inst,
     input [31:0] wb_inst,
-    input breq, 
+    input [31:0] addr,
+    input [31:0] pc,
+    input breq,
     input brlt,
-    input br_taken,
-
-    output reg brun, 
-    output reg [1:0] fwda, fwdb,
-    output reg [1:0] fwd_fpa, fwd_fpb, fwd_fpc,
-    output reg asel, bsel,
-    output reg fpa_sel,
-    output reg csr_mux_sel,
-    output reg csr_en,
-    output reg br_suc,
-    output reg [3:0] alusel,
-    output reg [2:0] fpusel,
-    output reg flush,
-    output reg fpu_valid
+    input target_taken,
+    input fwd_rs1,
+    input fwd_rs2,
+    
+    output reg [$clog2(`ALU_NUM_OPS)-1:0] alu_sel,
+    output reg [$clog2(`FPU_NUM_OPS)-1:0] fpu_sel,
+    output reg [$clog2(`A_NUM_INPUTS)-1:0] a_sel,
+    output reg [$clog2(`B_NUM_INPUTS)-1:0] b_sel,
+    output reg [1:0] size,
+    output reg brun,
+    output reg fp_a_sel,
+    output reg fp_c_sel,
+    output br_suc,
+    output flush,
+    output reg din_sel,
+    output reg br_inst,
+    output reg imem_en,
+    output reg dmem_en,
+    output reg bios_en,
+    output reg io_en,
+    output reg redirect_sel,
+    output reg br_taken,
+    output reg uncond
 );
 
-wire [4:0] opcode5;
-wire [2:0] funct3;
-wire [6:0] funct7;
-wire [3:0] funct4;
+    wire [4:0] opcode5 = inst[6:2];
+    wire [2:0] funct3 = inst[14:12];
+    wire [3:0] funct4 = inst[31:28];
 
-assign opcode5 = inst[6:2];
-assign funct3 = inst[14:12];
-assign funct7 = inst[31:25];
-assign funct4 = inst[31:28];
+    reg jalr;
 
-wire [4:0] rs1;
-wire has_rs1;
+    wire br_mispredict = br_inst && (target_taken ^ br_taken);
 
-wire [4:0] rs2;
-wire has_rs2;
+    assign flush  = jalr || uncond || br_mispredict;
+    assign br_suc = br_inst && !br_mispredict;
 
-wire [4:0] fs1;
-wire has_fs1;
+    wire [1:0] rs1 = {1'b0, fwd_rs1};
+    wire [1:0] rs2 = {1'b0, fwd_rs2};
 
-wire [4:0] fs2;
-wire has_fs2;
+    always @(*) begin
+        
+        // Default Values
+        alu_sel = `ALU_DONT_CARE;
+        fpu_sel = `FPU_DONT_CARE;
+        size = `MEM_SIZE_UNDEFINED;
+        brun = `BRUN_DONT_CARE;
+        a_sel = `A_DONT_CARE;
+        b_sel = `B_DONT_CARE;
+        fp_a_sel = `FP_A_DONT_CARE;
+        din_sel = `DIN_DONT_CARE;
+        br_inst = 1'b0;
+        imem_en = 1'b0;
+        dmem_en = 1'b0; 
+        bios_en = 1'b0;
+        io_en = 1'b0;
+        redirect_sel = `REDIR_DONT_CARE;
+        br_taken = 1'b0;
+        uncond = 1'b0;
+        fp_c_sel = wb_inst[6:2] == `OPC_FP_MADD_5;
+        jalr = 1'b0;
+        
+        case (opcode5)
+        `OPC_ARI_RTYPE_5: begin
 
-wire [4:0] fs3;
-wire has_fs3;
+            a_sel = rs1;
+            b_sel = rs2;
 
-wire [4:0] mem_rd;
-wire mem_has_rd;
-
-wire [4:0] mem_fd;
-wire mem_has_fd;
-
-wire [4:0] wb_rd;
-wire wb_has_rd;
-
-wire [4:0] wb_fd;
-wire wb_has_fd;
-
-assign rs1 = inst[19:15];
-assign has_rs1 = inst[6:0] != `OPC_AUIPC && inst[6:0] != `OPC_LUI && inst[6:0] != `OPC_JAL && (inst[6:0] != `OPC_CSR || inst[14:12] == `FNC_CSRRW) && rs1 != 5'b0 && inst[6:0] != `OPC_FP_MADD && (inst[6:0] != `OPC_FP || inst[31:25] == `FNC7_FP_MV_W_X || inst[31:25] == `FNC7_FP_CVT_S_W);
-
-assign rs2 = inst[24:20];
-assign has_rs2 = (inst[6:0] == `OPC_ARI_RTYPE || inst[6:0] == `OPC_STORE || inst[6:0] == `OPC_BRANCH) && rs2 != 5'b0;
-
-assign fs1 = inst[19:15];
-assign has_fs1 = inst[6:0] == `OPC_FP_MADD || (inst[6:0] == `OPC_FP && (inst[31:25] == `FNC7_FP_MV_X_W || inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
-
-assign fs2 = inst[24:20];
-assign has_fs2 = inst[6:0] == `OPC_FP_STORE || inst[6:0] == `OPC_FP_MADD || (inst[6:0] == `OPC_FP && (inst[31:25] == `FNC7_FP_FSGNJ_S || inst[31:25] == `FNC7_FP_ADD));
-
-assign fs3 = inst[31:27];
-assign has_fs3 = inst[6:0] == `OPC_FP_MADD;
-
-assign mem_rd = mem_inst[11:7];
-assign mem_has_rd = mem_inst[6:0] != `OPC_STORE && mem_inst[6:0] != `OPC_BRANCH && mem_inst[6:0] != `OPC_CSR && mem_inst[6:0] != `OPC_FP_LOAD && mem_inst[6:0] != `OPC_FP_STORE && mem_inst[6:0] != `OPC_FP_MADD && (mem_inst[6:0] != `OPC_FP || mem_inst[31:25] == `FNC7_FP_MV_X_W);
-
-assign mem_fd = mem_inst[11:7];
-assign mem_has_fd = mem_inst[6:0] == `OPC_FP_LOAD || mem_inst[6:0] == `OPC_FP_MADD || (mem_inst[6:0] == `OPC_FP && mem_inst[31:25] != `FNC7_FP_MV_X_W);
-
-assign wb_rd = wb_inst[11:7];
-assign wb_has_rd = wb_inst[6:0] != `OPC_STORE && wb_inst[6:0] != `OPC_BRANCH && wb_inst[6:0] != `OPC_CSR && wb_inst[6:0] != `OPC_FP_LOAD && wb_inst[6:0] != `OPC_FP_STORE && wb_inst[6:0] != `OPC_FP_MADD && (wb_inst[6:0] != `OPC_FP || wb_inst[31:25] == `FNC7_FP_MV_X_W);
-
-assign wb_fd = wb_inst[11:7];
-assign wb_has_fd = wb_inst[6:0] == `OPC_FP_LOAD || wb_inst[6:0] == `OPC_FP_MADD || (wb_inst[6:0] == `OPC_FP && wb_inst[31:25] != `FNC7_FP_MV_X_W);
-
-reg [31:0] last_inst;
-reg inst_changed;
-
-always @(posedge clk) begin 
-    last_inst <= inst;
-end
-
-always @(*) begin
-    inst_changed = last_inst != inst;
-
-    brun = `BRUN_DONT_CARE;
-    fwda = `EX_FWD_NONE;
-    fwdb = `EX_FWD_NONE;
-    fwd_fpa = `EX_FWD_NONE;
-    fwd_fpb = `EX_FWD_NONE;
-    fwd_fpc = `EX_FWD_NONE;
-    fpa_sel = `FP_A_DONT_CARE;
-    asel = `A_DONT_CARE;
-    bsel = `B_DONT_CARE;
-    csr_mux_sel = `CSR_DONT_CARE;
-    csr_en = 1'b0;
-    br_suc = 1'b0;
-    alusel = `ALU_DONT_CARE;
-    fpusel = `FPU_DONT_CARE;
-    flush = 1'b0;
-    fpu_valid = 1'b0;
-
-
-    if (has_rs1 && mem_has_rd && rs1 == mem_rd) begin 
-        fwda = `EX_FWD_MEM;
-    end else if (has_rs1 && wb_has_rd && rs1 == wb_rd) begin
-        fwda = `EX_FWD_WB;
-    end
-
-    if (has_rs2 && mem_has_rd && rs2 == mem_rd) begin 
-        fwdb = `EX_FWD_MEM;
-    end else if (has_rs2 && wb_has_rd && rs2 == wb_rd) begin
-        fwdb = `EX_FWD_WB;
-    end
-
-    if (has_fs1 && mem_has_fd && fs1 == mem_fd) begin 
-        fwd_fpa = `EX_FWD_MEM;
-    end else if (has_fs1 && wb_has_fd && fs1 == wb_fd) begin
-        fwd_fpa = `EX_FWD_WB;
-    end
-
-    if (has_fs2 && mem_has_fd && fs2 == mem_fd) begin 
-        fwd_fpb = `EX_FWD_MEM;
-    end else if (has_fs2 && wb_has_fd && fs2 == wb_fd) begin
-        fwd_fpb = `EX_FWD_WB;
-    end
-
-    if (has_fs3 && mem_has_fd && fs3 == mem_fd) begin 
-        fwd_fpc = `EX_FWD_MEM;
-    end else if (has_fs3 && wb_has_fd && fs3 == wb_fd) begin
-        fwd_fpc = `EX_FWD_WB;
-    end
-
-    case (opcode5)
-    `OPC_ARI_RTYPE_5:
-        case (funct3)
-        `FNC_ADD_SUB:
-            case (inst[30])
-            `FNC2_ADD: begin
-                // ADD
-                asel = `A_REG;
-                bsel = `B_REG;
-                alusel = `ALU_ADD;
+            case (funct3)
+            `FNC_ADD_SUB:
+                case (inst[30])
+                `FNC2_ADD: begin
+                    // ADD
+                    alu_sel = `ALU_ADD;
+                end
+                `FNC2_SUB: begin
+                    // SUB
+                    alu_sel = `ALU_SUB;
+                end
+                endcase
+            `FNC_AND: begin
+                // AND
+                alu_sel = `ALU_AND;
             end
-            `FNC2_SUB: begin
-                // SUB
-                asel = `A_REG;
-                bsel = `B_REG;
-                alusel = `ALU_SUB;
+            `FNC_OR: begin
+                // OR
+                alu_sel = `ALU_OR;
+            end
+            `FNC_XOR: begin
+                // XOR
+                alu_sel = `ALU_XOR;
+            end
+            `FNC_SLL: begin
+                // SLL
+                alu_sel = `ALU_SLL;
+            end
+            `FNC_SRL_SRA:
+                case (inst[30])
+                `FNC2_SRL: begin
+                    // SRL
+                    alu_sel = `ALU_SRL;
+                end
+                `FNC2_SRA: begin
+                    // SRA
+                    alu_sel = `ALU_SRA;
+                end
+                endcase
+            `FNC_SLT: begin
+                // SLT
+                alu_sel = `ALU_SLT;
+            end
+            `FNC_SLTU: begin
+                // SLTU
+                alu_sel = `ALU_SLTU;
             end
             endcase
-        `FNC_AND: begin
-            // AND
-            asel = `A_REG;
-            bsel = `B_REG;
-            alusel = `ALU_AND;
         end
-        `FNC_OR: begin
-            // OR
-            asel = `A_REG;
-            bsel = `B_REG;
-            alusel = `ALU_OR;
-        end
-        `FNC_XOR: begin
-            // XOR
-            asel = `A_REG;
-            bsel = `B_REG;
-            alusel = `ALU_XOR;
-        end
-        `FNC_SLL: begin
-            // SLL
-            asel = `A_REG;
-            bsel = `B_REG;
-            alusel = `ALU_SLL;
-        end
-        `FNC_SRL_SRA:
-            case (inst[30])
-            `FNC2_SRL: begin
-                // SRL
-                asel = `A_REG;
-                bsel = `B_REG;
-                alusel = `ALU_SRL;
+        `OPC_ARI_ITYPE_5: begin
+
+            a_sel = rs1;
+            b_sel = `B_IMM;
+
+            case (funct3)
+            `FNC_ADD_SUB: begin
+                // ADDI
+                alu_sel = `ALU_ADD;
             end
-            `FNC2_SRA: begin
-                // SRA
-                asel = `A_REG;
-                bsel = `B_REG;
-                alusel = `ALU_SRA;
+            `FNC_SLL: begin
+                // SLLI
+                alu_sel = `ALU_SLL;
+            end
+            `FNC_SLT: begin
+                // SLTI
+                alu_sel = `ALU_SLT;
+            end
+            `FNC_SLTU: begin
+                // SLTIU
+                alu_sel = `ALU_SLTU;
+            end
+            `FNC_XOR: begin
+                // XORI
+                alu_sel = `ALU_XOR;
+            end
+            `FNC_OR: begin
+                // ORI
+                alu_sel = `ALU_OR;
+            end
+            `FNC_AND: begin
+                // ANDI
+                alu_sel = `ALU_AND;
+            end
+            `FNC_SRL_SRA:
+                case (inst[30])
+                `FNC2_SRL: begin
+                    // SRLI
+                    alu_sel = `ALU_SRL;
+                end
+                `FNC2_SRA: begin
+                    // SRAI
+                    alu_sel = `ALU_SRA;
+                end
+                endcase
+            endcase
+        end
+        `OPC_LOAD_5: begin
+
+            a_sel = rs1;
+            b_sel = `B_IMM;
+            alu_sel = `ALU_ADD;
+
+            case (addr[31:28])
+            `ADDR_IO: io_en = 1'b1;
+            `ADDR_BIOS: bios_en = 1'b1;
+            `ADDR_DMEM: dmem_en = 1'b1;
+            `ADDR_MIRROR: dmem_en = 1'b1;
+            endcase
+        end
+        `OPC_STORE_5: begin
+
+            a_sel = rs1;
+            b_sel = `B_IMM;
+            alu_sel = `ALU_ADD;
+
+            case (addr[31:28])
+            `ADDR_IO: begin 
+                io_en = 1'b1;
+            end
+            `ADDR_DMEM: begin 
+                dmem_en = 1'b1;
+            end
+            `ADDR_IMEM: begin 
+                if (pc[30]) imem_en = 1'b1;
+            end
+            `ADDR_MIRROR: begin 
+                if (pc[30]) imem_en = 1'b1;
+                dmem_en = 1'b1;
             end
             endcase
-        `FNC_SLT: begin
-            // SLT
-            asel = `A_REG;
-            bsel = `B_REG;
-            alusel = `ALU_SLT;
-        end
-        `FNC_SLTU: begin
-            // SLTU
-            asel = `A_REG;
-            bsel = `B_REG;
-            alusel = `ALU_SLTU;
-        end
-        endcase
 
-    `OPC_ARI_ITYPE_5:
-        case (funct3)
-        `FNC_ADD_SUB: begin
-            // ADDI
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_ADD;
-        end
-        `FNC_SLL: begin
-            // SLLI
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_SLL;
-        end
-        `FNC_SLT: begin
-            // SLTI
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_SLT;
-        end
-        `FNC_SLTU: begin
-            // SLTIU
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_SLTU;
-        end
-        `FNC_XOR: begin
-            // XORI
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_XOR;
-        end
-        `FNC_OR: begin
-            // ORI
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_OR;
-        end
-        `FNC_AND: begin
-            // ANDI
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_AND;
-        end
-        `FNC_SRL_SRA:
-            case (inst[30])
-            `FNC2_SRL: begin
-                // SRLI
-                asel = `A_REG;
-                bsel = `B_IMM;
-                alusel = `ALU_SRL;
+            din_sel = `DIN_RD2;
+
+            case (funct3)
+            `FNC_SB: begin
+                // SB
+                size = `MEM_SIZE_BYTE;
             end
-            `FNC2_SRA: begin
-                // SRAI
-                asel = `A_REG;
-                bsel = `B_IMM;
-                alusel = `ALU_SRA;
+            `FNC_SH: begin
+                // SH
+                size = `MEM_SIZE_HALF;
+            end
+            `FNC_SW: begin
+                // SW
+                size = `MEM_SIZE_WORD;
             end
             endcase
-        endcase
-    
-    `OPC_LOAD_5:
-        case (funct3)
-        `FNC_LB: begin
-            // LB
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_ADD;
         end
-        `FNC_LH: begin
-            // LH
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_ADD;
-        end
-        `FNC_LW: begin
-            // LW
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_ADD;
-        end
-        `FNC_LBU: begin
-            // LBU
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_ADD;
-        end
-        `FNC_LHU: begin
-            // LHU
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_ADD;
-        end
-        endcase
+        `OPC_BRANCH_5: begin
 
-    `OPC_STORE_5:
-        case (funct3)
-        `FNC_SB: begin
-            // SB
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_ADD;
-        end
-        `FNC_SH: begin
-            // SH
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_ADD;
-        end
-        `FNC_SW: begin
-            // SW
-            asel = `A_REG;
-            bsel = `B_IMM;
-            alusel = `ALU_ADD;
-        end
-        endcase
-    
-    `OPC_BRANCH_5:
-        case (funct3)
-        `FNC_BEQ: begin
-            // BEQ
-            asel = `A_PC;
-            bsel = `B_IMM;
-            brun = 1'b0;
-            if (breq == br_taken) begin
-                br_suc = 1'b1;
-            end else begin 
-                flush = 1'b1;
-                alusel = breq ? `ALU_ADD : `ALU_A_PLUS_4;
-            end
-        end
-        `FNC_BNE: begin
-            // BNE
-            asel = `A_PC;
-            bsel = `B_IMM;
-            brun = 1'b0;
-            if (breq != br_taken) begin
-                br_suc = 1'b1;
-            end else begin 
-                flush = 1'b1;
-                alusel = !breq ? `ALU_ADD : `ALU_A_PLUS_4;
-            end
-        end
-        `FNC_BLT: begin
-            // BLT
-            asel = `A_PC;
-            bsel = `B_IMM;
-            brun = 1'b0;
-            if (brlt == br_taken) begin
-                br_suc = 1'b1;
-            end else begin 
-                flush = 1'b1;
-                alusel = brlt ? `ALU_ADD : `ALU_A_PLUS_4;
-            end
-        end
-        `FNC_BGE: begin
-            // BGE
-            asel = `A_PC;
-            bsel = `B_IMM;
-            brun = 1'b0;
-            if (brlt != br_taken) begin
-                br_suc = 1'b1;
-            end else begin 
-                flush = 1'b1;
-                alusel = !brlt ? `ALU_ADD : `ALU_A_PLUS_4;
-            end
-        end
-        `FNC_BLTU: begin
-            // BLTU
-            asel = `A_PC;
-            bsel = `B_IMM;
-            brun = 1'b1;
-            if (brlt == br_taken) begin
-                br_suc = 1'b1;
-            end else begin 
-                flush = 1'b1;
-                alusel = brlt ? `ALU_ADD : `ALU_A_PLUS_4;
-            end
-        end
-        `FNC_BGEU: begin
-            // BGEU
-            asel = `A_PC;
-            bsel = `B_IMM;
-            brun = 1'b1;
-            if (brlt != br_taken) begin
-                br_suc = 1'b1;
-            end else begin 
-                flush = 1'b1;
-                alusel = !brlt ? `ALU_ADD : `ALU_A_PLUS_4;
-            end
-        end
-        endcase
-    
-    `OPC_JAL_5: begin
-        // JAL
-        asel = `A_PC;
-        bsel = `B_IMM;
-        alusel = `ALU_ADD;
-    end
-    `OPC_JALR_5: begin
-        // JALR
-        asel = `A_REG;
-        bsel = `B_IMM;
-        alusel = `ALU_ADD;
-        flush = 1'b1;
-    end
+            br_inst = 1'b1;
 
-    `OPC_LUI_5: begin
-        // LUI
-        asel = `A_PC;
-        bsel = `B_IMM;
-        alusel = `ALU_BSEL;
-    end
-    `OPC_AUIPC_5: begin
-        // AUIPC
-        asel = `A_PC;
-        bsel = `B_IMM;
-        alusel = `ALU_ADD;
-    end
-    `OPC_CSR_5: begin
-        case (funct3)
-        `FNC_CSRRW: begin
-            // CSRRW
-            csr_mux_sel = `CSR_RD1;
-            csr_en = 1'b1;
-        end
-        `FNC_CSRRWI: begin
-            // CSRRWI
-            csr_mux_sel = `CSR_IMM; 
-            csr_en = 1'b1;
-        end
-        endcase
-    end
-    `OPC_FP_STORE_5: begin 
-        // FSW
-        fpusel = `FPU_BSEL;
-        asel = `A_REG;
-        bsel = `B_IMM;
-        alusel = `ALU_ADD;
-        fpu_valid = inst_changed;
-    end
-    `OPC_FP_LOAD_5: begin 
-        // FLW
-        asel = `A_REG;
-        bsel = `B_IMM;
-        alusel = `ALU_ADD;
-        fpu_valid = inst_changed;
-    end
-    `OPC_FP_5: begin 
-        fpu_valid = inst_changed;
-        case (funct4)
-        `FNC4_FP_ADD: begin 
-            // FADD
-            fpa_sel = `FP_A_FP_REG;
-            fpusel = `FPU_ADD;
-        end
-        `FNC4_FP_FSGNJ_S: begin 
-            // FSGNJ.S
-            fpa_sel = `FP_A_FP_REG;
-            fpusel = `FPU_SGNJ;
-        end
-        `FNC4_FP_MV_X_W: begin 
-            // FMV.X.W
-            fpa_sel = `FP_A_FP_REG;
-            fpusel = `FPU_ASEL;
-        end
-        `FNC4_FP_MV_W_X: begin 
-            // FMV.W.X
-            fpa_sel = `FP_A_REG;
-            fpusel = `FPU_ASEL;
-        end
-        `FNC4_FP_CVT_S_W: begin 
-            // FCVT.S.W
-            fpa_sel = `FP_A_REG;
-            fpusel = `FPU_CVT;
-        end
-        endcase
-    end
-    `OPC_FP_MADD_5: begin 
-        // FMADD
-        fpa_sel = `FP_A_FP_REG;
-        fpusel = `FPU_MADD;
-        fpu_valid = inst_changed;
-    end
-    endcase
-end
+            a_sel = `A_PC;
+            b_sel = `B_IMM;
+            alu_sel = `ALU_ADD;
+            redirect_sel = target_taken;
+            brun = (funct3[2:1] == 2'b11);
 
+            case (funct3)
+            `FNC_BEQ: begin
+                // BEQ
+                br_taken = breq;
+            end
+            `FNC_BNE: begin
+                // BNE
+                br_taken = !breq;
+            end
+            `FNC_BLT: begin
+                // BLT
+                br_taken = brlt;
+            end
+            `FNC_BGE: begin
+                // BGE
+                br_taken = !brlt;
+            end
+            `FNC_BLTU: begin
+                // BLTU
+                br_taken = brlt;
+            end
+            `FNC_BGEU: begin
+                // BGEU
+                br_taken = !brlt;
+            end
+            endcase
+        end
+        `OPC_JAL_5: begin
+            // JAL
+            a_sel = `A_PC;
+            b_sel = `B_IMM;
+            alu_sel = `ALU_ADD;
+            uncond = 1'b1;
+        end
+        `OPC_JALR_5: begin
+            // JALR
+            a_sel = rs1;
+            b_sel = `B_IMM;
+            alu_sel = `ALU_ADD;
+            redirect_sel = `REDIR_ALU;
+            jalr = 1'b1;
+        end
+
+        `OPC_LUI_5: begin
+            // LUI
+            a_sel = `A_PC;
+            b_sel = `B_IMM;
+            alu_sel = `ALU_BSEL;
+        end
+        `OPC_AUIPC_5: begin
+            // AUIPC
+            a_sel = `A_PC;
+            b_sel = `B_IMM;
+            alu_sel = `ALU_ADD;
+        end
+        `OPC_FP_STORE_5: begin 
+            // FSW
+            a_sel = rs1;
+            b_sel = `B_IMM;
+            alu_sel = `ALU_ADD;
+            din_sel = `DIN_FD2;
+            size = `MEM_SIZE_WORD;
+
+            case (addr[31:28])
+            `ADDR_IO: begin 
+                io_en = 1'b1;
+            end
+            `ADDR_DMEM: begin 
+                dmem_en = 1'b1;
+            end
+            `ADDR_IMEM: begin 
+                if (pc[30]) imem_en = 1'b1;
+            end
+            `ADDR_MIRROR: begin 
+                if (pc[30]) imem_en = 1'b1;
+                dmem_en = 1'b1;
+            end
+            endcase
+        end
+        `OPC_FP_LOAD_5: begin 
+            // FLW
+            a_sel = rs1;
+            b_sel = `B_IMM;
+            alu_sel = `ALU_ADD;
+
+            case (addr[31:28])
+            `ADDR_IO: io_en = 1'b1;
+            `ADDR_BIOS: bios_en = 1'b1;
+            `ADDR_DMEM: dmem_en = 1'b1;
+            `ADDR_MIRROR: dmem_en = 1'b1;
+            endcase
+        end
+        `OPC_FP_5: begin 
+            case (funct4)
+            `FNC4_FP_ADD: begin 
+                // FADD
+                fp_a_sel = `FP_A_FP_REG;
+                fpu_sel = `FPU_ADD;
+            end
+            `FNC4_FP_FSGNJ_S: begin 
+                // FSGNJ.S
+                fp_a_sel = `FP_A_FP_REG;
+                fpu_sel = `FPU_SGNJ;
+            end
+            `FNC4_FP_MV_X_W: begin 
+                // FMV.X.W
+                fp_a_sel = `FP_A_FP_REG;
+                fpu_sel = `FPU_ASEL;
+            end
+            `FNC4_FP_MV_W_X: begin 
+                // FMV.W.X
+                fp_a_sel = `FP_A_REG;
+                fpu_sel = `FPU_ASEL;
+            end
+            `FNC4_FP_CVT_S_W: begin 
+                // FCVT.S.W
+                fp_a_sel = `FP_A_REG;
+                fpu_sel = `FPU_CVT;
+            end
+            endcase
+        end
+        `OPC_FP_MADD_5: begin 
+            // FMADD
+            fp_a_sel = `FP_A_FP_REG;
+            fpu_sel = `FPU_MADD;
+        end
+        endcase
+    end
 endmodule

@@ -270,15 +270,19 @@ module bios_tb();
     if (`IMEM_PATH.mem[1] === 32'hcafeaaaa) begin
       $display("PASSED!");
     end
-    else
+    else begin
       $display("FAILED!");
+      $fatal();  
+    end
 
     $display("Test Write to DMem");
     if (`DMEM_PATH.mem[1] === 32'hcafeaaaa) begin
       $display("PASSED!");
     end
-    else
+    else begin
       $display("FAILED!");
+      $fatal();  
+    end
 
     // Test load command in BIOS mode
     $display("[TEST 4] Send [lw 30000004] command. Expect to see: 30000004:cafeaaaa");
@@ -385,8 +389,10 @@ module bios_tb();
     if (`RF_PATH.mem[3] === IMM[11:0]) begin
       $display("PASSED!");
     end
-    else
+    else begin
       $display("FAILED!");
+      $fatal();  
+    end
 
     repeat (100) @(posedge clk);
     $display("BIOS testbench done! Num failed tests: %d", num_failed_tests);

@@ -16,6 +16,7 @@ elements = {'LUT6': 1713,
             'RAMB36E1': 0,
             'RAMS32': 857,
             'RAMS64E': 1713,
+            'RAMB18E1': 0,
             'FDSE': 107,
             'LUT1': 429,
             'MUXF7': 7,
@@ -54,11 +55,6 @@ if __name__ == '__main__':
   parser.add_argument('rpt', action='store', help='resource utilization report')
   parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + version)
 
-  args = parser.parse_args()
-  if os.path.isfile(args.rpt):
-    f = open(args.rpt, 'r')
-  else:
-    print(args.rpt + ' not found')
-    exit()
+  f = open("build/synth/post_synth_utilization.rpt", 'r')
 
   print('Cost: ' + str(get_cost(f)))

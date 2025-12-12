@@ -64,20 +64,67 @@ module asm_tb();
 
     // Your processor should begin executing the code in /software/asm/start.s
 
-    // Test ADD
-    wait_for_reg_to_equal(20, 32'd1);       // Run the simulation until the flag is set to 1
-    check_reg(1, 32'd300, 1);               // Verify that x1 contains 300
+    // Test 1: ADD
+    wait_for_reg_to_equal(20, 32'd1);
+    check_reg(1, 32'd300, 1);
 
-    // Test BEQ
-    wait_for_reg_to_equal(20, 32'd2);       // Run the simulation until the flag is set to 2
-    check_reg(1, 32'd500, 2);               // Verify that x1 contains 500
-    check_reg(2, 32'd100, 3);               // Verify that x2 contains 100
+    // Test 2: BEQ (taken, forward)
+    wait_for_reg_to_equal(20, 32'd2);
+    check_reg(1, 32'd500, 2);
+    check_reg(2, 32'd100, 3);
+
+    // Test 3: BEQ (not taken, fall-through)
+    wait_for_reg_to_equal(20, 32'd3);
+    check_reg(1, 32'd42, 4);
+
+    // Test 4: BNE (taken, forward)
+    wait_for_reg_to_equal(20, 32'd4);
+    check_reg(1, 32'd33, 5);
+
+    // Test 5: BNE (not taken, fall-through)
+    wait_for_reg_to_equal(20, 32'd5);
+    check_reg(1, 32'd77, 6);
+
+    // Test 6: BLT loop (backward branch)
+    wait_for_reg_to_equal(20, 32'd6);
+    check_reg(1, 32'd25, 7);
+
+    // Test 7: JAL + JALR (call/return via x5)
+    wait_for_reg_to_equal(20, 32'd7);
+    check_reg(1, 32'd1234, 8);
+
+    // Test 8: J (jal x0, ...) skips an instruction
+    wait_for_reg_to_equal(20, 32'd8);
+    check_reg(1, 32'd55, 9);
+
+    // Test 9: Branch after ALU result (no hazard bug)
+    wait_for_reg_to_equal(20, 32'd9);
+    check_reg(1, 32'd7, 10);
+
+    // Test 10: JAL link register used in ALU sequence (BDD-like)
+    wait_for_reg_to_equal(20, 32'd10);
+    check_reg(3, 32'd42, 11);
+
+    // Test 11: JALR via register (indirect jump)
+    wait_for_reg_to_equal(20, 32'd11);
+    check_reg(1, 32'd321, 12);
+
+    // Test 12: Nested branches (taken + not-taken)
+    wait_for_reg_to_equal(20, 32'd12);
+    check_reg(1, 32'd3, 13);
+
+    // Test 13: BLT vs BLTU (signed vs unsigned)
+    wait_for_reg_to_equal(20, 32'd13);
+    check_reg(1, 32'd5, 14);
+    check_reg(12, 32'd7, 15);
+
     $display("ALL ASSEMBLY TESTS PASSED!");
     $finish();
   end
 
   initial begin
-    repeat (100) @(posedge clk);
+    // Give more headroom for the loops and extra tests
+    repeat (2000) @(posedge clk);
     $display("Failed: timing out");
     $fatal();
   end
