@@ -8,6 +8,8 @@ module ex_stage #(
     input clk,
     input rst,
 
+    input ex_id_ex_stall,
+
     input [31:0] ex_pc,
     input [31:0] ex_inst,
     input [31:0] ex_rd1,
@@ -294,7 +296,7 @@ module ex_stage #(
         .addr(alu_out),
         .din(ex_din),
         .inst(wb_inst),
-        .fp_inst(wb_fp_inst),
+        .stall(ex_id_ex_stall),
         .en(io_en),
         .br_suc(br_suc),
         .br_inst(br_inst),

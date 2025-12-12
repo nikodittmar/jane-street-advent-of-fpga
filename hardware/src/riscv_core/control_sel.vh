@@ -15,7 +15,7 @@
 // ***** ID STAGE *****
 
 // Nop instruction
-`define NOP                     32'h0000_0013
+`define NOP                     32'h0000_0000
 
 // Instruction sel
 `define INST_SEL_NUM_INPUTS     2

@@ -21,6 +21,8 @@ module id_stage (
     input wb_flush,
     input wb_regwen,
     input wb_fp_regwen,
+
+    output reg ex_id_ex_stall,
     
     output [31:0] ex_pc,
     output [31:0] ex_rd1,
@@ -155,6 +157,7 @@ module id_stage (
 
     always @(posedge clk) begin 
         ex_fpu_valid <= fpu_valid;
+        ex_id_ex_stall <= id_ex_stall;
     end
 
     assign ex_fwd_rs1 = ex[258];

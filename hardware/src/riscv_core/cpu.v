@@ -132,6 +132,8 @@ module cpu #(
 
     // MARK: Instruction Decode
 
+    wire ex_id_ex_stall;
+
     id_stage id_stage (
         .clk(clk),
         .rst(rst),
@@ -152,6 +154,8 @@ module cpu #(
         .wb_flush(wb_flush),
         .wb_regwen(wb_regwen),
         .wb_fp_regwen(wb_fp_regwen),
+
+        .ex_id_ex_stall(ex_id_ex_stall),
 
         .ex_pc(ex_pc),
         .ex_rd1(ex_rd1),
@@ -177,6 +181,8 @@ module cpu #(
     ) ex_stage (
         .clk(clk),
         .rst(rst),
+
+        .ex_id_ex_stall(ex_id_ex_stall),
 
         .ex_pc(ex_pc),
         .ex_inst(ex_inst),

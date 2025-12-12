@@ -10,7 +10,7 @@ module io #(
     input [31:0] addr,
     input [31:0] din,
     input [31:0] inst,
-    input [31:0] fp_inst,
+    input stall,
     input en,
     input br_suc,
     input br_inst,
@@ -37,9 +37,7 @@ module io #(
     reg can_read;
     reg [7:0] rx_buf;
 
-    wire fp_valid = fp_inst != `NOP;
-    wire int_valid = inst != `NOP;
-    wire [1:0] inst_inc = int_valid + fp_valid;
+    wire inst_inc = !stall && inst != `NOP;
 
     uart #(
         .CLOCK_FREQ(CLOCK_FREQ),
@@ -74,8 +72,7 @@ module io #(
             rx_buf <= 8'b0;
         end else begin 
             cycle_cnt <= cycle_cnt + 28'b1;
-            inst_cnt <= inst_cnt + { 22'b0, inst_inc };
-
+            inst_cnt <= inst_cnt + { 23'b0, inst_inc };
 
             `ifndef SYNTHESIS 
                 br_inst_cnt <= br_inst_cnt + { 23'b0, br_inst };
